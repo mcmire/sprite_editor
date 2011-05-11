@@ -1,4 +1,4 @@
-# pixel editor *(to be renamed)*
+# sprite editor *(to be renamed)*
 
 Making pixels fun to work with... since about a week ago.
 
