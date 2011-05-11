@@ -3,6 +3,8 @@ html, body {
 }
 
 body {
+  margin: 30px;
+  font-family: Helvetica;
   background-color: silver;
   margin: 0;
   padding: 0;
@@ -13,12 +15,9 @@ canvas {
   background-color: white;
 }
 
-/*
-#wrapper {
-  width: 1100px;
-  margin: 0 auto;
+input, select {
+  cursor: pointer;
 }
-*/
 
 #header {
   width: 100%;
@@ -26,14 +25,15 @@ canvas {
   line-height: 60px;
   background-color: white;
   overflow: auto;
-}
-#header h1 {
-  font-size: 35px;
-  float: left;
-  margin: 0;
-  margin-left: 15px;
-  letter-spacing: -1px;
-  z-index: 20;
+  
+  h1 {
+    font-size: 35px;
+    float: left;
+    margin: 0;
+    margin-left: 15px;
+    letter-spacing: -1px;
+    z-index: 20;
+  }
 }
 #help {
   float: right;
@@ -58,14 +58,16 @@ canvas {
   border-radius: 5px;
   box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
   -webkit-transition: opacity 0.3s ease-in-out;
-}
-#help_box p {
-  margin: 10px 0;
-}
-#help_box a {
-  color: lightyellow;
-  text-decoration: none;
-  border-bottom: 1px dotted lightyellow;
+  overflow: hidden;
+  
+  p {
+    margin: 10px 0;
+  }
+  a {
+    color: lightyellow;
+    text-decoration: none;
+    border-bottom: 1px dotted lightyellow;
+  }
 }
 
 #main {
@@ -97,71 +99,74 @@ canvas {
   /*float: left;*/
   overflow: auto;
   background-color: white;
-}
-.box h3 {
-  margin: -20px;
-  margin-bottom: 20px;
-  background-color: #333;
-  color: white;
-  padding: 5px 10px;
-  font-size: 15px;
-  text-align: center;
+  
+  h3 {
+    margin: -20px;
+    margin-bottom: 20px;
+    background-color: #333;
+    color: white;
+    padding: 5px 10px;
+    font-size: 15px;
+    text-align: center;
+  }
 }
 
 #tool_box {
   width: 130px;
   overflow: auto;
   margin-bottom: 20px;
-}
-#tool_box ul, #tool_box li {
-  list-style-type: none;
-  padding: 0;
-  margin: 0;
-  text-align: center;
-}
-#tool_box li {
-  display: inline-block;
-  vertical-align: middle;
-  margin-right: 20px;
-}
-#tool_box ul li:last-child {
-  margin-right: 0;
-}
-#tool_box .tool {
-  opacity: 0.5;
-  cursor: pointer;
-}
-#tool_box .tool:hover, #tool_box .tool.selected {
-  opacity: 1;
-}
-#tool_box .tool.selected {
-  border-bottom: 2px solid gray;
+  
+  ul, li {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    text-align: center;
+  }
+  li {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 20px;
+  }
+  ul li:last-child {
+    margin-right: 0;
+  }
+  .tool {
+    opacity: 0.5;
+    cursor: pointer;
+  }
+  .tool:hover, .tool.selected {
+    opacity: 1;
+  }
+  .tool.selected {
+    border-bottom: 2px solid gray;
+  }
 }
 
 #sizes_box {
   width: 130px;
   /*margin-left: 20px;*/
   margin-bottom: 20px;
-}
-#sizes_box canvas {
-  border: 1px solid red;
-  opacity: 0.5;
-  /*
-  margin-right: 20px;
-  display: inline-block;
-  vertical-align: middle;
-  */
-  margin: 0 auto 20px auto;
-  cursor: pointer;
-}
-#sizes_box canvas:last-child {
-  margin-bottom: 0;
-}
-#sizes_box canvas:hover, #sizes_box canvas.selected {
-  opacity: 1;
-}
-#sizes_box canvas.selected {
-  border-width: 2px;
+  
+  canvas {
+    border: 1px solid red;
+    opacity: 0.5;
+    /*
+    margin-right: 20px;
+    display: inline-block;
+    vertical-align: middle;
+    */
+    margin: 0 auto 20px auto;
+    cursor: pointer;
+  }
+  canvas:last-child {
+    margin-bottom: 0;
+  }
+  canvas:hover, #sizes_box canvas.selected {
+    opacity: 1;
+  }
+  canvas.selected {
+    border-width: 2px;
+  }
 }
 
 #color_box {
@@ -169,9 +174,10 @@ canvas {
   margin-bottom: 20px;
   /*margin-right: 20px;*/
   /*text-align: center;*/
-}
-#color_box input {
-  vertical-align: middle;
+  
+  input {
+    vertical-align: middle;
+  }
 }
 #color_sample {
   width: 60px;
@@ -182,24 +188,22 @@ canvas {
 .color_controls, #color_sample {
   margin-top: 10px;
 }
-.color_controls label, .color_controls input, .color_controls span {
-  display: inline-block;
-}
-.color_controls label {
-  width: 75px;
+.color_controls {
+  label, input, span {
+    display: inline-block;
+  }
+  label {
+    width: 75px;
+  }
 }
 
 #preview_box {
-  /*
-  width: 200px;
-  height: 250px;
-  */
-}
-#preview_box canvas {
-  border: 1px solid rgba(255, 0, 0, 0.3);
-  margin-left: auto;
-  margin-right: auto;
-}
-#preview_box canvas:nth-child(2) {
-  margin-bottom: 20px;
+  canvas {
+    border: 1px solid rgba(255, 0, 0, 0.3);
+    margin-left: auto;
+    margin-right: auto;
+  }
+  canvas:nth-child(2) {
+    margin-bottom: 20px;
+  }
 }
