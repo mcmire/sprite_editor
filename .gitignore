@@ -1,0 +1,6 @@
+.DS_Store
+*.tmproj
+vendor/ruby
+.bundle/*
+!.bundle/config
+.sass-cache
