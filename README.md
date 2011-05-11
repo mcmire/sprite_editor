@@ -20,6 +20,10 @@ Sass is being used for stylesheets (but of course). [Guard](http://github.com/gu
 
 Now, develop away!
 
+## Roadmap
+
+There's a public Pivotal Tracker project here: <https://www.pivotaltracker.com/projects/289453>
+
 ## Resources
 
 The HSL part of the color picker was stolen from http://hslpicker.com (source [here](https://github.com/imathis/hsl-color-picker/)). I really like that a lot.
