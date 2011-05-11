@@ -19,3 +19,7 @@ Sass is being used for stylesheets (but of course). [Guard](http://github.com/gu
     bundle exec guard
 
 Now, develop away!
+
+## Resources
+
+The HSL part of the color picker was stolen from http://hslpicker.com (source [here](https://github.com/imathis/hsl-color-picker/)). I really like that a lot.
