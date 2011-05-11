@@ -373,7 +373,7 @@
           img.className = "tool";
           img.width = 24;
           img.height = 24;
-          img.src = "images/sprite_editor/"+tool+".png";
+          img.src = "images/"+tool+".png";
           imgs.push(img);
           li.appendChild(img);
           ul.appendChild(li);
