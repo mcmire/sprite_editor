@@ -58,5 +58,13 @@ vertical-align: middle;
 .color_controls label, .color_controls input, .color_controls span { display: inline-block; }
 .color_controls label { width: 75px; }
 
+#square_color_picker { overflow: hidden; }
+
+#hue_sat_canvas, #lightness_canvas { border: 1px solid #dedede; }
+
+#hue_sat_canvas { float: left; }
+
+#lightness_canvas { float: right; }
+
 #preview_box canvas { border: 1px solid rgba(255, 0, 0, 0.3); margin-left: auto; margin-right: auto; }
 #preview_box canvas:nth-child(2) { margin-bottom: 20px; }

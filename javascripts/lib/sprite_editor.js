@@ -5,10 +5,28 @@
     var c = {};
     c.element = document.createElement("canvas");
     c.ctx = c.element.getContext("2d");
+    Object.extend(c.ctx, Canvas.Context);
     c.element.width = width;
     c.element.height = height;
     if (callback) callback(c);
     return c;
+  }
+  Canvas.Context = {
+    createImageData: function(_super, width, height) {
+      var imageData = _super.call(this, width, height);
+      Object.extend(imageData, Canvas.ImageData);
+      return imageData;
+    }
+  };
+  Canvas.ImageData = {
+    // http://beej.us/blog/2010/02/html5s-canvas-part-ii-pixel-manipulation/
+    fillPixel: function(x, y, r, g, b, a) {
+      var index = (x + y * this.width) * 4;
+      this.data[index+0] = r;
+      this.data[index+1] = g;
+      this.data[index+2] = b;
+      this.data[index+3] = a;
+    }
   }
   
   var Grid = {};
@@ -100,6 +118,9 @@
       }
     },
     undo: function() {
+      // Kind of weird to have this here as it kind of violates some sort of
+      // responsibility principle since it's directly editing the editor,
+      // but whatever...
       var self = this;
       var cells = self.events.pop();
       _.each(cells, function(cell) {
@@ -107,6 +128,61 @@
       })
     }
   };
+  
+  var SquareColorPicker = {
+    hueSatCanvasSize: {
+      width: 265,
+      height: 300
+    },
+    lightnessCanvasSize: {
+      width: 25,
+      height: 300
+    },
+    currentColor: Color.fromRGB(172, 85, 255),
+    
+    create: function() {
+      var self = this;
+      
+      self.element = document.createElement("div");
+      self.element.id = "square_color_picker";
+      
+      var hueSatCanvas = Canvas.create(self.hueSatCanvasSize.width, self.hueSatCanvasSize.height, function(c) {
+        var imageData = c.ctx.createImageData(c.element.width, c.element.height);
+        var color;
+        for (var y=0; y<c.element.height; y++) {
+          for (var x=0; x<c.element.width; x++) {
+            // x = 0..width  -> h = 0..360
+            // y = 0..height -> s = 100..0
+            var h = Math.round((360 / c.element.width) * x);
+            var s = Math.round((-100 / c.element.height) * y + 100);
+            color = self.currentColor.withHSL({hue: h, saturation: s});
+            imageData.fillPixel(x, y, color.red, color.blue, color.green, 255);
+          }
+        }
+        c.ctx.putImageData(imageData, 0, 0);
+      })
+      hueSatCanvas.element.id = "hue_sat_canvas";
+      self.element.appendChild(hueSatCanvas.element);
+      
+      var lightnessCanvas = Canvas.create(self.lightnessCanvasSize.width, self.lightnessCanvasSize.height, function(c) {
+        var imageData = c.ctx.createImageData(c.element.width, c.element.height);
+        var color;
+        for (var y=0; y<c.element.height; y++) {
+          // y = 0..height -> l = 100..0
+          var l = Math.round((-100 / c.element.height) * y + 100);
+          color = self.currentColor.withHSL({lightness: l});
+          for (var x=0; x<c.element.width; x++) {
+            imageData.fillPixel(x, y, color.red, color.blue, color.green, 255);
+          }
+        }
+        c.ctx.putImageData(imageData, 0, 0);
+      })
+      lightnessCanvas.element.id = "lightness_canvas";
+      self.element.appendChild(lightnessCanvas.element);
+      
+      return self;
+    }
+  }
 
   window.SpriteEditor = (function() {
     var editor = {};
@@ -240,6 +316,7 @@
         h3.innerHTML = "Color";
         boxDiv.appendChild(h3);
         
+        /*
         var colorSampleDiv = document.createElement("div");
         colorSampleDiv.style.backgroundColor = 'rgb('+self.currentColor.toRGBString()+')';
         colorSampleDiv.id = "color_sample";
@@ -314,19 +391,11 @@
           })
         })
         
-        /*
-        var colorSpectrum = Canvas.create(300, 300, function(c) {
-          for (var r=0; r<255; r++) {
-            for (var g=0; g<255; g++) {
-              for (var b=0; b<255; b++) {
-                
-              }
-            }
-          }
-        })
+        boxDiv.appendChild(colorSampleDiv);
         */
         
-        boxDiv.appendChild(colorSampleDiv);
+        var squareColorPicker = SquareColorPicker.create();
+        boxDiv.appendChild(squareColorPicker.element);
       },
       
       _createPreviewBox: function() {
@@ -610,7 +679,6 @@
         // so this is another way to clear the canvas that works
         pc.element.width = pc.element.width;
         pc.imageData = pc.ctx.createImageData(self.widthInCells, self.heightInCells);
-        self._extendImageData(pc.imageData);
       },
       
       _clearTiledPreviewCanvas: function() {
@@ -658,17 +726,6 @@
           tpc.ctx.fillStyle = pattern;
           tpc.ctx.fillRect(0, 0, tpc.element.width, tpc.element.height);
         tpc.ctx.restore();
-      },
-      
-      _extendImageData: function(imageData) {
-        // http://beej.us/blog/2010/02/html5s-canvas-part-ii-pixel-manipulation/
-        imageData.fillPixel = function(x, y, r, g, b, a) {
-          var index = (x + y * this.width) * 4;
-          this.data[index+0] = r;
-          this.data[index+1] = g;
-          this.data[index+2] = b;
-          this.data[index+3] = a;
-        }
       },
       
       _distance: function(v1, v2) {

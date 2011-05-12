@@ -106,6 +106,18 @@
     }
   });
   Object.extend(Color.prototype, {
+    withHSL: function(hsl) {
+      var self = this;
+      var clone = Object.extend(self.clone(), hsl);
+      clone.refreshRGB();
+      return clone;
+    },
+    withRGB: function(rgb) {
+      var self = this;
+      var clone = Object.extend(self.clone(), rgb);
+      clone.refreshHSL();
+      return clone;
+    },
     refreshHSL: function() {
       var self = this;
       Object.extend(self, Color.rgb2hsl(self));

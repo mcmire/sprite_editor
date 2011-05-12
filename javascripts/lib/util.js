@@ -25,10 +25,19 @@
   };
 
   Object.extend = function(obj, props) {
-    var prop;
-    for (prop in props) {
+    for (var prop in props) {
       if (props.hasOwnProperty(prop)) {
-        obj[prop] = props[prop];
+        if ((prop in obj) && typeof obj[prop] == "function") {
+          var _super = obj[prop],
+              _new   = props[prop];
+          obj[prop] = function() {
+            var args = Array.prototype.slice.call(arguments);
+            args.unshift(_super);
+            return _new.apply(obj, args);
+          }
+        } else {
+          obj[prop] = props[prop];
+        }
       }
     }
     return obj;
