@@ -3,7 +3,7 @@
   window.Color = function() {
     Color.init.apply(this, arguments);
   }
-  Object.extend(Color, {
+  $.extend(Color, {
     init: function(color) {
       var self = this;
       self.red = color.red;
@@ -105,26 +105,26 @@
       else return p;
     }
   });
-  Object.extend(Color.prototype, {
+  $.extend(Color.prototype, {
     withHSL: function(hsl) {
       var self = this;
-      var clone = Object.extend(self.clone(), hsl);
+      var clone = $.extend(self.clone(), hsl);
       clone.refreshRGB();
       return clone;
     },
     withRGB: function(rgb) {
       var self = this;
-      var clone = Object.extend(self.clone(), rgb);
+      var clone = $.extend(self.clone(), rgb);
       clone.refreshHSL();
       return clone;
     },
     refreshHSL: function() {
       var self = this;
-      Object.extend(self, Color.rgb2hsl(self));
+      $.extend(self, Color.rgb2hsl(self));
     },
     refreshRGB: function() {
       var self = this;
-      Object.extend(self, Color.hsl2rgb(self));
+      $.extend(self, Color.hsl2rgb(self));
     },
     clone: function() {
       var self = this;

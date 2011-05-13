@@ -23,44 +23,38 @@
   <div id="main">
   </di>
   
-  <script src="javascripts/vendor/underscore-1.1.6.min.js"></script>
-  <script src="javascripts/vendor/bean.min.js"></script>
+  <script src="javascripts/vendor/ender.min.js"></script>
+  <!--<script src="javascripts/vendor/zepto.min.js"></script>-->
+  <!--<script src="javascripts/vendor/underscore-1.1.6.min.js"></script>-->
   <script src="javascripts/lib/util.js"></script>
   <script src="javascripts/lib/color.js"></script>
   <script src="javascripts/lib/sprite_editor.js"></script>
   <script>
-    $(function() {
-      SpriteEditor.init();
+    (function(window, document, $, undefined) {
+      $.domReady(function() {
+        SpriteEditor.init();
       
-      var helpBox = $('help_box');
-      function openHelpBox() {
-        helpBox.style.height = "auto";
-        helpBox.style.opacity = 1;
-      }
-      function closeHelpBox() {
-        helpBox.style.opacity = 0;
-        setTimeout(function() { helpBox.style.height = 0 }, 300); // wait for webkit animation to finish
-      }
-      
-      bean.add($('help'), 'click', function(event) {
-        if (helpBox.style.opacity == 0) {
-          openHelpBox();
-        } else {
-          closeHelpBox();
-        }
-        event.preventDefault();
-        event.stopPropagation();
+        var $helpBox = $('#help_box');
+        $('#help').click(function(event) {
+          if ($helpBox.css('opacity') == 0) {
+            $helpBox.fadeIn();
+          } else {
+            $helpBox.fadeOut();
+          }
+          event.preventDefault();
+          event.stopPropagation();
+        })
+        $('help_box_close').click(function(event) {
+          $helpBox.fadeOut();
+          event.preventDefault();
+          event.stopPropagation();
+        })
+        $(document).click(function(event) {
+          $helpBox.fadeOut();
+          event.stopPropagation();
+        })
       })
-      bean.add($('help_box_close'), 'click', function(event) {
-        closeHelpBox();
-        event.preventDefault();
-        event.stopPropagation();
-      })
-      bean.add(document, 'click', function(event) {
-        closeHelpBox();
-        event.stopPropagation();
-      })
-    })
+    })(window, window.document, window.ender);
   </script>
 </body>
 </html>

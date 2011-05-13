@@ -1,20 +1,21 @@
-(function(window, document, $, _, undefined) {
+(function(window, document, $, undefined) {
 
   var Canvas = {};
   Canvas.create = function(width, height, callback) {
     var c = {};
-    c.element = document.createElement("canvas");
+    c.$element = $("<canvas/>");
+    c.element = c.$element[0];
     c.ctx = c.element.getContext("2d");
-    Object.extend(c.ctx, Canvas.Context);
-    c.element.width = width;
-    c.element.height = height;
+    $.extend(c.ctx, Canvas.Context);
+    c.width = c.element.width = width;
+    c.height = c.element.height = height;
     if (callback) callback(c);
     return c;
   }
   Canvas.Context = {
     createImageData: function(_super, width, height) {
       var imageData = _super.call(this, width, height);
-      Object.extend(imageData, Canvas.ImageData);
+      $.extend(imageData, Canvas.ImageData);
       return imageData;
     }
   };
@@ -61,7 +62,7 @@
   var Cell = function() {
     Cell.prototype.init.apply(this, arguments);
   }
-  Object.extend(Cell.prototype, {
+  $.extend(Cell.prototype, {
     init: function(editor, x, y) {
       var self = this;
       self.editor = editor;
@@ -123,7 +124,7 @@
       // but whatever...
       var self = this;
       var cells = self.events.pop();
-      _.each(cells, function(cell) {
+      $.v.each(cells, function(cell) {
         self.editor.cells[cell.i][cell.j] = cell;
       })
     }
@@ -143,42 +144,41 @@
     create: function() {
       var self = this;
       
-      self.element = document.createElement("div");
-      self.element.id = "square_color_picker";
+      self.$element = $("<div/>").attr("id", "square_color_picker");
       
       var hueSatCanvas = Canvas.create(self.hueSatCanvasSize.width, self.hueSatCanvasSize.height, function(c) {
-        var imageData = c.ctx.createImageData(c.element.width, c.element.height);
+        var imageData = c.ctx.createImageData(c.width, c.height);
         var color;
-        for (var y=0; y<c.element.height; y++) {
-          for (var x=0; x<c.element.width; x++) {
+        for (var y=0; y<c.height; y++) {
+          for (var x=0; x<c.width; x++) {
             // x = 0..width  -> h = 0..360
             // y = 0..height -> s = 100..0
-            var h = Math.round((360 / c.element.width) * x);
-            var s = Math.round((-100 / c.element.height) * y + 100);
+            var h = Math.round((360 / c.width) * x);
+            var s = Math.round((-100 / c.height) * y + 100);
             color = self.currentColor.withHSL({hue: h, saturation: s});
             imageData.fillPixel(x, y, color.red, color.blue, color.green, 255);
           }
         }
         c.ctx.putImageData(imageData, 0, 0);
       })
-      hueSatCanvas.element.id = "hue_sat_canvas";
-      self.element.appendChild(hueSatCanvas.element);
+      hueSatCanvas.$element[0].id = "hue_sat_canvas";
+      self.$element.append(hueSatCanvas.$element);
       
       var lightnessCanvas = Canvas.create(self.lightnessCanvasSize.width, self.lightnessCanvasSize.height, function(c) {
-        var imageData = c.ctx.createImageData(c.element.width, c.element.height);
+        var imageData = c.ctx.createImageData(c.width, c.height);
         var color;
-        for (var y=0; y<c.element.height; y++) {
+        for (var y=0; y<c.height; y++) {
           // y = 0..height -> l = 100..0
-          var l = Math.round((-100 / c.element.height) * y + 100);
+          var l = Math.round((-100 / c.height) * y + 100);
           color = self.currentColor.withHSL({lightness: l});
-          for (var x=0; x<c.element.width; x++) {
+          for (var x=0; x<c.width; x++) {
             imageData.fillPixel(x, y, color.red, color.blue, color.green, 255);
           }
         }
         c.ctx.putImageData(imageData, 0, 0);
       })
-      lightnessCanvas.element.id = "lightness_canvas";
-      self.element.appendChild(lightnessCanvas.element);
+      lightnessCanvas.$element[0].id = "lightness_canvas";
+      self.$element.append(lightnessCanvas.$element);
       
       return self;
     }
@@ -186,6 +186,11 @@
 
   window.SpriteEditor = (function() {
     var editor = {};
+    
+    editor.$container = null;
+    editor.$leftPane = null;
+    editor.$centerPane = null;
+    editor.$rightPane = null;
     
     editor.timer = null;
     editor.width = null;
@@ -211,10 +216,10 @@
     editor.heightInCells = 16; // cells
     editor.cellSize = 30; // pixels
     
-    Object.extend(editor, {
+    $.extend(editor, {
       init: function() {
         var self = this;
-        self.container = $('main');
+        self.$container = $('#main');
         self._initCells();
         self._createWrapperDivs();
         self._createGridCanvas();
@@ -263,17 +268,17 @@
       _createWrapperDivs: function() {
         var self = this;
         
-        self.leftPane = document.createElement("div");
-        self.leftPane.id = "left_pane";
-        self.container.appendChild(self.leftPane);
+        self.$leftPane = $("<div/>");
+        self.$leftPane.attr("id", "left_pane");
+        self.$container.append(self.$leftPane);
         
-        self.rightPane = document.createElement("div");
-        self.rightPane.id = "right_pane";
-        self.container.appendChild(self.rightPane);
+        self.$rightPane = $("<div/>");
+        self.$rightPane.attr("id", "right_pane");
+        self.$container.append(self.$rightPane);
         
-        self.centerPane = document.createElement("div");
-        self.centerPane.id = "center_pane";
-        self.container.appendChild(self.centerPane);
+        self.$centerPane = $("<div/>");
+        self.$centerPane.attr("id", "center_pane");
+        self.$container.append(self.$centerPane);
       },
       
       _createGridCanvas: function() {
@@ -299,22 +304,20 @@
         self.width = self.widthInCells * self.cellSize;
         self.height = self.heightInCells * self.cellSize;
         self.canvas = Canvas.create(self.width, self.height);
-        self.canvas.element.id = "enlarged_canvas";
-        self.canvas.element.style.backgroundImage = 'url('+self.gridCanvas.element.toDataURL("image/png")+')';
-        self.centerPane.appendChild(self.canvas.element);
+        self.canvas.$element
+          .attr("id", "enlarged_canvas")
+          .css("background-image", 'url('+self.gridCanvas.element.toDataURL("image/png")+')');
+        self.$centerPane.append(self.canvas.$element);
       },
       
       _createColorBox: function() {
         var self = this;
         
-        var boxDiv = document.createElement("div");
-        boxDiv.id = "color_box";
-        boxDiv.className = "box";
-        self.rightPane.appendChild(boxDiv);
+        var $boxDiv = $("<div/>").attr("id", "color_box").addClass("box");
+        self.$rightPane.append($boxDiv);
         
-        var h3 = document.createElement("h3");
-        h3.innerHTML = "Color";
-        boxDiv.appendChild(h3);
+        var $header = $("<h3/>").html("Color");
+        $boxDiv.append($header);
         
         /*
         var colorSampleDiv = document.createElement("div");
@@ -345,13 +348,13 @@
             lightness: {}
           }
         };
-        _.each(possibleColorSliders, function(components, ctype) {
+        $.v.each(possibleColorSliders, function(components, ctype) {
           var colorControlsDiv = document.createElement("div");
           colorControlsDiv.id = ctype + "_color_controls";
           colorControlsDiv.className = "color_controls";
           boxDiv.appendChild(colorControlsDiv);
           
-          _.each(components, function(component) {
+          $.v.each(components, function(component) {
             var colorDiv = document.createElement("div");
             colorControlsDiv.appendChild(colorDiv);
             
@@ -380,7 +383,7 @@
               } else {
                 self.currentColor.refreshRGB();
               }
-              _.each(colorSliders[ctype == "rgb" ? "hsl" : "rgb"], function(o, componentName) {
+              $.v.each(colorSliders[ctype == "rgb" ? "hsl" : "rgb"], function(o, componentName) {
                 var val = self.currentColor[componentName];
                 // Hue may be null, so check for that
                 if (val !== null) o.slider.value = o.sliderSpan.innerHTML = val;
@@ -395,97 +398,91 @@
         */
         
         var squareColorPicker = SquareColorPicker.create();
-        boxDiv.appendChild(squareColorPicker.element);
+        $boxDiv.append(squareColorPicker.$element);
       },
       
       _createPreviewBox: function() {
         var self = this;
         
-        var boxDiv = document.createElement("div");
-        boxDiv.id = "preview_box";
-        boxDiv.className = "box";
-        self.rightPane.appendChild(boxDiv);
+        var $boxDiv = $("<div/>").attr("id", "preview_box").addClass("box");
+        self.$rightPane.append($boxDiv);
         
-        var h3 = document.createElement("h3");
-        h3.innerHTML = "Preview";
-        boxDiv.appendChild(h3);
+        var $header = $("<h3/>").html("Preview");
+        $boxDiv.append($header);
         
         self.previewCanvas = Canvas.create(self.widthInCells, self.heightInCells);
         self.previewCanvas.element.id = "preview_canvas";
-        boxDiv.appendChild(self.previewCanvas.element);
+        $boxDiv.append(self.previewCanvas.$element);
         
         self.tiledPreviewCanvas = Canvas.create(self.widthInCells * 9, self.heightInCells * 9);
         self.tiledPreviewCanvas.element.id = "tiled_preview_canvas";
-        boxDiv.appendChild(self.tiledPreviewCanvas.element);
+        $boxDiv.append(self.tiledPreviewCanvas.$element);
       },
       
       _createToolBox: function() {
         var self = this;
         
-        var boxDiv = document.createElement("div");
-        boxDiv.id = "tool_box";
-        boxDiv.className = "box";
-        self.leftPane.appendChild(boxDiv);
+        var $boxDiv = $("<div/>").attr("id", "tool_box").addClass("box");
+        self.$leftPane.append($boxDiv);
         
-        var h3 = document.createElement("h3");
-        h3.innerHTML = "Toolbox";
-        boxDiv.appendChild(h3);
+        var $header = $("<h3/>").html("Toolbox");
+        $boxDiv.append($header);
         
-        var ul = document.createElement("ul");
-        boxDiv.appendChild(ul);
+        var $ul = $("<ul/>");
+        $boxDiv.append($ul);
         
-        var imgs = [];
-        _.each(["pencil", "bucket"], function(tool) {
-          var li = document.createElement("li");
+        var $imgs = $([]);
+        $.v.each(["pencil", "bucket"], function(tool) {
+          var $li = $("<li/>");
           
-          var img = document.createElement("img");
-          img.className = "tool";
-          img.width = 24;
-          img.height = 24;
-          img.src = "images/"+tool+".png";
-          imgs.push(img);
-          li.appendChild(img);
-          ul.appendChild(li);
+          var $img = $("<img/>");
+          $img.addClass("tool")
+              .attr("width", 24)
+              .attr("height", 24)
+              .attr("src", "images/"+tool+".png");
+          $imgs.push($img[0]);
+          $li.append($img);
+          $ul.append($li);
           
-          bean.add(img, 'click', function() {
+          // For some reason this doesn't work right if we just use click()... bug??
+          $img.bind('click', function() {
             self.currentTool = tool;
-            _.each(imgs, function(img) { img.className = img.className.replace("selected", "") })
-            img.className += " selected";
+            $imgs.removeClass("selected");
+            $img.addClass("selected");
           })
-          
-          if (self.currentTool == tool) bean.fire(img, 'click');
+          if (self.currentTool == tool) $img.trigger('click');
         })
       },
       
       _createBrushSizesBox: function() {
         var self = this;
         
-        var boxDiv = document.createElement("div");
-        boxDiv.id = "sizes_box";
-        boxDiv.className = "box";
-        self.leftPane.appendChild(boxDiv);
+        var $boxDiv = $("<div/>").attr("id", "sizes_box").addClass("box");
+        self.$leftPane.append($boxDiv);
         
-        var h3 = document.createElement("h3");
-        h3.innerHTML = "Sizes";
-        boxDiv.appendChild(h3);
+        var $header = $("<h3/>").html("Sizes");
+        $boxDiv.append($header);
         
-        var grids = []
-        _.each([1, 2, 3, 4], function(brushSize) {
+        var $grids = $([]);
+        $.v.each([1, 2, 3, 4], function(brushSize) {
           var grid = Grid.create(self, self.cellSize*brushSize, self.cellSize*brushSize);
-          grids.push(grid);
-          boxDiv.appendChild(grid.element);
-          bean.add(grid.element, 'click', function() {
+          $grids.push(grid.element);
+          $boxDiv.append(grid.$element);
+          // For some reason this doesn't work right if we just use click()... bug??
+          grid.$element.bind('click', function() {
             self.currentBrushSize = brushSize;
-            _.each(grids, function(grid) { grid.element.className = grid.element.className.replace("selected", "") })
-            grid.element.className += " selected";
+            $grids.removeClass("selected");
+            grid.$element.addClass("selected");
           })
-          if (self.currentBrushSize == brushSize) bean.fire(grid.element, 'click');
+          if (self.currentBrushSize == brushSize) {
+            grid.$element.trigger('click');
+          }
         })
       },
       
       _addEvents: function() {
         var self = this;
-        bean.add(self.canvas.element, {
+        this.canvas.$element.bind({
           mouseover: function(event) {
             self.start();
           },
@@ -555,11 +552,11 @@
             event.preventDefault();
           }
         })
-        bean.add(document, {
+        $(document).bind({
           keydown: function(event) {
             self.pressedKeys[event.keyCode] = true;
             if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
-              // Undo last action
+              // Ctrl-Z or Command-Z: Undo last action
               self.cellHistory.undo();
             }
           },
@@ -567,7 +564,7 @@
             delete self.pressedKeys[event.keyCode];
           }
         });
-        bean.add(window, {
+        $(window).bind({
           blur: function() {
             self.stop();
           }
@@ -615,7 +612,7 @@
       _setCurrentCellsToFilled: function() {
         var self = this;
         if (self.currentCells) {
-          _.each(self.currentCells, function(cell) {
+          $.v.each(self.currentCells, function(cell) {
             self.cellHistory.add(cell);
             // Clone so when changing the current color we don't change all cells
             // filled with that color
@@ -627,7 +624,7 @@
       _setCurrentCellsToUnfilled: function() {
         var self = this;
         if (self.currentCells) {
-          _.each(self.currentCells, function(cell) {
+          $.v.each(self.currentCells, function(cell) {
             self.cellHistory.add(cell);
             cell.color = null;
           })
@@ -641,8 +638,8 @@
         if (currentCellColor) currentCellColor = currentCellColor.clone();
         // Look for all cells with the color (or non-color) of the current cell
         // and mark them as filled with the current color
-        _.each(self.cells, function(row, i) {
-          _.each(row, function(cell, j) {
+        $.v.each(self.cells, function(row, i) {
+          $.v.each(row, function(cell, j) {
             if ((!cell.color && !currentCellColor) || cell.color.isEqual(currentCellColor)) {
               cell.color = self.currentColor.clone();
             }
@@ -657,8 +654,8 @@
         if (currentCellColor) currentCellColor = currentCellColor.clone();
         // Look for all cells with the color of the current cell
         // and mark them as unfilled
-        _.each(self.cells, function(row, i) {
-          _.each(row, function(cell, j) {
+        $.v.each(self.cells, function(row, i) {
+          $.v.each(row, function(cell, j) {
             if (cell.color && cell.color.isEqual(currentCellColor)) {
               cell.color = null;
             }
@@ -669,7 +666,7 @@
       _clearCanvas: function() {
         var self = this;
         var c = self.canvas;
-        c.ctx.clearRect(0, 0, c.element.width, c.element.height);
+        c.ctx.clearRect(0, 0, c.width, c.height);
       },
       
       _clearPreviewCanvas: function() {
@@ -677,14 +674,14 @@
         var pc = self.previewCanvas;
         // clearRect() won't clear image data set using createImageData(),
         // so this is another way to clear the canvas that works
-        pc.element.width = pc.element.width;
+        pc.element.width = pc.width;
         pc.imageData = pc.ctx.createImageData(self.widthInCells, self.heightInCells);
       },
       
       _clearTiledPreviewCanvas: function() {
         var self = this;
         var ptc = self.tiledPreviewCanvas;
-        ptc.ctx.clearRect(0, 0, ptc.element.width, ptc.element.height);
+        ptc.ctx.clearRect(0, 0, ptc.width, ptc.height);
       },
       
       _highlightCurrentCells: function() {
@@ -693,7 +690,7 @@
         if (self.currentCells && !(self.mouse.dragging || self.pressedKeys[16]) && self.currentTool == "pencil") {
           ctx.save();
             ctx.fillStyle = 'rgba('+self.currentColor.toRGBString()+',0.5)';
-            _.each(self.currentCells, function(cell) {
+            $.v.each(self.currentCells, function(cell) {
               ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
             })
           ctx.restore();
@@ -705,8 +702,8 @@
         var c = self.canvas;
         var pc = self.previewCanvas;
         c.ctx.save();
-          _.each(self.cells, function(row, i) {
-            _.each(row, function(cell, j) {
+          $.v.each(self.cells, function(row, i) {
+            $.v.each(row, function(cell, j) {
               if (cell.color) {
                 c.ctx.fillStyle = 'rgb('+cell.color.toRGBString()+')';
                 c.ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
@@ -724,7 +721,7 @@
         var pattern = tpc.ctx.createPattern(self.previewCanvas.element, 'repeat');
         tpc.ctx.save();
           tpc.ctx.fillStyle = pattern;
-          tpc.ctx.fillRect(0, 0, tpc.element.width, tpc.element.height);
+          tpc.ctx.fillRect(0, 0, tpc.width, tpc.height);
         tpc.ctx.restore();
       },
       
@@ -736,4 +733,4 @@
     return editor;
   })();
 
-})(window, window.document, window.$, window._);
+})(window, window.document, window.ender);
