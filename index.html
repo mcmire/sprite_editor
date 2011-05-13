@@ -10,7 +10,7 @@
     <div id="header-inner">
       <h1>sprite editor</h1>
       <div id="help"><a href="#" id="help_menu_text">So how do I use this, anyway?</a></div>
-      <div id="help_box" style="height: 0; opacity: 0">
+      <div id="help_box" style="opacity: 0">
         <p><b>Pencil tool:</b> Click on a cell to fill it in, right-click to delete (shift-click works too). You can also drag across the grid to quickly fill in or delete cells.</p>
         <p><b>Paint bucket tool:</b> Click on a cell to fill in all like cells with the current color. Right- or shift-click to clear all like cells.</p>
         <p>Ctrl-Z (or Command-Z) will undo the last action.</p>
@@ -24,8 +24,6 @@
   </di>
   
   <script src="javascripts/vendor/ender.min.js"></script>
-  <!--<script src="javascripts/vendor/zepto.min.js"></script>-->
-  <!--<script src="javascripts/vendor/underscore-1.1.6.min.js"></script>-->
   <script src="javascripts/lib/util.js"></script>
   <script src="javascripts/lib/color.js"></script>
   <script src="javascripts/lib/sprite_editor.js"></script>
@@ -35,22 +33,22 @@
         SpriteEditor.init();
       
         var $helpBox = $('#help_box');
-        $('#help').click(function(event) {
+        $('#help').bind('click', function(event) {
           if ($helpBox.css('opacity') == 0) {
-            $helpBox.fadeIn();
+            $helpBox.fadeIn(300);
           } else {
-            $helpBox.fadeOut();
+            $helpBox.fadeOut(300);
           }
           event.preventDefault();
           event.stopPropagation();
         })
-        $('help_box_close').click(function(event) {
-          $helpBox.fadeOut();
+        $('help_box_close').bind('click', function(event) {
+          $helpBox.fadeOut(300);
           event.preventDefault();
           event.stopPropagation();
         })
-        $(document).click(function(event) {
-          $helpBox.fadeOut();
+        $(document).bind('click', function(event) {
+          $helpBox.fadeOut(300);
           event.stopPropagation();
         })
       })
