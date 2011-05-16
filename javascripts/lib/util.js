@@ -39,6 +39,50 @@
     }
   })
   
+  $.ender({
+    center: function() {
+      var vp = $.viewport();
+      var self = $([this[0]]);
+      var top = (vp.height / 2) - (self.height() / 2);
+      var left = (vp.width / 2) - (self.width() / 2);
+      self.css("top", top+"px").css("left", left+"px");
+      return this;
+    },
+    // Bonzo's offset returns the offset of the element relative to the parent element.
+    // This returns the offset of the element relative to the document
+    // (only works in Webkit). Courtesy of Zepto.
+    absoluteOffset: function() {
+      if (this.length == 0) return null;
+      var obj = this[0].getBoundingClientRect();
+      return {
+        left: obj.left + document.body.scrollLeft,
+        top: obj.top + document.body.scrollTop,
+        width: obj.width,
+        height: obj.height
+      };
+    },
+    position: function() {
+      var po = this.parent().offset();
+      var o  = this.offset();
+      return {top: o.top - po.top, left: o.left - po.left};
+    },
+    parent: function() {
+      return $(this[0].parentNode);
+    },
+    // Copied from <http://blog.stchur.com/2006/06/21/css-computed-style/>
+    computedStyle: function(prop) {
+      var elem = this[0];
+      var computedStyle;
+      if (typeof elem.currentStyle !== 'undefined') {
+        computedStyle = elem.currentStyle;
+      } else {
+        computedStyle = document.defaultView.getComputedStyle(elem, null);
+      }
+      return prop ? computedStyle[prop] : computedStyle;
+    }
+  }, true);
+  
+  
   // Returns a random number between min (inclusive) and max (exclusive).
   // Copied from the MDC wiki
   Math.randomFloat = function(min, max) {

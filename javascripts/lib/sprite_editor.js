@@ -1,34 +1,6 @@
 (function(window, document, $, undefined) {
 
-  var Canvas = {};
-  Canvas.create = function(width, height, callback) {
-    var c = {};
-    c.$element = $("<canvas/>");
-    c.element = c.$element[0];
-    c.ctx = c.element.getContext("2d");
-    $.extend(c.ctx, Canvas.Context);
-    c.width = c.element.width = width;
-    c.height = c.element.height = height;
-    if (callback) callback(c);
-    return c;
-  }
-  Canvas.Context = {
-    createImageData: function(_super, width, height) {
-      var imageData = _super.call(this, width, height);
-      $.extend(imageData, Canvas.ImageData);
-      return imageData;
-    }
-  };
-  Canvas.ImageData = {
-    // http://beej.us/blog/2010/02/html5s-canvas-part-ii-pixel-manipulation/
-    fillPixel: function(x, y, r, g, b, a) {
-      var index = (x + y * this.width) * 4;
-      this.data[index+0] = r;
-      this.data[index+1] = g;
-      this.data[index+2] = b;
-      this.data[index+3] = a;
-    }
-  }
+  var SpriteEditor = {};
   
   var Grid = {};
   Grid.create = function(editor, width, height) {
@@ -129,379 +101,340 @@
       })
     }
   };
-  
-  var SquareColorPicker = {
-    hueSatCanvasSize: {
-      width: 265,
-      height: 300
-    },
-    lightnessCanvasSize: {
-      width: 25,
-      height: 300
-    },
-    currentColor: Color.fromRGB(172, 85, 255),
-    
-    create: function() {
-      var self = this;
-      
-      self.$element = $("<div/>").attr("id", "square_color_picker");
-      
-      var hueSatCanvas = Canvas.create(self.hueSatCanvasSize.width, self.hueSatCanvasSize.height, function(c) {
-        var imageData = c.ctx.createImageData(c.width, c.height);
-        var color;
-        for (var y=0; y<c.height; y++) {
-          for (var x=0; x<c.width; x++) {
-            // x = 0..width  -> h = 0..360
-            // y = 0..height -> s = 100..0
-            var h = Math.round((360 / c.width) * x);
-            var s = Math.round((-100 / c.height) * y + 100);
-            color = self.currentColor.withHSL({hue: h, saturation: s});
-            imageData.fillPixel(x, y, color.red, color.blue, color.green, 255);
-          }
-        }
-        c.ctx.putImageData(imageData, 0, 0);
-      })
-      hueSatCanvas.$element[0].id = "hue_sat_canvas";
-      self.$element.append(hueSatCanvas.$element);
-      
-      var lightnessCanvas = Canvas.create(self.lightnessCanvasSize.width, self.lightnessCanvasSize.height, function(c) {
-        var imageData = c.ctx.createImageData(c.width, c.height);
-        var color;
-        for (var y=0; y<c.height; y++) {
-          // y = 0..height -> l = 100..0
-          var l = Math.round((-100 / c.height) * y + 100);
-          color = self.currentColor.withHSL({lightness: l});
-          for (var x=0; x<c.width; x++) {
-            imageData.fillPixel(x, y, color.red, color.blue, color.green, 255);
-          }
-        }
-        c.ctx.putImageData(imageData, 0, 0);
-      })
-      lightnessCanvas.$element[0].id = "lightness_canvas";
-      self.$element.append(lightnessCanvas.$element);
-      
-      return self;
-    }
-  }
 
-  window.SpriteEditor = (function() {
-    var editor = {};
+  $.extend(SpriteEditor, {
+    $container: null,
+    $leftPane: null,
+    $centerPane: null,
+    $rightPane: null,
     
-    editor.$container = null;
-    editor.$leftPane = null;
-    editor.$centerPane = null;
-    editor.$rightPane = null;
-    
-    editor.timer = null;
-    editor.width = null;
-    editor.height = null;
-    editor.canvas = null;
-    editor.gridCanvas = null;
-    editor.previewCanvas = null;
-    editor.currentCell = null;
-    editor.cells = [];
-    editor.currentColor = Color.fromRGB(172, 85, 255);
-    editor.mouse = {
+    timer: null,
+    width: null,
+    height: null,
+    canvas: null,
+    gridCanvas: null,
+    previewCanvas: null,
+    currentCell: null,
+    cells: [],
+    currentColor: Color.fromRGB(172, 85, 255),
+    mouse: {
       dragging: false,
       downAt: null
-    };
-    editor.pressedKeys = {};
-    editor.currentTool = "pencil";
-    editor.currentCellToStartFill = null;
-    editor.currentBrushSize = 1;
-    editor.cellHistory = CellHistory.init(editor);
+    },
+    pressedKeys: {},
+    currentTool: "pencil",
+    currentCellToStartFill: null,
+    currentBrushSize: 1,
+    cellHistory: null,
     
-    editor.tickInterval = 30; // ms/frame
-    editor.widthInCells = 16; // cells
-    editor.heightInCells = 16; // cells
-    editor.cellSize = 30; // pixels
+    tickInterval: 30, // ms/frame
+    widthInCells: 16, // cells
+    heightInCells: 16, // cells
+    cellSize: 30, // pixels
     
-    $.extend(editor, {
-      init: function() {
-        var self = this;
-        self.$container = $('#main');
-        self._initCells();
-        self._createWrapperDivs();
-        self._createGridCanvas();
-        self._createCanvas();
-        self._createToolBox();
-        self._createBrushSizesBox();
-        self._createColorBox();
-        self._createPreviewBox();
-        self._addEvents();
-        self.redraw();
-        return self;
-      },
+    init: function() {
+      var self = this;
       
-      start: function() {
-        var self = this;
-        self.timer = setInterval(function() { self.redraw() }, self.tickInterval);
-        return self;
-      },
+      self.cellHistory = CellHistory.init(self);
+      self.$container = $('#main');
       
-      redraw: function() {
-        var self = this;
-        self._clearCanvas();
-        self._clearPreviewCanvas();
-        self._clearTiledPreviewCanvas();
-        self._highlightCurrentCells();
-        self._fillCells();
-        self._updateTiledPreviewCanvas();
-      },
+      self._initCells();
+      self._createWrapperDivs();
+      self._createGridCanvas();
+      self._createCanvas();
+      self._createToolBox();
+      self._createBrushSizesBox();
+      self._createColorBox();
+      self._createPreviewBox();
+      //self._addEvents();
+      self.redraw();
       
-      stop: function() {
-        var self = this;
-        clearInterval(self.timer);
-        return self;
-      },
-      
-      _initCells: function() {
-        var self = this;
-        for (var i=0; i<self.heightInCells; i++) {
-          var row = self.cells[i] = [];
-          for (var j=0; j<self.widthInCells; j++) {
-            row[j] = new Cell(self, j, i);
-          }
+      return self;
+    },
+    
+    start: function() {
+      var self = this;
+      self.timer = setInterval(function() { self.redraw() }, self.tickInterval);
+      return self;
+    },
+    
+    redraw: function() {
+      var self = this;
+      self._clearCanvas();
+      self._clearPreviewCanvas();
+      self._clearTiledPreviewCanvas();
+      self._highlightCurrentCells();
+      self._fillCells();
+      self._updateTiledPreviewCanvas();
+    },
+    
+    stop: function() {
+      var self = this;
+      clearInterval(self.timer);
+      return self;
+    },
+    
+    _initCells: function() {
+      var self = this;
+      for (var i=0; i<self.heightInCells; i++) {
+        var row = self.cells[i] = [];
+        for (var j=0; j<self.widthInCells; j++) {
+          row[j] = new Cell(self, j, i);
         }
-      },
+      }
+    },
+    
+    _createWrapperDivs: function() {
+      var self = this;
       
-      _createWrapperDivs: function() {
-        var self = this;
-        
-        self.$leftPane = $("<div/>");
-        self.$leftPane.attr("id", "left_pane");
-        self.$container.append(self.$leftPane);
-        
-        self.$rightPane = $("<div/>");
-        self.$rightPane.attr("id", "right_pane");
-        self.$container.append(self.$rightPane);
-        
-        self.$centerPane = $("<div/>");
-        self.$centerPane.attr("id", "center_pane");
-        self.$container.append(self.$centerPane);
-      },
+      self.$leftPane = $("<div/>");
+      self.$leftPane.attr("id", "left_pane");
+      self.$container.append(self.$leftPane);
       
-      _createGridCanvas: function() {
-        var self = this;
-        self.gridCanvas = Canvas.create(self.cellSize, self.cellSize, function(c) {
-          c.ctx.strokeStyle = "#eee";
-          c.ctx.beginPath();
-            // Draw a vertical line on the left
-            // We use 0.5 instead of 0 because this is the midpoint of the path we want to stroke
-            // See: <http://diveintohtml5.org/canvas.html#pixel-madness>
-            c.ctx.moveTo(0.5, 0);
-            c.ctx.lineTo(0.5, c.element.height);
-            // Draw a horizontal line on top
-            c.ctx.moveTo(0, 0.5);
-            c.ctx.lineTo(c.element.width, 0.5);
-          c.ctx.stroke();
-          c.ctx.closePath();
-        });
-      },
+      self.$rightPane = $("<div/>");
+      self.$rightPane.attr("id", "right_pane");
+      self.$container.append(self.$rightPane);
       
-      _createCanvas: function() {
-        var self = this;
-        self.width = self.widthInCells * self.cellSize;
-        self.height = self.heightInCells * self.cellSize;
-        self.canvas = Canvas.create(self.width, self.height);
-        self.canvas.$element
-          .attr("id", "enlarged_canvas")
-          .css("background-image", 'url('+self.gridCanvas.element.toDataURL("image/png")+')');
-        self.$centerPane.append(self.canvas.$element);
-      },
+      self.$centerPane = $("<div/>");
+      self.$centerPane.attr("id", "center_pane");
+      self.$container.append(self.$centerPane);
+    },
+    
+    _createGridCanvas: function() {
+      var self = this;
+      self.gridCanvas = Canvas.create(self.cellSize, self.cellSize, function(c) {
+        c.ctx.strokeStyle = "#eee";
+        c.ctx.beginPath();
+          // Draw a vertical line on the left
+          // We use 0.5 instead of 0 because this is the midpoint of the path we want to stroke
+          // See: <http://diveintohtml5.org/canvas.html#pixel-madness>
+          c.ctx.moveTo(0.5, 0);
+          c.ctx.lineTo(0.5, c.element.height);
+          // Draw a horizontal line on top
+          c.ctx.moveTo(0, 0.5);
+          c.ctx.lineTo(c.element.width, 0.5);
+        c.ctx.stroke();
+        c.ctx.closePath();
+      });
+    },
+    
+    _createCanvas: function() {
+      var self = this;
+      self.width = self.widthInCells * self.cellSize;
+      self.height = self.heightInCells * self.cellSize;
+      self.canvas = Canvas.create(self.width, self.height);
+      self.canvas.$element
+        .attr("id", "enlarged_canvas")
+        .css("background-image", 'url('+self.gridCanvas.element.toDataURL("image/png")+')');
+      self.$centerPane.append(self.canvas.$element);
+    },
+    
+    _createColorBox: function() {
+      var self = this;
       
-      _createColorBox: function() {
-        var self = this;
+      var $boxDiv = $("<div/>").attr("id", "color_box").addClass("box");
+      self.$rightPane.append($boxDiv);
+      
+      var $header = $("<h3/>").html("Color");
+      $boxDiv.append($header);
+      
+      /*
+      var colorSampleDiv = document.createElement("div");
+      colorSampleDiv.style.backgroundColor = 'rgb('+self.currentColor.toRGBString()+')';
+      colorSampleDiv.id = "color_sample";
+      
+      var possibleColorSliders = {
+        rgb: [
+          {name: "red", max: 255},
+          {name: "green", max: 255},
+          {name: "blue", max: 255}
+        ],
+        hsl: [
+          {name: "hue", max: 360},
+          {name: "saturation", max: 100},
+          {name: "lightness", max: 100}
+        ]
+      };
+      var colorSliders = {
+        rgb: {
+          red: {},
+          green: {},
+          blue: {}
+        },
+        hsl: {
+          hue: {},
+          saturation: {},
+          lightness: {}
+        }
+      };
+      $.v.each(possibleColorSliders, function(components, ctype) {
+        var colorControlsDiv = document.createElement("div");
+        colorControlsDiv.id = ctype + "_color_controls";
+        colorControlsDiv.className = "color_controls";
+        boxDiv.appendChild(colorControlsDiv);
         
-        var $boxDiv = $("<div/>").attr("id", "color_box").addClass("box");
-        self.$rightPane.append($boxDiv);
-        
-        var $header = $("<h3/>").html("Color");
-        $boxDiv.append($header);
-        
-        /*
-        var colorSampleDiv = document.createElement("div");
-        colorSampleDiv.style.backgroundColor = 'rgb('+self.currentColor.toRGBString()+')';
-        colorSampleDiv.id = "color_sample";
-        
-        var possibleColorSliders = {
-          rgb: [
-            {name: "red", max: 255},
-            {name: "green", max: 255},
-            {name: "blue", max: 255}
-          ],
-          hsl: [
-            {name: "hue", max: 360},
-            {name: "saturation", max: 100},
-            {name: "lightness", max: 100}
-          ]
-        };
-        var colorSliders = {
-          rgb: {
-            red: {},
-            green: {},
-            blue: {}
-          },
-          hsl: {
-            hue: {},
-            saturation: {},
-            lightness: {}
-          }
-        };
-        $.v.each(possibleColorSliders, function(components, ctype) {
-          var colorControlsDiv = document.createElement("div");
-          colorControlsDiv.id = ctype + "_color_controls";
-          colorControlsDiv.className = "color_controls";
-          boxDiv.appendChild(colorControlsDiv);
+        $.v.each(components, function(component) {
+          var colorDiv = document.createElement("div");
+          colorControlsDiv.appendChild(colorDiv);
           
-          $.v.each(components, function(component) {
-            var colorDiv = document.createElement("div");
-            colorControlsDiv.appendChild(colorDiv);
-            
-            var label = document.createElement("label");
-            label.innerHTML = String.capitalize(component.name);
-            colorDiv.appendChild(label);
+          var label = document.createElement("label");
+          label.innerHTML = String.capitalize(component.name);
+          colorDiv.appendChild(label);
 
-            var colorSlider = document.createElement("input");
-            colorSlider.type = "range";
-            colorSlider.min = 0;
-            colorSlider.max = component.max;
-            colorSlider.value = self.currentColor[component.name];
-            colorDiv.appendChild(colorSlider);
-            colorSliders[ctype][component.name].slider = colorSlider;
+          var colorSlider = document.createElement("input");
+          colorSlider.type = "range";
+          colorSlider.min = 0;
+          colorSlider.max = component.max;
+          colorSlider.value = self.currentColor[component.name];
+          colorDiv.appendChild(colorSlider);
+          colorSliders[ctype][component.name].slider = colorSlider;
 
-            var colorValueSpan = document.createElement("span");
-            colorValueSpan.innerHTML = self.currentColor[component.name];
-            colorDiv.appendChild(document.createTextNode(" "))
-            colorDiv.appendChild(colorValueSpan);
-            colorSliders[ctype][component.name].sliderSpan = colorValueSpan;
+          var colorValueSpan = document.createElement("span");
+          colorValueSpan.innerHTML = self.currentColor[component.name];
+          colorDiv.appendChild(document.createTextNode(" "))
+          colorDiv.appendChild(colorValueSpan);
+          colorSliders[ctype][component.name].sliderSpan = colorValueSpan;
 
-            bean.add(colorSlider, 'change', function() {
-              self.currentColor[component.name] = colorSlider.value;
-              if (ctype == "rgb") {
-                self.currentColor.refreshHSL();
-              } else {
-                self.currentColor.refreshRGB();
-              }
-              $.v.each(colorSliders[ctype == "rgb" ? "hsl" : "rgb"], function(o, componentName) {
-                var val = self.currentColor[componentName];
-                // Hue may be null, so check for that
-                if (val !== null) o.slider.value = o.sliderSpan.innerHTML = val;
-              });
-              colorValueSpan.innerHTML = self.currentColor[component.name];
-              colorSampleDiv.style.backgroundColor = 'rgb('+self.currentColor.toRGBString()+')';
-            })
-          })
-        })
-        
-        boxDiv.appendChild(colorSampleDiv);
-        */
-        
-        var squareColorPicker = SquareColorPicker.create();
-        $boxDiv.append(squareColorPicker.$element);
-      },
-      
-      _createPreviewBox: function() {
-        var self = this;
-        
-        var $boxDiv = $("<div/>").attr("id", "preview_box").addClass("box");
-        self.$rightPane.append($boxDiv);
-        
-        var $header = $("<h3/>").html("Preview");
-        $boxDiv.append($header);
-        
-        self.previewCanvas = Canvas.create(self.widthInCells, self.heightInCells);
-        self.previewCanvas.element.id = "preview_canvas";
-        $boxDiv.append(self.previewCanvas.$element);
-        
-        self.tiledPreviewCanvas = Canvas.create(self.widthInCells * 9, self.heightInCells * 9);
-        self.tiledPreviewCanvas.element.id = "tiled_preview_canvas";
-        $boxDiv.append(self.tiledPreviewCanvas.$element);
-      },
-      
-      _createToolBox: function() {
-        var self = this;
-        
-        var $boxDiv = $("<div/>").attr("id", "tool_box").addClass("box");
-        self.$leftPane.append($boxDiv);
-        
-        var $header = $("<h3/>").html("Toolbox");
-        $boxDiv.append($header);
-        
-        var $ul = $("<ul/>");
-        $boxDiv.append($ul);
-        
-        var $imgs = $([]);
-        $.v.each(["pencil", "bucket"], function(tool) {
-          var $li = $("<li/>");
-          
-          var $img = $("<img/>");
-          $img.addClass("tool")
-              .attr("width", 24)
-              .attr("height", 24)
-              .attr("src", "images/"+tool+".png");
-          $imgs.push($img[0]);
-          $li.append($img);
-          $ul.append($li);
-          
-          // For some reason this doesn't work right if we just use click()... bug??
-          $img.bind('click', function() {
-            self.currentTool = tool;
-            $imgs.removeClass("selected");
-            $img.addClass("selected");
-          })
-          if (self.currentTool == tool) $img.trigger('click');
-        })
-      },
-      
-      _createBrushSizesBox: function() {
-        var self = this;
-        
-        var $boxDiv = $("<div/>").attr("id", "sizes_box").addClass("box");
-        self.$leftPane.append($boxDiv);
-        
-        var $header = $("<h3/>").html("Sizes");
-        $boxDiv.append($header);
-        
-        var $grids = $([]);
-        $.v.each([1, 2, 3, 4], function(brushSize) {
-          var grid = Grid.create(self, self.cellSize*brushSize, self.cellSize*brushSize);
-          $grids.push(grid.element);
-          $boxDiv.append(grid.$element);
-          // For some reason this doesn't work right if we just use click()... bug??
-          grid.$element.bind('click', function() {
-            self.currentBrushSize = brushSize;
-            $grids.removeClass("selected");
-            grid.$element.addClass("selected");
-          })
-          if (self.currentBrushSize == brushSize) {
-            grid.$element.trigger('click');
-          }
-        })
-      },
-      
-      _addEvents: function() {
-        var self = this;
-        this.canvas.$element.bind({
-          mouseover: function(event) {
-            self.start();
-          },
-          mousemove: function(event) {
-            var mouse = {x: event.pageX, y: event.pageY};
-            
-            self._setCurrentCells(mouse);
-            
-            // If dragging isn't set yet, set it until the mouse is lifted off
-            if (self.mouse.downAt) {
-              if (!self.mouse.dragging) {
-                self.mouse.dragging = (self._distance(self.mouse.downAt, mouse) > 3);
-                self.selectedCells = [];
-              }
+          bean.add(colorSlider, 'change', function() {
+            self.currentColor[component.name] = colorSlider.value;
+            if (ctype == "rgb") {
+              self.currentColor.refreshHSL();
             } else {
-              self.mouse.dragging = false;
+              self.currentColor.refreshRGB();
             }
-            
-            if (self.mouse.dragging && self.currentTool == "pencil") {
+            $.v.each(colorSliders[ctype == "rgb" ? "hsl" : "rgb"], function(o, componentName) {
+              var val = self.currentColor[componentName];
+              // Hue may be null, so check for that
+              if (val !== null) o.slider.value = o.sliderSpan.innerHTML = val;
+            });
+            colorValueSpan.innerHTML = self.currentColor[component.name];
+            colorSampleDiv.style.backgroundColor = 'rgb('+self.currentColor.toRGBString()+')';
+          })
+        })
+      })
+      
+      boxDiv.appendChild(colorSampleDiv);
+      */
+      
+      var cpBox = SpriteEditor.ColorPickerBox.init($boxDiv);
+    },
+    
+    _createPreviewBox: function() {
+      var self = this;
+      
+      var $boxDiv = $("<div/>").attr("id", "preview_box").addClass("box");
+      self.$rightPane.append($boxDiv);
+      
+      var $header = $("<h3/>").html("Preview");
+      $boxDiv.append($header);
+      
+      self.previewCanvas = Canvas.create(self.widthInCells, self.heightInCells);
+      self.previewCanvas.element.id = "preview_canvas";
+      $boxDiv.append(self.previewCanvas.$element);
+      
+      self.tiledPreviewCanvas = Canvas.create(self.widthInCells * 9, self.heightInCells * 9);
+      self.tiledPreviewCanvas.element.id = "tiled_preview_canvas";
+      $boxDiv.append(self.tiledPreviewCanvas.$element);
+    },
+    
+    _createToolBox: function() {
+      var self = this;
+      
+      var $boxDiv = $("<div/>").attr("id", "tool_box").addClass("box");
+      self.$leftPane.append($boxDiv);
+      
+      var $header = $("<h3/>").html("Toolbox");
+      $boxDiv.append($header);
+      
+      var $ul = $("<ul/>");
+      $boxDiv.append($ul);
+      
+      var $imgs = $([]);
+      $.v.each(["pencil", "bucket"], function(tool) {
+        var $li = $("<li/>");
+        
+        var $img = $("<img/>");
+        $img.addClass("tool")
+            .attr("width", 24)
+            .attr("height", 24)
+            .attr("src", "images/"+tool+".png");
+        $imgs.push($img[0]);
+        $li.append($img);
+        $ul.append($li);
+        
+        // For some reason this doesn't work right if we just use click()... bug??
+        $img.bind('click', function() {
+          self.currentTool = tool;
+          $imgs.removeClass("selected");
+          $img.addClass("selected");
+        })
+        if (self.currentTool == tool) $img.trigger('click');
+      })
+    },
+    
+    _createBrushSizesBox: function() {
+      var self = this;
+      
+      var $boxDiv = $("<div/>").attr("id", "sizes_box").addClass("box");
+      self.$leftPane.append($boxDiv);
+      
+      var $header = $("<h3/>").html("Sizes");
+      $boxDiv.append($header);
+      
+      var $grids = $([]);
+      $.v.each([1, 2, 3, 4], function(brushSize) {
+        var grid = Grid.create(self, self.cellSize*brushSize, self.cellSize*brushSize);
+        $grids.push(grid.element);
+        $boxDiv.append(grid.$element);
+        // For some reason this doesn't work right if we just use click()... bug??
+        grid.$element.bind('click', function() {
+          self.currentBrushSize = brushSize;
+          $grids.removeClass("selected");
+          grid.$element.addClass("selected");
+        })
+        if (self.currentBrushSize == brushSize) {
+          grid.$element.trigger('click');
+        }
+      })
+    },
+    
+    _addEvents: function() {
+      var self = this;
+      self.canvas.$element.bind({
+        mouseover: function(event) {
+          self.start();
+        },
+        mousemove: function(event) {
+          self._setCurrentCells(self.canvas.$element.data('mouse').pos);
+        },
+        mousedown: function(event) {
+          self.cellHistory.open();
+          event.preventDefault();
+        },
+        mouseup: function(event) {
+          self.cellHistory.close();
+          event.preventDefault();
+        },
+        mouseout: function(event) {
+          self._unsetCurrentCells();
+          self.stop();
+          self.redraw();
+        },
+        click: function(event) {
+          event.preventDefault();
+        },
+        contextmenu: function(event) {
+          event.preventDefault();
+        }
+      })
+      self.canvas.$element.trackMouse({
+        draggingDistance: 3,
+        on: {
+          startdrag: function() {
+            self.selectedCells = [];
+          },
+          drag: function() {
+            if (self.currentTool == "pencil") {
               // FIXME: If you drag too fast it will skip some cells!
               // Use the current mouse position and the last mouse position and
               //  fill in or erase cells in between.
@@ -512,225 +445,199 @@
               }
             }
           },
-          mousedown: function(event) {
-            self.mouse.downAt = {x: event.pageX, y: event.pageY};
-            self.cellHistory.open();
-            event.preventDefault();
-          },
-          mouseup: function(event) {
-            if (!self.mouse.dragging) {
-              switch (self.currentTool) {
-                case "pencil":
-                  if (event.rightClick || self.pressedKeys[16]) {
-                    self._setCurrentCellsToUnfilled();
-                  } else {
-                    self._setCurrentCellsToFilled();
-                  }
-                  break;
-                case "bucket":
-                  if (event.rightClick || self.pressedKeys[16]) {
-                    self._setCellsLikeCurrentToUnfilled();
-                  } else {
-                    self._setCellsLikeCurrentToFilled();
-                  }
-                  break;
-              }
-            }
-            self.cellHistory.close();
-            self.mouse.downAt = null;
-            event.preventDefault();
-          },
-          mouseout: function(event) {
-            self._unsetCurrentCells();
-            self.stop();
-            self.redraw();
-          },
-          click: function(event) {
-            event.preventDefault();
-          },
-          contextmenu: function(event) {
-            event.preventDefault();
-          }
-        })
-        $(document).bind({
-          keydown: function(event) {
-            self.pressedKeys[event.keyCode] = true;
-            if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
-              // Ctrl-Z or Command-Z: Undo last action
-              self.cellHistory.undo();
-            }
-          },
-          keyup: function(event) {
-            delete self.pressedKeys[event.keyCode];
-          }
-        });
-        $(window).bind({
-          blur: function() {
-            self.stop();
-          }
-        })
-      },
-      
-      _setCurrentCells: function(mouse) {
-        var self = this;
-        
-        var bs = (self.currentBrushSize-1) * self.cellSize;
-        var x = (mouse.x - self.canvas.element.offsetLeft);
-        var y = (mouse.y - self.canvas.element.offsetTop);
-        
-        var currentCells = [];
-        // Make a bounding box of pixels within the enlarged canvas based on
-        // the brush size
-        var x1 = x - (bs / 2),
-            x2 = x + (bs / 2),
-            y1 = y - (bs / 2),
-            y2 = y + (bs / 2);
-        // Scale each enlarged coord down to the actual pixel value
-        // on the sprite
-        var j1 = Math.floor(x1 / self.cellSize),
-            j2 = Math.floor(x2 / self.cellSize),
-            i1 = Math.floor(y1 / self.cellSize),
-            i2 = Math.floor(y2 / self.cellSize);
-        // Now that we have a bounding box of pixels, enumerate through all
-        // pixels in this bounding box
-        for (var i=i1; i<=i2; i++) {
-          for (var j=j1; j<=j2; j++) {
-            var row = self.cells[i];
-            if (row && row[j]) {
-              currentCells.push(row[j]);
+          stopdrag: function() {
+            switch (self.currentTool) {
+              case "pencil":
+                if (event.rightClick || self.pressedKeys[16]) {
+                  self._setCurrentCellsToUnfilled();
+                } else {
+                  self._setCurrentCellsToFilled();
+                }
+                break;
+              case "bucket":
+                if (event.rightClick || self.pressedKeys[16]) {
+                  self._setCellsLikeCurrentToUnfilled();
+                } else {
+                  self._setCellsLikeCurrentToFilled();
+                }
+                break;
             }
           }
         }
-        self.currentCells = currentCells;
-      },
-      
-      _unsetCurrentCells: function() {
-        var self = this;
-        self.currentCells = null;
-      },
-      
-      _setCurrentCellsToFilled: function() {
-        var self = this;
-        if (self.currentCells) {
-          $.v.each(self.currentCells, function(cell) {
-            self.cellHistory.add(cell);
-            // Clone so when changing the current color we don't change all cells
-            // filled with that color
-            cell.color = self.currentColor.clone();
-          })
+      })
+      $(document).bind({
+        keydown: function(event) {
+          self.pressedKeys[event.keyCode] = true;
+          if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
+            // Ctrl-Z or Command-Z: Undo last action
+            self.cellHistory.undo();
+          }
+        },
+        keyup: function(event) {
+          delete self.pressedKeys[event.keyCode];
         }
-      },
-      
-      _setCurrentCellsToUnfilled: function() {
-        var self = this;
-        if (self.currentCells) {
-          $.v.each(self.currentCells, function(cell) {
-            self.cellHistory.add(cell);
-            cell.color = null;
-          })
+      });
+      $(window).bind({
+        blur: function() {
+          self.stop();
         }
-      },
-      
-      _setCellsLikeCurrentToFilled: function() {
-        var self = this;
-        // Copy this as the color of the current cell will change during this loop
-        var currentCellColor = self.currentCells[0].color;
-        if (currentCellColor) currentCellColor = currentCellColor.clone();
-        // Look for all cells with the color (or non-color) of the current cell
-        // and mark them as filled with the current color
-        $.v.each(self.cells, function(row, i) {
-          $.v.each(row, function(cell, j) {
-            if ((!cell.color && !currentCellColor) || cell.color.isEqual(currentCellColor)) {
-              cell.color = self.currentColor.clone();
-            }
-          })
-        })
-      },
-      
-      _setCellsLikeCurrentToUnfilled: function() {
-        var self = this;
-        // Copy this as the color of the current cell will change during this loop
-        var currentCellColor = self.currentCells[0].color;
-        if (currentCellColor) currentCellColor = currentCellColor.clone();
-        // Look for all cells with the color of the current cell
-        // and mark them as unfilled
-        $.v.each(self.cells, function(row, i) {
-          $.v.each(row, function(cell, j) {
-            if (cell.color && cell.color.isEqual(currentCellColor)) {
-              cell.color = null;
-            }
-          })
-        })
-      },
-      
-      _clearCanvas: function() {
-        var self = this;
-        var c = self.canvas;
-        c.ctx.clearRect(0, 0, c.width, c.height);
-      },
-      
-      _clearPreviewCanvas: function() {
-        var self = this;
-        var pc = self.previewCanvas;
-        // clearRect() won't clear image data set using createImageData(),
-        // so this is another way to clear the canvas that works
-        pc.element.width = pc.width;
-        pc.imageData = pc.ctx.createImageData(self.widthInCells, self.heightInCells);
-      },
-      
-      _clearTiledPreviewCanvas: function() {
-        var self = this;
-        var ptc = self.tiledPreviewCanvas;
-        ptc.ctx.clearRect(0, 0, ptc.width, ptc.height);
-      },
-      
-      _highlightCurrentCells: function() {
-        var self = this;
-        var ctx = self.canvas.ctx;
-        if (self.currentCells && !(self.mouse.dragging || self.pressedKeys[16]) && self.currentTool == "pencil") {
-          ctx.save();
-            ctx.fillStyle = 'rgba('+self.currentColor.toRGBString()+',0.5)';
-            $.v.each(self.currentCells, function(cell) {
-              ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
-            })
-          ctx.restore();
-        }
-      },
-      
-      _fillCells: function() {
-        var self = this;
-        var c = self.canvas;
-        var pc = self.previewCanvas;
-        c.ctx.save();
-          $.v.each(self.cells, function(row, i) {
-            $.v.each(row, function(cell, j) {
-              if (cell.color) {
-                c.ctx.fillStyle = 'rgb('+cell.color.toRGBString()+')';
-                c.ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
-                pc.imageData.fillPixel(cell.actual.x, cell.actual.y, cell.color.red, cell.color.green, cell.color.blue, 255);
-              }
-            })
-          })
-        c.ctx.restore();
-        pc.ctx.putImageData(pc.imageData, 0, 0);
-      },
-      
-      _updateTiledPreviewCanvas: function() {
-        var self = this;
-        var tpc = self.tiledPreviewCanvas;
-        var pattern = tpc.ctx.createPattern(self.previewCanvas.element, 'repeat');
-        tpc.ctx.save();
-          tpc.ctx.fillStyle = pattern;
-          tpc.ctx.fillRect(0, 0, tpc.width, tpc.height);
-        tpc.ctx.restore();
-      },
-      
-      _distance: function(v1, v2) {
-        return Math.sqrt(Math.pow((v2.y - v1.y), 2) + Math.pow((v2.x - v1.x), 2));
-      }
-    })
+      })
+    },
     
-    return editor;
-  })();
+    _setCurrentCells: function(mouse) {
+      var self = this;
+      
+      var bs = (self.currentBrushSize-1) * self.cellSize;
+      var x = (mouse.x - self.canvas.element.offsetLeft);
+      var y = (mouse.y - self.canvas.element.offsetTop);
+      
+      var currentCells = [];
+      // Make a bounding box of pixels within the enlarged canvas based on
+      // the brush size
+      var x1 = x - (bs / 2),
+          x2 = x + (bs / 2),
+          y1 = y - (bs / 2),
+          y2 = y + (bs / 2);
+      // Scale each enlarged coord down to the actual pixel value
+      // on the sprite
+      var j1 = Math.floor(x1 / self.cellSize),
+          j2 = Math.floor(x2 / self.cellSize),
+          i1 = Math.floor(y1 / self.cellSize),
+          i2 = Math.floor(y2 / self.cellSize);
+      // Now that we have a bounding box of pixels, enumerate through all
+      // pixels in this bounding box
+      for (var i=i1; i<=i2; i++) {
+        for (var j=j1; j<=j2; j++) {
+          var row = self.cells[i];
+          if (row && row[j]) {
+            currentCells.push(row[j]);
+          }
+        }
+      }
+      self.currentCells = currentCells;
+    },
+    
+    _unsetCurrentCells: function() {
+      var self = this;
+      self.currentCells = null;
+    },
+    
+    _setCurrentCellsToFilled: function() {
+      var self = this;
+      if (self.currentCells) {
+        $.v.each(self.currentCells, function(cell) {
+          self.cellHistory.add(cell);
+          // Clone so when changing the current color we don't change all cells
+          // filled with that color
+          cell.color = self.currentColor.clone();
+        })
+      }
+    },
+    
+    _setCurrentCellsToUnfilled: function() {
+      var self = this;
+      if (self.currentCells) {
+        $.v.each(self.currentCells, function(cell) {
+          self.cellHistory.add(cell);
+          cell.color = null;
+        })
+      }
+    },
+    
+    _setCellsLikeCurrentToFilled: function() {
+      var self = this;
+      // Copy this as the color of the current cell will change during this loop
+      var currentCellColor = self.currentCells[0].color;
+      if (currentCellColor) currentCellColor = currentCellColor.clone();
+      // Look for all cells with the color (or non-color) of the current cell
+      // and mark them as filled with the current color
+      $.v.each(self.cells, function(row, i) {
+        $.v.each(row, function(cell, j) {
+          if ((!cell.color && !currentCellColor) || cell.color.isEqual(currentCellColor)) {
+            cell.color = self.currentColor.clone();
+          }
+        })
+      })
+    },
+    
+    _setCellsLikeCurrentToUnfilled: function() {
+      var self = this;
+      // Copy this as the color of the current cell will change during this loop
+      var currentCellColor = self.currentCells[0].color;
+      if (currentCellColor) currentCellColor = currentCellColor.clone();
+      // Look for all cells with the color of the current cell
+      // and mark them as unfilled
+      $.v.each(self.cells, function(row, i) {
+        $.v.each(row, function(cell, j) {
+          if (cell.color && cell.color.isEqual(currentCellColor)) {
+            cell.color = null;
+          }
+        })
+      })
+    },
+    
+    _clearCanvas: function() {
+      var self = this;
+      var c = self.canvas;
+      c.ctx.clearRect(0, 0, c.width, c.height);
+    },
+    
+    _clearPreviewCanvas: function() {
+      var self = this;
+      var pc = self.previewCanvas;
+      // clearRect() won't clear image data set using createImageData(),
+      // so this is another way to clear the canvas that works
+      pc.element.width = pc.width;
+      pc.imageData = pc.ctx.createImageData(self.widthInCells, self.heightInCells);
+    },
+    
+    _clearTiledPreviewCanvas: function() {
+      var self = this;
+      var ptc = self.tiledPreviewCanvas;
+      ptc.ctx.clearRect(0, 0, ptc.width, ptc.height);
+    },
+    
+    _highlightCurrentCells: function() {
+      var self = this;
+      var ctx = self.canvas.ctx;
+      if (self.currentCells && !(self.mouse.dragging || self.pressedKeys[16]) && self.currentTool == "pencil") {
+        ctx.save();
+          ctx.fillStyle = 'rgba('+self.currentColor.toRGBString()+',0.5)';
+          $.v.each(self.currentCells, function(cell) {
+            ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
+          })
+        ctx.restore();
+      }
+    },
+    
+    _fillCells: function() {
+      var self = this;
+      var c = self.canvas;
+      var pc = self.previewCanvas;
+      c.ctx.save();
+        $.v.each(self.cells, function(row, i) {
+          $.v.each(row, function(cell, j) {
+            if (cell.color) {
+              c.ctx.fillStyle = 'rgb('+cell.color.toRGBString()+')';
+              c.ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
+              pc.imageData.fillPixel(cell.actual.x, cell.actual.y, cell.color.red, cell.color.green, cell.color.blue, 255);
+            }
+          })
+        })
+      c.ctx.restore();
+      pc.ctx.putImageData(pc.imageData, 0, 0);
+    },
+    
+    _updateTiledPreviewCanvas: function() {
+      var self = this;
+      var tpc = self.tiledPreviewCanvas;
+      var pattern = tpc.ctx.createPattern(self.previewCanvas.element, 'repeat');
+      tpc.ctx.save();
+        tpc.ctx.fillStyle = pattern;
+        tpc.ctx.fillRect(0, 0, tpc.width, tpc.height);
+      tpc.ctx.restore();
+    }
+  });
+  window.SpriteEditor = SpriteEditor;
 
 })(window, window.document, window.ender);

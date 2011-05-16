@@ -15,8 +15,23 @@ canvas {
   background-color: white;
 }
 
-input, select {
+input[type="submit"], input[type="button"], select {
   cursor: pointer;
+}
+
+.dialog {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #333;
+  color: white;
+  font-size: 12px;
+  line-height: normal;
+  padding: 0 10px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
+  overflow: hidden;
+  padding: 10px;
 }
 
 #header {
@@ -46,18 +61,10 @@ input, select {
   border-bottom: 1px dotted #666;
 }
 #help_box {
-  position: absolute;
   top: 50px;
   right: 100px;
   width: 300px;
-  background-color: #333;
-  color: white;
-  font-size: 12px;
-  line-height: normal;
-  padding: 0 10px;
-  border-radius: 5px;
-  box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.8);
-  overflow: hidden;
+  padding: 0;
   
   p {
     margin: 10px 0;
@@ -196,17 +203,45 @@ input, select {
   }
 }
 
-#square_color_picker {
+.square_color_picker {
   overflow: hidden;
-}
-#hue_sat_canvas, #lightness_canvas {
-  border: 1px solid #dedede;
-}
-#hue_sat_canvas {
-  float: left;
-}
-#lightness_canvas {
-  float: right;
+  
+  .hue_sat_div {
+    float: left;
+    border: 2px solid #666;
+    position: relative;
+    // is there a way to not hardcode this??
+    width: 265px;
+    height: 300px;
+  }
+  .hue_sat_canvas, .hue_sat_selector {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .hue_sat_canvas {
+    z-index: 10;
+  }
+  .hue_sat_selector {
+    z-index: 20;
+    cursor: url(/images/colorpicker_select_trans.png), auto;
+    background-image: url(/images/colorpicker_select.png);
+    background-repeat: no-repeat;
+  }
+  .hue_sat_selector.dragging {
+    cursor: none;
+  }
+  .lightness_canvas {
+    float: right;
+    margin-left: 10px;
+    border: 2px solid #666;
+  }
+  .color_sample {
+    width: 50px;
+    height: 50px;
+  }
 }
 
 #preview_box {

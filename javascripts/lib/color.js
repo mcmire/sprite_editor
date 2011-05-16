@@ -4,6 +4,9 @@
     Color.init.apply(this, arguments);
   }
   $.extend(Color, {
+    components: {rgb: ['red', 'green', 'blue'], hsl: ['hue', 'saturation', 'lightness']},
+    correctHue: true,
+    
     init: function(color) {
       var self = this;
       self.red = color.red;
@@ -45,7 +48,9 @@
       var h;
       switch (max) {
         case min:
-          h = null;
+          // According to the spec, hue is undefined when min == max,
+          // but for display purposes this isn't very convenient, so let's correct this by default
+          h = self.correctHue ? 0 : null;
           break;
         case r:
           h = ((60 * (g - b) / diff) + 360) % 360;
@@ -66,7 +71,7 @@
       else if (l <= 0.5) s = diff / sum;
       else s = diff / (2 - sum);
       
-      hsl.hue = h ? Math.round(h) : null;
+      hsl.hue = h === null ? null : Math.round(h);
       hsl.saturation = Math.round(s * 100);
       hsl.lightness = Math.round(l * 100);
       
@@ -76,7 +81,7 @@
       var self = this;
       var rgb = {};
       
-      var h = hsl.hue / 360;
+      var h = (hsl.hue || 0) / 360;
           s = hsl.saturation / 100;
           l = hsl.lightness / 100;
       
@@ -139,7 +144,11 @@
     },
     toRGBString: function() {
       var self = this;
-      return [self.red, self.green, self.blue].join(",");
+      return [self.red, self.green, self.blue].join(", ");
+    },
+    toHSLString: function() {
+      var self = this;
+      return [self.hue+"°", self.saturation+"%", self.lightness+"%"].join(", ")
     },
     isEqual: function(other) {
       var self = this;
