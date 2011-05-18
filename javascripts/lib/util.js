@@ -38,7 +38,7 @@
       return $.extend({}, obj);
     }
   })
-  
+
   $.ender({
     center: function() {
       var vp = $.viewport();
@@ -48,18 +48,30 @@
       self.css("top", top+"px").css("left", left+"px");
       return this;
     },
-    // Bonzo's offset returns the offset of the element relative to the parent element.
-    // This returns the offset of the element relative to the document
-    // (only works in Webkit). Courtesy of Zepto.
+    // Adapted from code by Peter-Paul Koch
+    // <http://www.quirksmode.org/js/findpos.html>
     absoluteOffset: function() {
       if (this.length == 0) return null;
-      var obj = this[0].getBoundingClientRect();
-      return {
-        left: obj.left + document.body.scrollLeft,
-        top: obj.top + document.body.scrollTop,
-        width: obj.width,
-        height: obj.height
-      };
+
+      var node = this[0];
+      var top = 0, left = 0;
+
+      do {
+        top  += node.offsetTop;
+        left += node.offsetLeft;
+      } while (node = node.offsetParent);
+
+      /*
+      var computedStyle = this.computedStyle();
+      var border = {
+        top:  parseInt(computedStyle["border-top-width"], 10),
+        left: parseInt(computedStyle["border-left-width"], 10)
+      }
+      if (border.top)  top  -= border.top;
+      if (border.left) left -= border.left;
+      */
+
+      return {top: top, left: left};
     },
     position: function() {
       var po = this.parent().offset();
@@ -81,21 +93,21 @@
       return prop ? computedStyle[prop] : computedStyle;
     }
   }, true);
-  
-  
+
+
   // Returns a random number between min (inclusive) and max (exclusive).
   // Copied from the MDC wiki
   Math.randomFloat = function(min, max) {
     return Math.random() * (max - min) + min;
   };
-  
+
   // Returns a random integer between min (inclusive) and max (exclusive?).
   // Using Math.round() will give you a non-uniform distribution!
   // Copied from the MDC wiki
   Math.randomInt = function(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   };
-  
+
   // <http://stackoverflow.com/questions/610406/javascript-printf-string-format>
   String.format = function(/* str, var1, var2, ... */) {
     var args = Array.prototype.slice.call(arguments);
@@ -106,10 +118,10 @@
     }
     return str;
   };
-  
+
   String.capitalize = function(str) {
     if (!str) return "";
     return str[0].toUpperCase() + str.slice(1);
   }
-  
+
 })(window, window.document, window.ender);

@@ -40,7 +40,7 @@ input[type="submit"], input[type="button"], select {
   line-height: 60px;
   background-color: white;
   overflow: auto;
-  
+
   h1 {
     font-size: 35px;
     float: left;
@@ -65,7 +65,7 @@ input[type="submit"], input[type="button"], select {
   right: 100px;
   width: 300px;
   padding: 0;
-  
+
   p {
     margin: 10px 0;
   }
@@ -105,7 +105,7 @@ input[type="submit"], input[type="button"], select {
   /*float: left;*/
   overflow: auto;
   background-color: white;
-  
+
   h3 {
     margin: -20px;
     margin-bottom: 20px;
@@ -121,7 +121,7 @@ input[type="submit"], input[type="button"], select {
   width: 130px;
   overflow: auto;
   margin-bottom: 20px;
-  
+
   ul, li {
     list-style-type: none;
     padding: 0;
@@ -152,7 +152,7 @@ input[type="submit"], input[type="button"], select {
   width: 130px;
   /*margin-left: 20px;*/
   margin-bottom: 20px;
-  
+
   canvas {
     border: 1px solid red;
     opacity: 0.5;
@@ -180,7 +180,7 @@ input[type="submit"], input[type="button"], select {
   margin-bottom: 20px;
   /*margin-right: 20px;*/
   /*text-align: center;*/
-  
+
   input {
     vertical-align: middle;
   }
@@ -205,16 +205,13 @@ input[type="submit"], input[type="button"], select {
 
 .square_color_picker {
   overflow: hidden;
-  
+
   .hue_sat_div {
     float: left;
     border: 2px solid #666;
     position: relative;
-    // is there a way to not hardcode this??
-    width: 265px;
-    height: 300px;
   }
-  .hue_sat_canvas, .hue_sat_selector {
+  .hue_sat_canvas, .hue_sat_selector, .hue_sat_live_selector {
     position: absolute;
     top: 0;
     left: 0;
@@ -224,14 +221,18 @@ input[type="submit"], input[type="button"], select {
   .hue_sat_canvas {
     z-index: 10;
   }
-  .hue_sat_selector {
-    z-index: 20;
-    cursor: url(/images/colorpicker_select_trans.png), auto;
-    background-image: url(/images/colorpicker_select.png);
+  .hue_sat_selector/*, .hue_sat_live_selector*/ {
+    background-image: url(/images/color_picker_selector.png);
     background-repeat: no-repeat;
   }
-  .hue_sat_selector.dragging {
-    cursor: none;
+  .hue_sat_selector {
+    z-index: 20;
+    cursor: crosshair;
+  }
+  .hue_sat_live_selector {
+    z-index: 30;
+    opacity: 0.4;
+    background-position: 100px 100px;
   }
   .lightness_canvas {
     float: right;
