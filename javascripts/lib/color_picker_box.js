@@ -26,11 +26,7 @@
       self._addLightnessCanvas();
       self._addColorFields();
       self._addColorSample();
-
       self.$container.center();
-      // cache these for later use so we don't have to call them over and over
-      //self.hueSatCanvas.offset = self.hueSatCanvas.$element.offset();
-      self.hueSatCanvas.position = self.hueSatCanvas.$element.position();
 
       self._addEvents();
 
@@ -55,7 +51,6 @@
 
       self._addHueSatCanvas();
       self._addHueSatSelectorDiv();
-      //self._addHueSatLiveSelectorDiv();
     },
 
     _addHueSatCanvas: function() {
@@ -85,12 +80,6 @@
       self.$hueSatSelectorDiv = $('<div class="hue_sat_selector" />');
       self.$hueSatDiv.append(self.$hueSatSelectorDiv);
     },
-
-    //_addHueSatLiveSelectorDiv: function() {
-    //  var self = this;
-    //  self.$hueSatLiveSelectorDiv = $('<div class="hue_sat_live_selector" />');
-    //  self.$hueSatDiv.append(self.$hueSatLiveSelectorDiv);
-    //},
 
     _addLightnessCanvas: function() {
       var self = this;
@@ -138,13 +127,6 @@
     _addEvents: function() {
       var self = this;
       self.$hueSatDiv.mouseTracking({
-        // XXX: This is way too CPU-intensive to be usable.....
-        // mouseglide: function() {
-        //   self._positionLiveSelectorFromMousePos();
-        // },
-        // mousedown: function() {
-        //   self.$hueSatLiveSelectorDiv.hide();
-        // },
         mousedownordrag: function() {
           self._positionSelectorFromMousePos();
           self._setCurrentColor();
@@ -174,13 +156,6 @@
       var left = Math.floor(self.mouse.pos.x - 7);
       self.$hueSatSelectorDiv.css("background-position", left+"px "+top+"px");
     },
-
-    // _positionLiveSelectorFromMousePos: function() {
-    //   var self = this;
-    //   var top = self.mouse.pos.rel.y - 5;
-    //   var left = self.mouse.pos.rel.x - 5;
-    //   self.$hueSatLiveSelectorDiv.css("background-position", left+"px "+top+"px");
-    // },
 
     _positionSelectorFromCurrentColor: function() {
       var self = this;

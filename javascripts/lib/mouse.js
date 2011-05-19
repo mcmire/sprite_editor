@@ -148,6 +148,11 @@
 
       // cache some values for later use
       self.elementOffset = self.$element.absoluteOffset();
+      var computedStyle = self.$element.computedStyle();
+      self.elementSize = {
+        width: parseInt(computedStyle["width"], 10),
+        height: parseInt(computedStyle["height"], 10)
+      }
     },
 
     destroy: function() {
@@ -157,29 +162,54 @@
 
     _addEvents: function() {
       var self = this;
+      self._wrappedOnMouseMove = function() {
+        self._onMouseMove.apply(self, arguments);
+      }
+      $(document).bind({
+        // We bind this on the document so that we can test whether the mouse
+        // is being dragged inside the element
+        "mousemove.Mouse-instance": self._wrappedOnMouseMove
+      })
       self.$element.bind({
         "mousedown.Mouse": function(event) {
           self.downAt = {x: event.pageX - self.elementOffset.left, y: event.pageY - self.elementOffset.top}
-        },
-        "mousemove.Mouse": function(event) {
-          self.pos = {x: event.pageX - self.elementOffset.left, y: event.pageY - self.elementOffset.top};
-          if (Mouse.isDragging && self.pos.x >= 0 && self.pos.y >= 0) {
-            self.$element.trigger('mousedrag');
-            self.$element.trigger('mousedownordrag');
-          }
-          if (Mouse.debug || self.options.debug) {
-            Mouse.debugDiv().html(String.format("abs: ({0}, {1})<br/>rel: ({2}, {3})", Mouse.pos.x, Mouse.pos.y, self.pos.x, self.pos.y))
-          }
         }
       })
       $.v.each(self.customEvents, function(eventName, callback) {
-        (eventName == "mouseup" ? $(document) : self.$element).bind(eventName+".Mouse", callback);
+        (/^(mouseup|mousemove)$/.test(eventName) ? $(document) : self.$element).bind(eventName+".Mouse-instance", callback);
       })
     },
 
     _removeEvents: function() {
       var self = this;
-      self.$element.unbind(".Mouse");
+      $(document).unbind("mousemove.Mouse-instance", self._wrappedOnMouseMove);
+      self.$element.unbind(".Mouse-instance");
+    },
+
+    _onMouseMove: function(event) {
+      var self = this;
+
+      self.pos = {x: event.pageX - self.elementOffset.left, y: event.pageY - self.elementOffset.top};
+
+      // Correct the position if it's outside the bounds of the element
+      if (self.pos.x < 0) {
+        self.pos.x = 0;
+      } else if (self.pos.x > self.elementSize.width) {
+        self.pos.x = self.elementSize.width;
+      }
+      if (self.pos.y < 0) {
+        self.pos.y = 0;
+      } else if (self.pos.y > self.elementSize.height) {
+        self.pos.y = self.elementSize.height
+      }
+
+      if (Mouse.isDragging) {
+        self.$element.trigger('mousedrag');
+        self.$element.trigger('mousedownordrag');
+      }
+      if (Mouse.debug || self.options.debug) {
+        Mouse.debugDiv().html(String.format("abs: ({0}, {1})<br/>rel: ({2}, {3})", Mouse.pos.x, Mouse.pos.y, self.pos.x, self.pos.y))
+      }
     }
   })
   window.Mouse = Mouse;
