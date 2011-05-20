@@ -15,7 +15,7 @@ input[type="submit"], input[type="button"], select { cursor: pointer; }
 
 #help a { color: #666; font-weight: bold; text-decoration: none; border-bottom: 1px dotted #666; }
 
-#help_box { top: 50px; right: 100px; width: 300px; padding: 0; }
+#help_box { top: 50px; left: auto; right: 100px; width: 300px; padding: 0 10px; }
 #help_box p { margin: 10px 0; }
 #help_box a { color: lightyellow; text-decoration: none; border-bottom: 1px dotted lightyellow; }
 

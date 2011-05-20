@@ -76,7 +76,7 @@
     },
     close: function() {
       var self = this;
-      if (self.currentEvent.array.length > 0) {
+      if (self.currentEvent.array && self.currentEvent.array.length > 0) {
         self.events.push(self.currentEvent.array);
       }
       self.currentEvent.array = null;
@@ -146,7 +146,7 @@
       self._createBrushSizesBox();
       self._createColorBox();
       self._createPreviewBox();
-      //self._addEvents();
+      self._addEvents();
       self.redraw();
 
       return self;
@@ -316,7 +316,7 @@
       boxDiv.appendChild(colorSampleDiv);
       */
 
-      var cpBox = SpriteEditor.ColorPickerBox.init($boxDiv);
+      //var cpBox = SpriteEditor.ColorPickerBox.init($boxDiv);
     },
 
     _createPreviewBox: function() {
@@ -400,19 +400,65 @@
 
     _addEvents: function() {
       var self = this;
+      // FIXME: This no longer works...
+      // For one, we need to pass the event to the callbacks here
+      self.canvas.$element.mouseTracker({
+        //draggingDistance: 3,
+        mousemove: function(event) {
+          self._setCurrentCells(self.canvas.$element.mouseTracker('getPosition'));
+        },
+        mousedragstart: function(event) {
+          self.selectedCells = [];
+        },
+        mousedrag: function(event) {
+          if (self.currentTool == "pencil") {
+            // FIXME: If you drag too fast it will skip some cells!
+            // Use the current mouse position and the last mouse position and
+            //  fill in or erase cells in between.
+            if (event.rightClick || self.pressedKeys[16]) {
+              self._setCurrentCellsToUnfilled();
+            } else {
+              self._setCurrentCellsToFilled();
+            }
+          }
+        },
+        mouseup: function(event) {
+          if (self.currentTool == "bucket") {
+            if (event.rightClick || self.pressedKeys[16]) {
+              self._setCellsLikeCurrentToUnfilled();
+            } else {
+              self._setCellsLikeCurrentToFilled();
+            }
+          }
+        }
+        /*,
+        mousedragstop: function() {
+          switch (self.currentTool) {
+            case "pencil":
+              if (event.rightClick || self.pressedKeys[16]) {
+                self._setCurrentCellsToUnfilled();
+              } else {
+                self._setCurrentCellsToFilled();
+              }
+              break;
+            case "bucket":
+              // XXX: We can actually apply this on mouseup, no need
+              // to involve dragging in this
+              if (event.rightClick || self.pressedKeys[16]) {
+                self._setCellsLikeCurrentToUnfilled();
+              } else {
+                self._setCellsLikeCurrentToFilled();
+              }
+              break;
+          }
+        }*/
+      })
       self.canvas.$element.bind({
         mouseover: function(event) {
           self.start();
         },
-        mousemove: function(event) {
-          self._setCurrentCells(self.canvas.$element.data('mouse').pos);
-        },
         mousedown: function(event) {
           self.cellHistory.open();
-          event.preventDefault();
-        },
-        mouseup: function(event) {
-          self.cellHistory.close();
           event.preventDefault();
         },
         mouseout: function(event) {
@@ -421,51 +467,19 @@
           self.redraw();
         },
         click: function(event) {
+          // Prevent things on the page from being selected
           event.preventDefault();
         },
         contextmenu: function(event) {
+          // Prevent things on the page from being selected
           event.preventDefault();
         }
       })
-      self.canvas.$element.trackMouse({
-        draggingDistance: 3,
-        on: {
-          mousedragstart: function() {
-            self.selectedCells = [];
-          },
-          mousedrag: function() {
-            if (self.currentTool == "pencil") {
-              // FIXME: If you drag too fast it will skip some cells!
-              // Use the current mouse position and the last mouse position and
-              //  fill in or erase cells in between.
-              if (event.rightClick || self.pressedKeys[16]) {
-                self._setCurrentCellsToUnfilled();
-              } else {
-                self._setCurrentCellsToFilled();
-              }
-            }
-          },
-          mousedragstop: function() {
-            switch (self.currentTool) {
-              case "pencil":
-                if (event.rightClick || self.pressedKeys[16]) {
-                  self._setCurrentCellsToUnfilled();
-                } else {
-                  self._setCurrentCellsToFilled();
-                }
-                break;
-              case "bucket":
-                if (event.rightClick || self.pressedKeys[16]) {
-                  self._setCellsLikeCurrentToUnfilled();
-                } else {
-                  self._setCellsLikeCurrentToFilled();
-                }
-                break;
-            }
-          }
-        }
-      })
       $(document).bind({
+        mouseup: function(event) {
+          self.cellHistory.close();
+          event.preventDefault();
+        },
         keydown: function(event) {
           self.pressedKeys[event.keyCode] = true;
           if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
@@ -488,8 +502,8 @@
       var self = this;
 
       var bs = (self.currentBrushSize-1) * self.cellSize;
-      var x = (mouse.x - self.canvas.element.offsetLeft);
-      var y = (mouse.y - self.canvas.element.offsetTop);
+      var x = mouse.rel.x;
+      var y = mouse.rel.y;
 
       var currentCells = [];
       // Make a bounding box of pixels within the enlarged canvas based on

@@ -10,7 +10,7 @@
     <div id="header-inner">
       <h1>sprite editor</h1>
       <div id="help"><a href="#" id="help_menu_text">So how do I use this, anyway?</a></div>
-      <div id="help_box" class="dialog" style="opacity: 0">
+      <div id="help_box" class="dialog" style="opacity: 0; display: none">
         <p><b>Pencil tool:</b> Click on a cell to fill it in, right-click to delete (shift-click works too). You can also drag across the grid to quickly fill in or delete cells.</p>
         <p><b>Paint bucket tool:</b> Click on a cell to fill in all like cells with the current color. Right- or shift-click to clear all like cells.</p>
         <p>Ctrl-Z (or Command-Z) will undo the last action.</p>
@@ -38,21 +38,26 @@
         var $helpBox = $('#help_box');
         $('#help').bind('click', function(event) {
           if ($helpBox.css('opacity') == 0) {
+            $helpBox.show();
             $helpBox.fadeIn(300);
           } else {
-            $helpBox.fadeOut(300);
+            $helpBox.fadeOut(300, function() { $helpBox.hide() });
           }
           event.preventDefault();
           event.stopPropagation();
         })
-        $('help_box_close').bind('click', function(event) {
-          $helpBox.fadeOut(300);
+        $('#help_box').bind('click', function(event) {
+          event.stopPropagation();
+        })
+        $('#help_box_close').bind('click', function(event) {
+          $helpBox.fadeOut(300, function() { $helpBox.hide() });
           event.preventDefault();
           event.stopPropagation();
         })
         $(document).bind('click', function(event) {
-          if ($helpBox.css('opacity') != 0) $helpBox.fadeOut(300);
-          event.stopPropagation();
+          if ($helpBox.css('opacity') != 0) {
+            $helpBox.fadeOut(300, function() { $helpBox.hide() });
+          }
         })
       })
     })(window, window.document, window.ender);
