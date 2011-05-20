@@ -442,8 +442,9 @@
             }
           }
         }
-        /*,
-        mousedragstop: function() {
+      })
+      $(document).bind({
+        mouseup: function(event) {
           switch (self.currentTool) {
             case "pencil":
               if (event.rightClick || self.pressedKeys[16]) {
@@ -461,17 +462,6 @@
                 self._setCellsLikeCurrentToFilled();
               }
               break;
-          }
-        }*/
-      })
-      $(document).bind({
-        mouseup: function(event) {
-          if (self.currentTool == "bucket") {
-            if (event.rightClick || self.pressedKeys[16]) {
-              self._setCellsLikeCurrentToUnfilled();
-            } else {
-              self._setCellsLikeCurrentToFilled();
-            }
           }
           self.cellHistory.close();
           event.preventDefault();
