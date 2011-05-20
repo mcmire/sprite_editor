@@ -400,8 +400,28 @@
 
     _addEvents: function() {
       var self = this;
-      // FIXME: This no longer works...
-      // For one, we need to pass the event to the callbacks here
+      self.canvas.$element.bind({
+        mouseover: function(event) {
+          self.start();
+        },
+        mousedown: function(event) {
+          self.cellHistory.open();
+          event.preventDefault();
+        },
+        mouseout: function(event) {
+          self._unsetCurrentCells();
+          self.stop();
+          self.redraw();
+        },
+        click: function(event) {
+          // Prevent things on the page from being selected
+          event.preventDefault();
+        },
+        contextmenu: function(event) {
+          // Prevent things on the page from being selected
+          event.preventDefault();
+        }
+      })
       self.canvas.$element.mouseTracker({
         //draggingDistance: 3,
         mousemove: function(event) {
@@ -419,15 +439,6 @@
               self._setCurrentCellsToUnfilled();
             } else {
               self._setCurrentCellsToFilled();
-            }
-          }
-        },
-        mouseup: function(event) {
-          if (self.currentTool == "bucket") {
-            if (event.rightClick || self.pressedKeys[16]) {
-              self._setCellsLikeCurrentToUnfilled();
-            } else {
-              self._setCellsLikeCurrentToFilled();
             }
           }
         }
@@ -453,30 +464,15 @@
           }
         }*/
       })
-      self.canvas.$element.bind({
-        mouseover: function(event) {
-          self.start();
-        },
-        mousedown: function(event) {
-          self.cellHistory.open();
-          event.preventDefault();
-        },
-        mouseout: function(event) {
-          self._unsetCurrentCells();
-          self.stop();
-          self.redraw();
-        },
-        click: function(event) {
-          // Prevent things on the page from being selected
-          event.preventDefault();
-        },
-        contextmenu: function(event) {
-          // Prevent things on the page from being selected
-          event.preventDefault();
-        }
-      })
       $(document).bind({
         mouseup: function(event) {
+          if (self.currentTool == "bucket") {
+            if (event.rightClick || self.pressedKeys[16]) {
+              self._setCellsLikeCurrentToUnfilled();
+            } else {
+              self._setCellsLikeCurrentToFilled();
+            }
+          }
           self.cellHistory.close();
           event.preventDefault();
         },
@@ -568,6 +564,7 @@
       $.v.each(self.cells, function(row, i) {
         $.v.each(row, function(cell, j) {
           if ((!cell.color && !currentCellColor) || cell.color.isEqual(currentCellColor)) {
+            self.cellHistory.add(cell);
             cell.color = self.currentColor.clone();
           }
         })
@@ -584,6 +581,7 @@
       $.v.each(self.cells, function(row, i) {
         $.v.each(row, function(cell, j) {
           if (cell.color && cell.color.isEqual(currentCellColor)) {
+            self.cellHistory.add(cell);
             cell.color = null;
           }
         })
