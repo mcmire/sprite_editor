@@ -36,6 +36,15 @@
     //
     clone: function(obj) {
       return $.extend({}, obj);
+    },
+
+    // Wraps the given function in another function which will call the original
+    // function in the given context. Useful if you want to use a method of
+    // an object as an event listener, while keeping the 'this' reference inside
+    // the function as the object.
+    //
+    proxy: function(obj, fn) {
+      return obj[fn].apply(obj, arguments);
     }
   })
 
