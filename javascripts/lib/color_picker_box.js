@@ -31,7 +31,7 @@
       self._addEvents();
 
       self._setColorFields();
-      self._positionSelectorFromCurrentColor();
+      self._positionHueSatSelectorFromColor();
       self._setColorSample();
 
       return self;
@@ -126,20 +126,19 @@
 
     _addEvents: function() {
       var self = this;
-      self.$hueSatDiv.mouseTracking({
+      ElementMouseTracker.bind(self.$hueSatDiv, {
         mousedownordrag: function() {
-          self._positionSelectorFromMousePos();
+          self._positionHueSatSelectorFromMouse();
           self._setCurrentColor();
           self._setColorFields();
           self._setColorSample();
         }//,
         //debug: true
       })
-      self.mouse = self.$hueSatDiv.data('mouse');
     },
 
     _removeEvents: function() {
-      self.$hueSatDiv.mouseTracking('destroy');
+      ElementMouseTracker.unbind(self.$hueSatDiv);
     },
 
     _setColorFields: function() {
@@ -149,15 +148,16 @@
       });
     },
 
-    _positionSelectorFromMousePos: function() {
+    _positionHueSatSelectorFromMouse: function() {
       var self = this;
-      // This 7 here is just a value I found matches up with the center of the selector image
-      var top = Math.floor(self.mouse.pos.y - 7);
-      var left = Math.floor(self.mouse.pos.x - 7);
+      // This 5 here is just a value I found matches up with the center of the selector image
+      var mouse = ElementMouseTracker.pos.rel;
+      var top = mouse.y - 5;
+      var left = mouse.x - 5;
       self.$hueSatSelectorDiv.css("background-position", left+"px "+top+"px");
     },
 
-    _positionSelectorFromCurrentColor: function() {
+    _positionHueSatSelectorFromColor: function() {
       var self = this;
       var top = self._sat2px();
       var left = self._hue2px();
@@ -186,7 +186,8 @@
     },
     _px2sat: function() {
       var self = this;
-      var y = self.mouse.pos.y;
+      var mouse = ElementMouseTracker.pos.rel;
+      var y = mouse.y;
       var h = self.hueSatCanvasSize.height;
       // y = 0..height -> s = 100..0
       var s = Math.round(-100 * (y - h) / h);
@@ -203,7 +204,8 @@
     },
     _px2hue: function() {
       var self = this;
-      var x = self.mouse.pos.x;
+      var mouse = ElementMouseTracker.pos.rel;
+      var x = mouse.x;
       var w = self.hueSatCanvasSize.width;
       var h = Math.round((360 * x) / w);
       return h;
