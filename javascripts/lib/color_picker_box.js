@@ -148,7 +148,7 @@
     _addEvents: function() {
       var self = this;
       self.$hueSatDiv.mouseTracker({
-        mousedownordrag: function() {
+        'mousedown mousedrag': function() {
           self._positionHueSatSelectorFromMouse();
           self._setHueAndSatFromSelectorPosition();
           self._setColorFields();
@@ -158,7 +158,7 @@
         //debug: true
       })
       self.$lightnessDiv.mouseTracker({
-        mousedownordrag: function() {
+        'mousedown mousedrag': function() {
           self._positionLightnessSelectorFromMouse();
           self._setLightnessFromSelectorPosition();
           self._setColorFields();

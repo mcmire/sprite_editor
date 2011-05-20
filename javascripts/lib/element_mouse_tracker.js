@@ -41,9 +41,6 @@
   //   mousedragstop
   //     Invoked if the mouse was being dragged and is now released, or when it
   //     leaves the element
-  //   mousedragordown / mousedownordrag
-  //     Invoked once when the mouse is pressed down, or repeatedly when the
-  //     mouse is being dragged across the element
   //   mouseglide
   //     Invoved repeatedly while the mouse is being moved over the element but
   //     not being dragged
@@ -261,8 +258,8 @@
 
       if (self.isDragging) {
         self.trigger('mousedrag', event);
-        self.trigger('mousedownordrag', event);
-        self.trigger('mousedragordown', event);
+        //self.trigger('mousedownordrag', event);
+        //self.trigger('mousedragordown', event);
       }
 
       if (self.options.debug) {
@@ -323,8 +320,8 @@
             abs: {x: event.pageX, y: event.pageY},
             rel: {x: event.pageX - self.elementOffset.left, y: event.pageY - self.elementOffset.top}
           };
-          self.trigger('mousedownordrag', event);
-          self.trigger('mousedragordown', event);
+          //self.trigger('mousedownordrag', event);
+          //self.trigger('mousedragordown', event);
 
           if (self.options.debug) {
             ElementMouseTracker.debugDiv().show();
