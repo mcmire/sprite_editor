@@ -1,63 +1,48 @@
 (function(window, document, $, undefined) {
 
-  var pressedKeys = {};
+  var Keyboard = {
+    SHIFT_KEY: 16,
+    CTRL_KEY: 17,
+    ALT_KEY: 18,
+    META_KEY: 91,
+
+    pressedKeys: {}
+  }
+
+  var checkboxes = {};
 
   $(document).bind({
     keydown: function(event) {
-      keyCodeField.value = event.keyCode;
-      if (event.shiftKey) shiftCheckbox.checked = true;
-      if (event.altKey)   altCheckbox.checked   = true;
-      if (event.ctrlKey)  ctrlCheckbox.checked  = true;
-      if (event.metaKey)  metaCheckbox.checked  = true;
-      pressedKeys[event.keyCode] = true;
+      var key = event.keyCode;
+      $keyCodeField.attr('value', key);
+      Keyboard.pressedKeys[key] = true;
+      if (key in checkboxes) checkboxes[key].attr('checked', 'checked');
     },
     keyup: function(event) {
-      keyCodeField.value = "";
-      delete pressedKeys[event.keyCode];
-      if ($.v.keys(pressedKeys).length == 0) {
-        shiftCheckbox.checked = false;
-        altCheckbox.checked   = false;
-        ctrlCheckbox.checked  = false;
-        metaCheckbox.checked  = false;
+      var key = event.keyCode;
+      $keyCodeField.attr('value', "");
+      delete Keyboard.pressedKeys[key];
+      if (key in checkboxes) checkboxes[key].removeAttr('checked');
+      if ($.v.keys(Keyboard.pressedKeys).length == 0) {
+        $.v.each(checkboxes, function(key, $box) { $box.removeAttr('checked') })
       }
     }
   })
 
-  var p = document.createElement("p");
-    p.innerHTML += "Key code:"
-    var keyCodeField = document.createElement("input")
-      keyCodeField.type = "text";
-    p.appendChild(keyCodeField);
-  document.body.appendChild(p);
+  var $keyCodeField = window.$keyCodeField = $('<input type="text" />');
+  var $p = $('<p />').html("Key code:").append($keyCodeField);
+  $(document.body).append($p);
 
-  var p = document.createElement("p");
-    var label = document.createElement("label");
-      label.innerHTML += "shift";
-      var shiftCheckbox = document.createElement("input");
-        shiftCheckbox.type = "checkbox";
-      label.appendChild(shiftCheckbox);
-    p.appendChild(label);
+  checkboxes[Keyboard.SHIFT_KEY] = $('<input type="checkbox" />');
+  checkboxes[Keyboard.ALT_KEY]   = $('<input type="checkbox" />');
+  checkboxes[Keyboard.CTRL_KEY]  = $('<input type="checkbox" />');
+  checkboxes[Keyboard.META_KEY]  = $('<input type="checkbox" />');
 
-    var label = document.createElement("label");
-      label.innerHTML += "alt";
-      var altCheckbox = document.createElement("input");
-        altCheckbox.type = "checkbox";
-      label.appendChild(altCheckbox);
-    p.appendChild(label);
-
-    var label = document.createElement("label");
-      label.innerHTML += "ctrl";
-      var ctrlCheckbox = document.createElement("input");
-        ctrlCheckbox.type = "checkbox";
-      label.appendChild(ctrlCheckbox);
-    p.appendChild(label);
-
-    var label = document.createElement("label");
-      label.innerHTML += "meta";
-      var metaCheckbox = document.createElement("input");
-        metaCheckbox.type = "checkbox";
-      label.appendChild(metaCheckbox);
-    p.appendChild(label);
-  document.body.appendChild(p);
+  var $p = $('<p />')
+    .append( $('<label />').html("shift").append(checkboxes[Keyboard.SHIFT_KEY]) )
+    .append( $('<label />').html("alt").append(checkboxes[Keyboard.ALT_KEY]) )
+    .append( $('<label />').html("ctrl").append(checkboxes[Keyboard.CTRL_KEY]) )
+    .append( $('<label />').html("meta").append(checkboxes[Keyboard.META_KEY]) );
+  $(document.body).append($p);
 
 })(window, window.document, window.ender);
