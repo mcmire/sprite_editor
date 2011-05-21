@@ -111,21 +111,16 @@
     timer: null,
     width: null,
     height: null,
-    canvas: null,
-    gridCanvas: null,
+    pixelEditorCanvas: null,
+    pixelGridCanvas: null,
     previewCanvas: null,
     currentCell: null,
     cells: [],
     currentColor: Color.fromRGB(172, 85, 255),
-    mouse: {
-      dragging: false,
-      downAt: null
-    },
-    pressedKeys: {},
     currentTool: "pencil",
-    currentCellToStartFill: null,
     currentBrushSize: 1,
     cellHistory: null,
+    pressedKeys: {},
 
     tickInterval: 30, // ms/frame
     widthInCells: 16, // cells
@@ -138,13 +133,14 @@
       self.cellHistory = CellHistory.init(self);
       self.$container = $('#main');
 
+      self._createMask();
       self._initCells();
       self._createWrapperDivs();
-      self._createGridCanvas();
-      self._createCanvas();
+      self._createPixelGridCanvas();
+      self._createPixelEditorCanvas();
       self._createToolBox();
       self._createBrushSizesBox();
-      self._createColorBox();
+      self._createColorPickerBox();
       self._createPreviewBox();
       self._addEvents();
       self.redraw();
@@ -160,7 +156,7 @@
 
     redraw: function() {
       var self = this;
-      self._clearCanvas();
+      self._clearPixelEditorCanvas();
       self._clearPreviewCanvas();
       self._clearTiledPreviewCanvas();
       self._highlightCurrentCells();
@@ -200,9 +196,9 @@
       self.$container.append(self.$centerPane);
     },
 
-    _createGridCanvas: function() {
+    _createPixelGridCanvas: function() {
       var self = this;
-      self.gridCanvas = Canvas.create(self.cellSize, self.cellSize, function(c) {
+      self.pixelGridCanvas = Canvas.create(self.cellSize, self.cellSize, function(c) {
         c.ctx.strokeStyle = "#eee";
         c.ctx.beginPath();
           // Draw a vertical line on the left
@@ -218,18 +214,18 @@
       });
     },
 
-    _createCanvas: function() {
+    _createPixelEditorCanvas: function() {
       var self = this;
       self.width = self.widthInCells * self.cellSize;
       self.height = self.heightInCells * self.cellSize;
-      self.canvas = Canvas.create(self.width, self.height);
-      self.canvas.$element
-        .attr("id", "enlarged_canvas")
-        .css("background-image", 'url('+self.gridCanvas.element.toDataURL("image/png")+')');
-      self.$centerPane.append(self.canvas.$element);
+      self.pixelEditorCanvas = Canvas.create(self.width, self.height);
+      self.pixelEditorCanvas.$element
+        .attr("id", "pixel_editor_canvas")
+        .css("background-image", 'url('+self.pixelGridCanvas.element.toDataURL("image/png")+')');
+      self.$centerPane.append(self.pixelEditorCanvas.$element);
     },
 
-    _createColorBox: function() {
+    _createColorPickerBox: function() {
       var self = this;
 
       var $boxDiv = $("<div/>").attr("id", "color_box").addClass("box");
@@ -238,85 +234,21 @@
       var $header = $("<h3/>").html("Color");
       $boxDiv.append($header);
 
-      /*
-      var colorSampleDiv = document.createElement("div");
-      colorSampleDiv.style.backgroundColor = 'rgb('+self.currentColor.toRGBString()+')';
-      colorSampleDiv.id = "color_sample";
+      self.colorPickerBox = SpriteEditor.ColorPickerBox.init($boxDiv)
+    },
 
-      var possibleColorSliders = {
-        rgb: [
-          {name: "red", max: 255},
-          {name: "green", max: 255},
-          {name: "blue", max: 255}
-        ],
-        hsl: [
-          {name: "hue", max: 360},
-          {name: "saturation", max: 100},
-          {name: "lightness", max: 100}
-        ]
-      };
-      var colorSliders = {
-        rgb: {
-          red: {},
-          green: {},
-          blue: {}
-        },
-        hsl: {
-          hue: {},
-          saturation: {},
-          lightness: {}
-        }
-      };
-      $.v.each(possibleColorSliders, function(components, ctype) {
-        var colorControlsDiv = document.createElement("div");
-        colorControlsDiv.id = ctype + "_color_controls";
-        colorControlsDiv.className = "color_controls";
-        boxDiv.appendChild(colorControlsDiv);
+    _openColorPickerBox: function() {
+      var self = this;
+      self._removePixelEditorCanvasEvents();
+      self._showMask();
+      self.colorPickerBox.open();
+    },
 
-        $.v.each(components, function(component) {
-          var colorDiv = document.createElement("div");
-          colorControlsDiv.appendChild(colorDiv);
-
-          var label = document.createElement("label");
-          label.innerHTML = String.capitalize(component.name);
-          colorDiv.appendChild(label);
-
-          var colorSlider = document.createElement("input");
-          colorSlider.type = "range";
-          colorSlider.min = 0;
-          colorSlider.max = component.max;
-          colorSlider.value = self.currentColor[component.name];
-          colorDiv.appendChild(colorSlider);
-          colorSliders[ctype][component.name].slider = colorSlider;
-
-          var colorValueSpan = document.createElement("span");
-          colorValueSpan.innerHTML = self.currentColor[component.name];
-          colorDiv.appendChild(document.createTextNode(" "))
-          colorDiv.appendChild(colorValueSpan);
-          colorSliders[ctype][component.name].sliderSpan = colorValueSpan;
-
-          bean.add(colorSlider, 'change', function() {
-            self.currentColor[component.name] = colorSlider.value;
-            if (ctype == "rgb") {
-              self.currentColor.refreshHSL();
-            } else {
-              self.currentColor.refreshRGB();
-            }
-            $.v.each(colorSliders[ctype == "rgb" ? "hsl" : "rgb"], function(o, componentName) {
-              var val = self.currentColor[componentName];
-              // Hue may be null, so check for that
-              if (val !== null) o.slider.value = o.sliderSpan.innerHTML = val;
-            });
-            colorValueSpan.innerHTML = self.currentColor[component.name];
-            colorSampleDiv.style.backgroundColor = 'rgb('+self.currentColor.toRGBString()+')';
-          })
-        })
-      })
-
-      boxDiv.appendChild(colorSampleDiv);
-      */
-
-      //var cpBox = SpriteEditor.ColorPickerBox.init($boxDiv);
+    _closeColorPickerBox: function() {
+      var self = this;
+      self.colorPickerBox.close();
+      self._hideMask();
+      self._addPixelEditorCanvasEvents();
     },
 
     _createPreviewBox: function() {
@@ -400,32 +332,63 @@
 
     _addEvents: function() {
       var self = this;
-      self.canvas.$element.bind({
+      self._addPixelEditorCanvasEvents();
+      $(document).bind({
+        keydown: function(event) {
+          self.pressedKeys[event.keyCode] = true;
+          if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
+            // Ctrl-Z or Command-Z: Undo last action
+            self.cellHistory.undo();
+          }
+        },
+        keyup: function(event) {
+          delete self.pressedKeys[event.keyCode];
+        }
+      });
+      $(window).bind({
+        blur: function() {
+          self.stop();
+        }
+      })
+    },
+
+    _addPixelEditorCanvasEvents: function() {
+      var self = this;
+      self.pixelEditorCanvas.$element.mouseTracker({
         mouseover: function(event) {
           self.start();
-        },
-        mousedown: function(event) {
-          self.cellHistory.open();
-          event.preventDefault();
         },
         mouseout: function(event) {
           self._unsetCurrentCells();
           self.stop();
           self.redraw();
         },
-        click: function(event) {
-          // Prevent things on the page from being selected
+        mousedown: function(event) {
+          self.cellHistory.open();
           event.preventDefault();
         },
-        contextmenu: function(event) {
-          // Prevent things on the page from being selected
+        mouseup: function(event) {
+          switch (self.currentTool) {
+            case "pencil":
+              if (event.rightClick || self.pressedKeys[16]) {
+                self._setCurrentCellsToUnfilled();
+              } else {
+                self._setCurrentCellsToFilled();
+              }
+              break;
+            case "bucket":
+              if (event.rightClick || self.pressedKeys[16]) {
+                self._setCellsLikeCurrentToUnfilled();
+              } else {
+                self._setCellsLikeCurrentToFilled();
+              }
+              break;
+          }
+          self.cellHistory.close();
           event.preventDefault();
-        }
-      })
-      self.canvas.$element.mouseTracker({
-        //draggingDistance: 3,
+        },
         mousemove: function(event) {
-          self._setCurrentCells(self.canvas.$element.mouseTracker('getPosition'));
+          self._setCurrentCells(self.pixelEditorCanvas.$element.mouseTracker('getPosition'));
         },
         mousedragstart: function(event) {
           self.selectedCells = [];
@@ -443,45 +406,11 @@
           }
         }
       })
-      $(document).bind({
-        mouseup: function(event) {
-          switch (self.currentTool) {
-            case "pencil":
-              if (event.rightClick || self.pressedKeys[16]) {
-                self._setCurrentCellsToUnfilled();
-              } else {
-                self._setCurrentCellsToFilled();
-              }
-              break;
-            case "bucket":
-              // XXX: We can actually apply this on mouseup, no need
-              // to involve dragging in this
-              if (event.rightClick || self.pressedKeys[16]) {
-                self._setCellsLikeCurrentToUnfilled();
-              } else {
-                self._setCellsLikeCurrentToFilled();
-              }
-              break;
-          }
-          self.cellHistory.close();
-          event.preventDefault();
-        },
-        keydown: function(event) {
-          self.pressedKeys[event.keyCode] = true;
-          if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
-            // Ctrl-Z or Command-Z: Undo last action
-            self.cellHistory.undo();
-          }
-        },
-        keyup: function(event) {
-          delete self.pressedKeys[event.keyCode];
-        }
-      });
-      $(window).bind({
-        blur: function() {
-          self.stop();
-        }
-      })
+    },
+
+    _removePixelEditorCanvasEvents: function() {
+      var self = this;
+      self.pixelEditorCanvas.$element.mouseTracker('destroy');
     },
 
     _setCurrentCells: function(mouse) {
@@ -578,9 +507,9 @@
       })
     },
 
-    _clearCanvas: function() {
+    _clearPixelEditorCanvas: function() {
       var self = this;
-      var c = self.canvas;
+      var c = self.pixelEditorCanvas;
       c.ctx.clearRect(0, 0, c.width, c.height);
     },
 
@@ -601,7 +530,7 @@
 
     _highlightCurrentCells: function() {
       var self = this;
-      var ctx = self.canvas.ctx;
+      var ctx = self.pixelEditorCanvas.ctx;
       if (self.currentCells && !(self.mouse.dragging || self.pressedKeys[16]) && self.currentTool == "pencil") {
         ctx.save();
           ctx.fillStyle = 'rgba('+self.currentColor.toRGBString()+',0.5)';
@@ -614,7 +543,7 @@
 
     _fillCells: function() {
       var self = this;
-      var c = self.canvas;
+      var c = self.pixelEditorCanvas;
       var pc = self.previewCanvas;
       c.ctx.save();
         $.v.each(self.cells, function(row, i) {
@@ -638,6 +567,17 @@
         tpc.ctx.fillStyle = pattern;
         tpc.ctx.fillRect(0, 0, tpc.width, tpc.height);
       tpc.ctx.restore();
+    },
+
+    _createMask: function() {
+      var self = this;
+      self.$maskDiv = $('<div id="mask" />').hide();
+      $(document.body).append(self.$maskDiv);
+    },
+
+    _showMask: function() {
+      var self = this;
+      self.$maskDiv.show();
     }
   });
   window.SpriteEditor = SpriteEditor;

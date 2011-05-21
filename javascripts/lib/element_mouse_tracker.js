@@ -77,11 +77,10 @@
         "mouseup.ElementMouseTracker": function() {
           $.v.each(self.activeInstances(), function(inst) { inst.triggerHandler('mouseup', event) });
           var inst = self.activeInstance.mouseHeldWithin;
-          if (inst && inst.isDragging) inst.trigger('mousedragstop');
+          if (inst && inst.isDragging) inst.triggerHandler('mousedragstop');
           //event.stopPropagation();
           event.preventDefault();
         },
-
         "mousemove.ElementMouseTracker": function(event) {
           self.pos = {x: event.pageX, y: event.pageY};
           $.v.each(self.activeInstances(), function(inst) { inst.triggerHandler('mousemove', event) });
@@ -170,6 +169,7 @@
     ElementMouseTracker.instance.prototype.init.apply(this, arguments);
   }
   ElementMouseTracker.instance.prototype = {
+    /*
     $element: null,
     options: {},
     customEvents: {},
@@ -184,18 +184,34 @@
       rel: {x: null, y: null}
     },
     isDragging: false,
+    */
 
     init: function($element, options) {
       var self = this;
 
       self.$element = $element;
-      $.v.each(options, function(k, v) {
-        if (/^mouse/.test(k)) {
-          self.customEvents[k] = v;
-        } else {
-          self.options[k] = v;
-        }
+      self.options = {};
+      self.customEvents = {};
+      $.v.each(options, function(keys, val) {
+        $.v.each(keys.split(" "), function(key) {
+          if (/^mouse/.test(key)) {
+            self.customEvents[key] = val;
+          } else {
+            self.options[key] = val;
+          }
+        })
       })
+
+      self.pos = {
+        abs: {x: null, y: null},
+        rel: {x: null, y: null}
+      };
+      self.isDown = false;
+      self.downAt = {
+        abs: {x: null, y: null},
+        rel: {x: null, y: null}
+      };
+      self.isDragging = false;
 
       self._addEvents();
 
@@ -213,6 +229,7 @@
       self._removeEvents();
     },
 
+    /*
     trigger: function(eventName, event) {
       var self = this;
       // Trigger the handlers not attached to the element
@@ -220,6 +237,7 @@
       // Invoke the native event we've attached to the element ourselves below
       self.$element.trigger(eventName);
     },
+    */
 
     triggerHandler: function(eventName, event) {
       var self = this;
@@ -249,17 +267,15 @@
       if (self.isDown) {
         if (!self.isDragging) {
           self.isDragging = (!self.draggingDistance || self._distance(self.downAt, self.pos.abs) > self.options.draggingDistance);
-          self.trigger('mousedragstart', event);
+          self.triggerHandler('mousedragstart', event);
         }
       } else {
         self.isDragging = false;
-        self.trigger('mouseglide', event);
+        self.triggerHandler('mouseglide', event);
       }
 
       if (self.isDragging) {
-        self.trigger('mousedrag', event);
-        //self.trigger('mousedownordrag', event);
-        //self.trigger('mousedragordown', event);
+        self.triggerHandler('mousedrag', event);
       }
 
       if (self.options.debug) {
@@ -304,12 +320,22 @@
       var self = this;
 
       self.$element.bind({
+        "mouseover.ElementMouseTracker": function(event) {
+          self.triggerHandler('mouseover', event);
+        },
+
+        "mouseout.ElementMouseTracker": function(event) {
+          self.triggerHandler('mouseout', event);
+        },
+
         "mouseenter.ElementMouseTracker": function(event) {
           ElementMouseTracker.activeInstance.mouseWithin = self;
+          self.triggerHandler('mouseenter', event);
         },
 
         "mouseleave.ElementMouseTracker": function(event) {
           delete ElementMouseTracker.activeInstance.mouseWithin;
+          self.triggerHandler('mouseleave', event);
         },
 
         "mousedown.ElementMouseTracker": function(event) {
@@ -320,14 +346,26 @@
             abs: {x: event.pageX, y: event.pageY},
             rel: {x: event.pageX - self.elementOffset.left, y: event.pageY - self.elementOffset.top}
           };
-          //self.trigger('mousedownordrag', event);
-          //self.trigger('mousedragordown', event);
 
           if (self.options.debug) {
             ElementMouseTracker.debugDiv().show();
           }
 
+          self.triggerHandler('mousedown', event);
+
           //event.stopPropagation();
+          event.preventDefault();
+        },
+
+        "click.ElementMouseTracker": function(event) {
+          self.triggerHandler('mouseclick', event);
+          // Prevent things on the page from being selected
+          event.preventDefault();
+        },
+
+        "contextmenu.ElementMouseTracker": function(event) {
+          self.triggerHandler('contextmenu', event);
+          // Prevent things on the page from being selected
           event.preventDefault();
         }
       })

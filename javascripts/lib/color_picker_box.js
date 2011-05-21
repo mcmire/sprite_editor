@@ -19,23 +19,26 @@
     init: function($parent) {
       var self = this;
 
-      self.$container = $('<div class="square_color_picker dialog" />');
+      self.$container = $('<div class="square_color_picker dialog" />').hide();
       $parent.append(self.$container);
 
       self._addHueSatDiv();
       self._addLightnessDiv();
       self._addColorFields();
       self._addColorSample();
+
+      return self;
+    },
+
+    open: function() {
+      var self = this;
+      self.$container.show();
       self.$container.center();
-
-      self._addEvents();
-
       self._setColorFields();
       self._positionHueSatSelectorFromColor();
       self._positionLightnessSelectorFromColor();
       self._setColorSample();
-
-      return self;
+      self._addEvents();
     },
 
     destroy: function() {
