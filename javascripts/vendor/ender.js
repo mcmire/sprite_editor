@@ -16,7 +16,7 @@
 
   function boosh(s, r) {
     var els;
-    if (ender._select && typeof s == 'string' || s.nodeName || s.length && 'item' in s) { //string || node || nodelist
+    if (ender._select && typeof s == 'string' || s.nodeName || s.length && 'item' in s || s == window) { //string || node || nodelist || window
       els = ender._select(s, r);
       els.selector = s;
     } else {
@@ -30,9 +30,21 @@
   }
 
   aug(ender, {
-    _VERSION: '0.1.8',
+    _VERSION: '0.2.0',
     ender: function (o, chain) {
       aug(chain ? boosh : ender, o);
+    }
+  });
+
+  aug(boosh, {
+    forEach: function (fn, scope) {
+      // opt out of native forEach so we can intentionally call our own scope
+      // defaulting to the current item
+      for (var i = 0, l = this.length; i < l; ++i) {
+        i in this && fn.call(scope || this[i], this[i], i, this);
+      }
+      // return self for chaining
+      return this;
     }
   });
 
@@ -43,6 +55,7 @@
   };
 
   (typeof module !== 'undefined') && module.exports && (module.exports = ender);
+  // use subscript notation as extern for Closure compilation
   context['ender'] = context['$'] = ender;
 
 }(this);
@@ -115,7 +128,7 @@
 !function (context, doc) {
 
   var c, i, j, k, l, m, o, p, r, v,
-      el, node, len, found, classes, item, items, token, collection,
+      el, node, len, found, classes, item, items, token,
       id = /#([\w\-]+)/,
       clas = /\.[\w\-]+/g,
       idOnly = /^#([\w\-]+$)/,
@@ -274,7 +287,7 @@
   }
 
   function isNode(el) {
-    return (el && el.nodeType == 1 || el.nodeType == 9);
+    return (el && el.nodeType && (el.nodeType == 1 || el.nodeType == 9));
   }
 
   function uniq(ar) {
@@ -307,6 +320,7 @@
       return (container.compareDocumentPosition(element) & 16) == 16;
     } : 'contains' in html ?
     function (element, container) {
+      container = container == doc || container == window ? html : container;
       return container !== element && container.contains(element);
     } :
     function (element, container) {
@@ -318,36 +332,39 @@
       return 0;
     },
 
-  select = doc.querySelector && doc.querySelectorAll ? function (selector, root) {
-    if (doc.getElementsByClassName && (m = selector.match(classOnly))) {
-      return array((root).getElementsByClassName(m[1]));
-    }
-    return array((root).querySelectorAll(selector));
-  } : function (selector, root) {
-    if (m = selector.match(tagAndOrClass)) {
-      items = root.getElementsByTagName(m[1] || '*');
-      r = classCache.g(m[2]) || classCache.s(m[2], new RegExp('(^|\\s+)' + m[2] + '(\\s+|$)'));
-      for (i = 0, l = items.length, j = 0; i < l; i++) {
-        r.test(items[i].className) && (result[j++] = items[i]);
+  select = (doc.querySelector && doc.querySelectorAll) ?
+    function (selector, root) {
+      if (doc.getElementsByClassName && (m = selector.match(classOnly))) {
+        return array((root).getElementsByClassName(m[1]));
       }
-      return result;
-    }
-    for (i = 0, items = selector.split(','), l = items.length; i < l; i++) {
-      collections[i] = _qwery(items[i]);
-    }
-    for (i = 0, l = collections.length; i < l && (collection = collections[i]); i++) {
-      var ret = collection;
-      if (root !== doc) {
-        ret = [];
-        for (j = 0, m = collection.length; j < m && (element = collection[j]); j++) {
-          // make sure element is a descendent of root
-          isAncestor(element, root) && ret.push(element);
+      return array((root).querySelectorAll(selector));
+    } :
+    function (selector, root) {
+      var result = [], collection, collections = [], i;
+      if (m = selector.match(tagAndOrClass)) {
+        items = root.getElementsByTagName(m[1] || '*');
+        r = classCache.g(m[2]) || classCache.s(m[2], new RegExp('(^|\\s+)' + m[2] + '(\\s+|$)'));
+        for (i = 0, l = items.length, j = 0; i < l; i++) {
+          r.test(items[i].className) && (result[j++] = items[i]);
         }
+        return result;
       }
-      result = result.concat(ret);
-    }
-    return uniq(result);
-  };
+      for (i = 0, items = selector.split(','), l = items.length; i < l; i++) {
+        collections[i] = _qwery(items[i]);
+      }
+      for (i = 0, l = collections.length; i < l && (collection = collections[i]); i++) {
+        var ret = collection;
+        if (root !== doc) {
+          ret = [];
+          for (j = 0, m = collection.length; j < m && (element = collection[j]); j++) {
+            // make sure element is a descendent of root
+            isAncestor(element, root) && ret.push(element);
+          }
+        }
+        result = result.concat(ret);
+      }
+      return uniq(result);
+    };
 
   qwery.uniq = uniq;
   var oldQwery = context.qwery;
@@ -384,12 +401,18 @@
       }
       return $(q.uniq(r));
     }
+    , and: function (s) {
+      var plus = $(s);
+      for (var i = this.length, j = 0, l = this.length + plus.length; i < l; i++, j++) {
+        this[i] = plus[j];
+      }
+      return this;
+    }
   }, true);
 }(document);
 /*!
-  * bean.js - copyright @dedfat
+  * bean.js - copyright Jacob Thornton 2011
   * https://github.com/fat/bean
-  * Follow our software http://twitter.com/dedfat
   * MIT License
   * special thanks to:
   * dean edwards: http://dean.edwards.name/
@@ -702,9 +725,9 @@
 
   (typeof module !== 'undefined' && module.exports) ?
     (module.exports = bean) :
-    (context.bean = bean);
+    (context['bean'] = bean);
 
-}(this);!function () {
+}(this);!function ($) {
   var b = bean.noConflict(),
       integrate = function (method, type, method2) {
         var _args = type ? [type] : [];
@@ -763,7 +786,7 @@
   }
 
   $.ender(methods, true);
-}();
+}(ender);
 /*!
   * bonzo.js - copyright @dedfat 2011
   * https://github.com/ded/bonzo
@@ -783,7 +806,7 @@
       ie = /msie/i.test(navigator.userAgent),
       uidList = [],
       uuids = 0,
-      digit = /^-?\d+$/,
+      digit = /^-?[\d\.]+$/,
       px = 'px',
       // commonly used methods
       setAttribute = 'setAttribute',
@@ -1626,10 +1649,12 @@
     var props = [],
         styles = [],
         duration = opts.duration || 1000,
-        easing = opts.easing || 'ease-out';
+        easing = opts.easing || 'ease-out',
+        newStyle = '';
     duration = duration + 'ms';
-    opts.after && el.addEventListener(transitionEnd, function f() {
-      opts.after();
+    el.addEventListener(transitionEnd, function f() {
+	  el.setAttribute('style', newStyle);
+      if(opts.after) opts.after();
       el.removeEventListener(transitionEnd, f, true);
     }, true);
 
@@ -1638,12 +1663,13 @@
       for (k in o) {
         o.hasOwnProperty(k) && props.push(camelToDash(k) + ' ' + duration + ' ' + easing);
       }
-      props = props.join(',');
-      el.style[prefix + 'Transition'] = props;
       for (k in o) {
         var v = (camelize(k) in animationProperties) && d.test(o[k]) ? o[k] + 'px' : o[k];
         o.hasOwnProperty(k) && (el.style[camelize(k)] = v);
       }
+      newStyle = el.getAttribute('style');
+      props = props.join(',');
+      el.style[prefix + 'Transition'] = props;
     }, 10);
 
   }
@@ -1699,8 +1725,9 @@
   function fade(duration, callback, to) {
     var opts = getOptions(duration, callback);
     for (var i = 0, l = this.length; i < l; i++) {
-      this[i].style.opacity = to ? 0 : 1;
-      this[i].style.filter = 'alpha(opacity=' + (to ? 0 : 1 ) * 100 + ')';
+      this[i].currentStyle || (this[i].style.opacity = to ? 0 : 1);
+      this[i].currentStyle && (this[i].style.filter = 'alpha(opacity=' + (to ? 0 : 1 ) * 100 + ')');
+      this[i].currentStyle && !this[i].currentStyle.hasLayout && (this[i].style.zoom = 1);
       this[i].style.display = '';
     }
     return this.animate({
@@ -1837,11 +1864,11 @@
   var v = function (a, scope) {
         return new Valentine(a, scope);
       },
-      ap = Array.prototype,
-      op = Object.prototype,
+      ap = [],
+      op = {},
       slice = ap.slice,
-      nativ = !!('map' in ap),
-      nativ18 = !!('reduce' in ap),
+      nativ = 'map' in ap,
+      nativ18 = 'reduce' in ap,
       trimReplace = /(^\s*|\s*$)/g;
 
   var iters = {
@@ -1851,7 +1878,7 @@
       } :
       function (a, fn, scope) {
         for (var i = 0, l = a.length; i < l; i++) {
-          fn.call(scope, a[i], i, a);
+          i in a && fn.call(scope, a[i], i, a);
         }
       },
     map: nativ ?
@@ -1861,7 +1888,7 @@
       function (a, fn, scope) {
         var r = [];
         for (var i = 0, l = a.length; i < l; i++) {
-          r[i] = fn.call(scope, a[i], i, a);
+          i in a && (r[i] = fn.call(scope, a[i], i, a));
         }
         return r;
       },
@@ -1871,7 +1898,7 @@
       } :
       function (a, fn, scope) {
         for (var i = 0, l = a.length; i < l; i++) {
-          if (fn.call(scope, a[i], i, a)) {
+          if (i in a && fn.call(scope, a[i], i, a)) {
             return true;
           }
         }
@@ -1883,7 +1910,7 @@
       } :
       function (a, fn, scope) {
         for (var i = 0, l = a.length; i < l; i++) {
-          if (!fn.call(scope, a[i], i, a)) {
+          if (i in a && !fn.call(scope, a[i], i, a)) {
             return false;
           }
         }
@@ -1896,10 +1923,12 @@
       function (a, fn, scope) {
         var r = [];
         for (var i = 0, j = 0, l = a.length; i < l; i++) {
-          if (!fn.call(scope, a[i], i, a)) {
-            continue;
+          if (i in a) {
+            if (!fn.call(scope, a[i], i, a)) {
+              continue;
+            }
+            r[j++] = a[i];
           }
-          r[j++] = a[i];
         }
         return r;
       },
@@ -1910,7 +1939,7 @@
       function (a, el, start) {
         start = start || 0;
         for (var i = 0; i < a.length; i++) {
-          if (a[i] === el) {
+          if (i in a && a[i] === el) {
             return i;
           }
         }
@@ -1926,7 +1955,7 @@
         start = start >= a.length ? a.length :
           start < 0 ? a.length + start : start;
         for (var i = start; i >= 0; --i) {
-          if (a[i] === el) {
+          if (i in a && a[i] === el) {
             return i;
           }
         }
@@ -1938,18 +1967,23 @@
         return ap.reduce.call(o, i, m, c);
       } :
       function (obj, iterator, memo, context) {
-        var initial = !is.und(memo);
         !obj && (obj = []);
-        iters.each(obj, function (value, index, list) {
-          if (!initial && index === 0) {
-            memo = value;
-            initial = true;
-          } else {
-            memo = iterator.call(context, memo, value, index, list);
+        var i = 0, l = obj.length;
+        if (arguments.length < 3) {
+          do {
+            if (i in obj) {
+              memo = obj[i++];
+              break;
+            }
+            if (++i >= l) {
+              throw new TypeError('Empty array');
+            }
+          } while (1);
+        }
+        for (; i < l; i++) {
+          if (i in obj) {
+            memo = iterator.call(context, memo, obj[i], i, obj);
           }
-        });
-        if (!initial) {
-          throw new TypeError("Reduce of empty array with no initial value");
         }
         return memo;
       },
@@ -1958,10 +1992,26 @@
       function (o, i, m, c) {
         return ap.reduceRight.call(o, i, m, c);
       } :
-      function (ob, i, m, c) {
-        !ob && (ob = []);
-        var reversed = (is.arr(ob) ? ob.slice() : o.toArray(ob)).reverse();
-        return iters.reduce(reversed, i, m, c);
+      function (obj, iterator, memo, context) {
+        !obj && (obj = []);
+        var l = obj.length, i = l - 1;
+        if (arguments.length < 3) {
+          do {
+            if (i in obj) {
+              memo = obj[i--];
+              break;
+            }
+            if (--i < 0) {
+              throw new TypeError('Empty array');
+            }
+          } while (1);
+        }
+        for (; i >= 0; i--) {
+          if (i in obj) {
+            memo = iterator.call(context, memo, obj[i], i, obj);
+          }
+        }
+        return memo;
       },
 
     find: function (obj, iterator, context) {
@@ -1978,10 +2028,12 @@
     reject: function (a, fn, scope) {
       var r = [];
       for (var i = 0, j = 0, l = a.length; i < l; i++) {
-        if (fn.call(scope, a[i], i, a)) {
-          continue;
+        if (i in a) {
+          if (fn.call(scope, a[i], i, a)) {
+            continue;
+          }
+          r[j++] = a[i];
         }
-        r[j++] = a[i];
       }
       return r;
     },
@@ -2050,6 +2102,10 @@
     arr: function (ar) {
       return ar instanceof Array;
     },
+    
+    arrLike: function (ar) {
+      return (ar && ar.length && isFinite(ar.length));
+    },
 
     num: function (n) {
       return typeof n === 'number';
@@ -2103,7 +2159,7 @@
 
   var o = {
     each: function (a, fn, scope) {
-      is.arr(a) ?
+      is.arrLike(a) ?
         iters.each(a, fn, scope) : (function () {
           for (var k in a) {
             op.hasOwnProperty.call(a, k) && fn.call(scope, k, a[k], a);
