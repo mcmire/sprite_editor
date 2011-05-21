@@ -107,6 +107,7 @@
     CTRL_KEY: 17,
     ALT_KEY: 18,
     META_KEY: 91,
+    Z_KEY: 90,
 
     pressedKeys: {}
   };
@@ -389,16 +390,16 @@
       var self = this;
       $(document).bind({
         "keydown.pixelEditor": function(event) {
-          if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
+          var key = event.keyCode;
+          if (key == Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
             // Ctrl-Z or Command-Z: Undo last action
             self.cellHistory.undo();
-          }
-          if (event.keyCode == Keyboard.SHIFT_KEY) {
-            self.currentColorType = 'background';
+          } else if (key == Keyboard.SHIFT_KEY) {
+            self.currentColor.type = 'background';
           }
         },
         "keyup.pixelEditor": function() {
-          self.currentColorType = 'foreground';
+          self.currentColor.type = 'foreground';
         }
       })
       self.pixelEditorCanvas.$element.mouseTracker({
