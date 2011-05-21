@@ -17,6 +17,7 @@
       $keyCodeField.attr('value', key);
       Keyboard.pressedKeys[key] = true;
       if (key in checkboxes) checkboxes[key].attr('checked', 'checked');
+      event.preventDefault();
     },
     keyup: function(event) {
       var key = event.keyCode;
@@ -27,7 +28,13 @@
         $.v.each(checkboxes, function(key, $box) { $box.removeAttr('checked') })
       }
     }
-  })
+  });
+  // For some reason bean (or qwery) doesn't support $(window).blur()
+  window.onblur = function(event) {
+    $keyCodeField.attr('value', "");
+    Keyboard.pressedKeys = {};
+    $.v.each(checkboxes, function(key, $box) { $box.removeAttr('checked') });
+  }
 
   var $keyCodeField = window.$keyCodeField = $('<input type="text" />');
   var $p = $('<p />').html("Key code:").append($keyCodeField);
