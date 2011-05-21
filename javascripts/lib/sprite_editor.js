@@ -257,10 +257,10 @@
       self.colorPickerBox = SpriteEditor.ColorPickerBox.init({
         open: function() {
           self._removePixelEditorCanvasEvents();
-          //self._showMask();
+          self._showMask();
         },
         close: function() {
-          //self._hideMask();
+          self._hideMask();
           self._addPixelEditorCanvasEvents();
           self.currentColor.beingEdited = null;
         },
