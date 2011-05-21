@@ -16,7 +16,7 @@
       y: null
     },
 
-    init: function($parent, options) {
+    init: function(options) {
       var self = this;
       self.options = options;
 
@@ -34,7 +34,7 @@
     open: function(color) {
       var self = this;
 
-      if (self.options.open) self.options.open();
+      if (self.options.open) self.options.open.call(self);
 
       self.$container.show();
       self.$container.center();
@@ -53,7 +53,7 @@
       var self = this;
       self.$container.hide();
       self._removeEvents();
-      if (self.options.close) self.options.close();
+      if (self.options.close) self.options.close.call(self);
     },
 
     _addHueSatDiv: function() {
@@ -177,6 +177,7 @@
           self._setColorFields();
           self._setColorSample();
           self._drawLightnessCanvas();
+          if (self.options.change) self.options.change.call(self, self.currentColor);
         }//,
         //debug: true
       })
@@ -186,6 +187,7 @@
           self._setLightnessFromSelectorPosition();
           self._setColorFields();
           self._setColorSample();
+          if (self.options.change) self.options.change.call(self, self.currentColor);
         }//,
         //debug: true
       })

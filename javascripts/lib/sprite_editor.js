@@ -125,9 +125,11 @@
     previewCanvas: null,
     currentCell: null,
     cells: [],
-    currentFgColor: Color.fromRGB(172, 85, 255),
-    currentBgColor: Color.fromRGB(255, 38, 192),
-    currentColorType: 'foreground',
+    currentColor: {
+      type: 'foreground',
+      foreground: Color.fromRGB(172, 85, 255),
+      background: Color.fromRGB(255, 38, 192)
+    },
     currentTool: "pencil",
     currentBrushSize: 1,
     cellHistory: null,
@@ -178,15 +180,6 @@
       var self = this;
       clearInterval(self.timer);
       return self;
-    },
-
-    currentColor: function() {
-      var self = this;
-      if (self.currentColorType == 'foreground') {
-        return self.currentFgColor;
-      } else {
-        return self.currentBgColor;
-      }
     },
 
     _initCells: function() {
@@ -253,21 +246,24 @@
       var $header = $("<h3/>").html("Color");
       $boxDiv.append($header);
 
-      var $fgColorSampleDiv = $('<div class="color_sample" />');
-      $fgColorSampleDiv.css("background-color", "rgb("+self.currentFgColor.toRGBString()+")");
-      $fgColorSampleDiv.bind('click', function() {
-        self.colorPickerBox.open(self.currentFgColor);
-      })
-      $boxDiv.append($fgColorSampleDiv);
+      var colorSampleDivs = $.v.reduce(["foreground", "background"], function(hash, colorType) {
+        var $div = $('<div class="color_sample" />');
+        $div.bind({
+          click: function() {
+            self.currentColor.beingEdited = colorType;
+            self.colorPickerBox.open(self.currentColor[colorType]);
+          },
+          update: function() {
+            $div.css("background-color", "rgb("+self.currentColor[colorType].toRGBString()+")")
+          }
+        })
+        $div.trigger('update');
+        $boxDiv.append($div);
+        hash[colorType] = $div;
+        return hash;
+      }, {});
 
-      var $bgColorSampleDiv = $('<div class="color_sample" />');
-      $bgColorSampleDiv.css("background-color", "rgb("+self.currentBgColor.toRGBString()+")");
-      $bgColorSampleDiv.bind('click', function() {
-        self.colorPickerBox.open(self.currentBgColor);
-      })
-      $boxDiv.append($bgColorSampleDiv);
-
-      self.colorPickerBox = SpriteEditor.ColorPickerBox.init($boxDiv, {
+      self.colorPickerBox = SpriteEditor.ColorPickerBox.init({
         open: function() {
           self._removePixelEditorCanvasEvents();
           //self._showMask();
@@ -275,6 +271,10 @@
         close: function() {
           //self._hideMask();
           self._addPixelEditorCanvasEvents();
+          self.currentColor.beingEdited = null;
+        },
+        change: function(color) {
+          colorSampleDivs[self.currentColor.beingEdited].trigger('update');
         }
       });
       $(document.body).append(self.colorPickerBox.$container);
@@ -519,7 +519,7 @@
           self.cellHistory.add(cell);
           // Clone so when changing the current color we don't change all cells
           // filled with that color
-          cell.color = self.currentColor().clone();
+          cell.color = self.currentColor[self.currentColor.type].clone();
         })
       }
     },
@@ -545,7 +545,7 @@
         $.v.each(row, function(cell, j) {
           if ((!cell.color && !currentCellColor) || cell.color.isEqual(currentCellColor)) {
             self.cellHistory.add(cell);
-            cell.color = self.currentColor().clone();
+            cell.color = self.currentColor[self.currentColor.type].clone();
           }
         })
       })
@@ -595,7 +595,7 @@
       var isDragging = self.pixelEditorCanvas.$element.mouseTracker('isDragging');
       if (self.currentCells && !(isDragging || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) && self.currentTool == "pencil") {
         ctx.save();
-          ctx.fillStyle = 'rgba('+self.currentColor().toRGBString()+',0.5)';
+          ctx.fillStyle = 'rgba('+self.currentColor[self.currentColor.type].toRGBString()+',0.5)';
           $.v.each(self.currentCells, function(cell) {
             ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
           })
