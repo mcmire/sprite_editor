@@ -40,6 +40,7 @@
       self.$container.center();
 
       self.currentColor = color;
+      self._drawLightnessCanvas();
       self._setColorFields();
       self._positionHueSatSelectorFromColor();
       self._positionLightnessSelectorFromColor();
@@ -112,7 +113,6 @@
     _addLightnessCanvas: function() {
       var self = this;
       self.lightnessCanvas = Canvas.create(self.lightnessCanvasSize.width, self.lightnessCanvasSize.height);
-      self._drawLightnessCanvas();
       self.lightnessCanvas.$element.addClass("lightness_canvas");
       self.$lightnessDiv.append(self.lightnessCanvas.$element);
     },
