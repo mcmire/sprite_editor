@@ -180,7 +180,7 @@ input[type="submit"], input[type="button"], select {
   canvas:last-child {
     margin-bottom: 0;
   }
-  canvas:hover, #sizes_box canvas.selected {
+  canvas:hover, canvas.selected {
     opacity: 1;
   }
   canvas.selected {

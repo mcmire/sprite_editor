@@ -49,7 +49,7 @@ display: inline-block;
 vertical-align: middle;
 */ margin: 0 auto 20px auto; cursor: pointer; }
 #sizes_box canvas:last-child { margin-bottom: 0; }
-#sizes_box canvas:hover, #sizes_box #sizes_box canvas.selected { opacity: 1; }
+#sizes_box canvas:hover, #sizes_box canvas.selected { opacity: 1; }
 #sizes_box canvas.selected { border-width: 2px; }
 
 #color_box { clear: left; margin-bottom: 20px; text-align: center; }
