@@ -108,7 +108,7 @@ input[type="submit"], input[type="button"], select {
 }
 #right_pane {
   float: right;
-  width: 350px;
+  width: 250px;
 }
 
 .box {
@@ -191,28 +191,18 @@ input[type="submit"], input[type="button"], select {
 #color_box {
   clear: left;
   margin-bottom: 20px;
-  /*margin-right: 20px;*/
-  /*text-align: center;*/
+  text-align: center;
 
-  input {
-    vertical-align: middle;
-  }
-}
-#color_sample {
-  width: 60px;
-  height: 60px;
-  border: 1px solid black;
-  margin: 0 auto;
-}
-.color_controls, #color_sample {
-  margin-top: 10px;
-}
-.color_controls {
-  label, input, span {
+  .color_sample {
+    width: 60px;
+    height: 60px;
+    border: 1px solid black;
+    margin: 0 auto;
     display: inline-block;
+    margin-right: 30px;
   }
-  label {
-    width: 75px;
+  .color_sample:last-child {
+    margin-right: 0;
   }
 }
 

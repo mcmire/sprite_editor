@@ -29,7 +29,7 @@ input[type="submit"], input[type="button"], select { cursor: pointer; }
 
 #pixel_editor_canvas { border: 1px solid red; cursor: pointer; display: inline; }
 
-#right_pane { float: right; width: 350px; }
+#right_pane { float: right; width: 250px; }
 
 .box { border: 1px solid #333; border-radius: 4px; padding: 20px; /*float: left;*/ overflow: auto; background-color: white; }
 .box h3 { margin: -20px; margin-bottom: 20px; background-color: #333; color: white; padding: 5px 10px; font-size: 15px; text-align: center; }
@@ -52,15 +52,9 @@ vertical-align: middle;
 #sizes_box canvas:hover, #sizes_box #sizes_box canvas.selected { opacity: 1; }
 #sizes_box canvas.selected { border-width: 2px; }
 
-#color_box { clear: left; margin-bottom: 20px; /*margin-right: 20px;*/ /*text-align: center;*/ }
-#color_box input { vertical-align: middle; }
-
-#color_sample { width: 60px; height: 60px; border: 1px solid black; margin: 0 auto; }
-
-.color_controls, #color_sample { margin-top: 10px; }
-
-.color_controls label, .color_controls input, .color_controls span { display: inline-block; }
-.color_controls label { width: 75px; }
+#color_box { clear: left; margin-bottom: 20px; text-align: center; }
+#color_box .color_sample { width: 60px; height: 60px; border: 1px solid black; margin: 0 auto; display: inline-block; margin-right: 30px; }
+#color_box .color_sample:last-child { margin-right: 0; }
 
 .square_color_picker { overflow: hidden; }
 .square_color_picker .hue_sat_canvas, .square_color_picker .lightness_canvas, .square_color_picker .color_sample { border: 2px solid #666; }

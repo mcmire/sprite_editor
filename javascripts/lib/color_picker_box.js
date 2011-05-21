@@ -20,7 +20,6 @@
       var self = this;
 
       self.$container = $('<div class="square_color_picker dialog" />').hide();
-      $parent.append(self.$container);
 
       self._addHueSatDiv();
       self._addLightnessDiv();

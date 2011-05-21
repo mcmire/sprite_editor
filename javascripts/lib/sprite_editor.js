@@ -102,6 +102,15 @@
     }
   };
 
+  var Keyboard = {
+    SHIFT_KEY: 16,
+    CTRL_KEY: 17,
+    ALT_KEY: 18,
+    META_KEY: 91,
+
+    pressedKeys: {}
+  };
+
   $.extend(SpriteEditor, {
     $container: null,
     $leftPane: null,
@@ -116,11 +125,12 @@
     previewCanvas: null,
     currentCell: null,
     cells: [],
-    currentColor: Color.fromRGB(172, 85, 255),
+    currentFgColor: Color.fromRGB(172, 85, 255),
+    currentBgColor: Color.fromRGB(255, 38, 192),
+    currentColorType: 'foreground',
     currentTool: "pencil",
     currentBrushSize: 1,
     cellHistory: null,
-    pressedKeys: {},
 
     tickInterval: 30, // ms/frame
     widthInCells: 16, // cells
@@ -168,6 +178,15 @@
       var self = this;
       clearInterval(self.timer);
       return self;
+    },
+
+    currentColor: function() {
+      var self = this;
+      if (self.currentColorType == 'foreground') {
+        return self.currentFgColor;
+      } else {
+        return self.currentBgColor;
+      }
     },
 
     _initCells: function() {
@@ -234,7 +253,16 @@
       var $header = $("<h3/>").html("Color");
       $boxDiv.append($header);
 
-      self.colorPickerBox = SpriteEditor.ColorPickerBox.init($boxDiv)
+      var $fgColorSampleDiv = $('<div class="color_sample" />');
+      $fgColorSampleDiv.css("background-color", "rgb("+self.currentFgColor.toRGBString()+")");
+      $boxDiv.append($fgColorSampleDiv);
+
+      var $bgColorSampleDiv = $('<div class="color_sample" />');
+      $bgColorSampleDiv.css("background-color", "rgb("+self.currentBgColor.toRGBString()+")");
+      $boxDiv.append($bgColorSampleDiv);
+
+      //self.colorPickerBox = SpriteEditor.ColorPickerBox.init($boxDiv);
+      //$boxDiv.append(self.colorPickerBox.$container);
     },
 
     _openColorPickerBox: function() {
@@ -332,52 +360,67 @@
 
     _addEvents: function() {
       var self = this;
+      self._addKeyboardEvents();
       self._addPixelEditorCanvasEvents();
+    },
+
+    _addKeyboardEvents: function() {
+      var self = this;
       $(document).bind({
-        keydown: function(event) {
-          self.pressedKeys[event.keyCode] = true;
-          if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
-            // Ctrl-Z or Command-Z: Undo last action
-            self.cellHistory.undo();
-          }
+        "keydown.keyboard": function(event) {
+          Keyboard.pressedKeys[event.keyCode] = true;
         },
-        keyup: function(event) {
-          delete self.pressedKeys[event.keyCode];
+        "keyup.keyboard": function(event) {
+          delete Keyboard.pressedKeys[event.keyCode];
         }
       });
-      $(window).bind({
-        blur: function() {
-          self.stop();
-        }
-      })
+    },
+
+    _removeKeyboardEvents: function() {
+      var self = this;
+      $(document).unbind('.keyboard');
     },
 
     _addPixelEditorCanvasEvents: function() {
       var self = this;
+      $(document).bind({
+        "keydown.pixelEditor": function(event) {
+          if (event.keyCode == 90 && (event.ctrlKey || event.metaKey)) {
+            // Ctrl-Z or Command-Z: Undo last action
+            self.cellHistory.undo();
+          }
+          if (event.keyCode == Keyboard.SHIFT_KEY) {
+            self.currentColorType = 'background';
+          }
+        },
+        "keyup.pixelEditor": function() {
+          self.currentColorType = 'foreground';
+        }
+      })
       self.pixelEditorCanvas.$element.mouseTracker({
-        mouseover: function(event) {
+        "mouseover": function(event) {
           self.start();
         },
-        mouseout: function(event) {
+        "mouseout": function(event) {
           self._unsetCurrentCells();
           self.stop();
           self.redraw();
         },
-        mousedown: function(event) {
+        "mousedown": function(event) {
           self.cellHistory.open();
           event.preventDefault();
         },
-        mouseup: function(event) {
+        "mouseup": function(event) {
           switch (self.currentTool) {
             case "pencil":
-              if (event.rightClick || self.pressedKeys[16]) {
+              if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
                 self._setCurrentCellsToUnfilled();
               } else {
                 self._setCurrentCellsToFilled();
               }
               break;
             case "bucket":
-              if (event.rightClick || self.pressedKeys[16]) {
+              if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
                 self._setCellsLikeCurrentToUnfilled();
               } else {
                 self._setCellsLikeCurrentToFilled();
@@ -390,15 +433,15 @@
         "mousemove": function(event) {
           self._setCurrentCells(self.pixelEditorCanvas.$element.mouseTracker('pos'));
         },
-        mousedragstart: function(event) {
+        "mousedragstart": function(event) {
           self.selectedCells = [];
         },
-        mousedrag: function(event) {
+        "mousedrag": function(event) {
           if (self.currentTool == "pencil") {
             // FIXME: If you drag too fast it will skip some cells!
             // Use the current mouse position and the last mouse position and
             //  fill in or erase cells in between.
-            if (event.rightClick || self.pressedKeys[16]) {
+            if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
               self._setCurrentCellsToUnfilled();
             } else {
               self._setCurrentCellsToFilled();
@@ -417,6 +460,7 @@
     _removePixelEditorCanvasEvents: function() {
       var self = this;
       self.pixelEditorCanvas.$element.mouseTracker('destroy');
+      $(window).unbind('.pixelEditor');
     },
 
     _setCurrentCells: function(mouse) {
@@ -464,7 +508,7 @@
           self.cellHistory.add(cell);
           // Clone so when changing the current color we don't change all cells
           // filled with that color
-          cell.color = self.currentColor.clone();
+          cell.color = self.currentColor().clone();
         })
       }
     },
@@ -490,7 +534,7 @@
         $.v.each(row, function(cell, j) {
           if ((!cell.color && !currentCellColor) || cell.color.isEqual(currentCellColor)) {
             self.cellHistory.add(cell);
-            cell.color = self.currentColor.clone();
+            cell.color = self.currentColor().clone();
           }
         })
       })
@@ -538,9 +582,9 @@
       var self = this;
       var ctx = self.pixelEditorCanvas.ctx;
       var isDragging = self.pixelEditorCanvas.$element.mouseTracker('isDragging');
-      if (self.currentCells && !(isDragging || self.pressedKeys[16]) && self.currentTool == "pencil") {
+      if (self.currentCells && !(isDragging || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) && self.currentTool == "pencil") {
         ctx.save();
-          ctx.fillStyle = 'rgba('+self.currentColor.toRGBString()+',0.5)';
+          ctx.fillStyle = 'rgba('+self.currentColor().toRGBString()+',0.5)';
           $.v.each(self.currentCells, function(cell) {
             ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
           })
