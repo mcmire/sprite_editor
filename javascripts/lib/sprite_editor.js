@@ -406,6 +406,12 @@
           }
         }
       })
+      // Yeah, the whole [...] thing is a quirk in Bonzo
+      $([window]).bind({
+        "blur.pixelEditor": function() {
+          self.stop();
+        }
+      })
     },
 
     _removePixelEditorCanvasEvents: function() {

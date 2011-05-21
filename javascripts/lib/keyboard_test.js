@@ -29,12 +29,14 @@
       }
     }
   });
-  // For some reason bean (or qwery) doesn't support $(window).blur()
-  window.onblur = function(event) {
-    $keyCodeField.attr('value', "");
-    Keyboard.pressedKeys = {};
-    $.v.each(checkboxes, function(key, $box) { $box.removeAttr('checked') });
-  }
+  // Yeah, the whole [...] thing is a quirk in Bonzo
+  $([window]).bind({
+    blur: function(event) {
+      $keyCodeField.attr('value', "");
+      Keyboard.pressedKeys = {};
+      $.v.each(checkboxes, function(key, $box) { $box.removeAttr('checked') });
+    }
+  });
 
   var $keyCodeField = window.$keyCodeField = $('<input type="text" />');
   var $p = $('<p />').html("Key code:").append($keyCodeField);
