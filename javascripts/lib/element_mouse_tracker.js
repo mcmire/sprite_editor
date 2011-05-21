@@ -5,14 +5,17 @@
   //
   // To track the mouse in the context of an element, we can create a new
   // instance of ElementMouseTracker and attach some events to the element.
-  // This is easily done with ElementMouseTracker.bind():
+  // This is easily done with ElementMouseTracker.add():
   //
-  //   ElementMouseTracker.bind($element);
+  //   mouseTracker = ElementMouseTracker.add($element);
+  //
+  // This makes and returns a new instance of ElementMouseTracker.instance.
+  // You can do what you want with it (we store it with the element).
   //
   // You may also pass an option hash to specify callbacks for mouse events
   // which will be called at the appropriate time. An example would be:
   //
-  //   ElementMouseTracker.bind($element, {
+  //   mouseTracker = ElementMouseTracker.add($element, {
   //     mousedragstart: function(event) {
   //       doSomethingBasedOnMousePos(self.pos);
   //     }
@@ -45,15 +48,15 @@
   //     Invoved repeatedly while the mouse is being moved over the element but
   //     not being dragged
   //
-  // Your callback will be passed an event object, and the 'this' object inside
-  // the callback will be set to the ElementMouseTracker instance, so you can
-  // say `this.pos.rel`, for instance, to access the relative mouse coordinates.
+  // Your callback will be passed an event object as though it were a real
+  // event handler.
   //
   // When you no longer need to track the mouse with an element, you'll need
   // to do some cleanup to detach these events. You can do this with
-  // ElementMouseTracker.unbind():
+  // ElementMouseTracker.remove(). Note that you pass the mouse tracker instance
+  // you received from ElementMouseTracker.add() instead of the element:
   //
-  //   ElementMouseTracker.unbind($element);
+  //   ElementMouseTracker.remove(mouseTracker);
   //
   var ElementMouseTracker = {
     instances: [],
@@ -92,10 +95,14 @@
 
     destroy: function() {
       var self = this;
-      $(document).unbind(".ElementMouseTracker")
+      $(document).unbind([
+        "mouseup.ElementMouseTracker",
+        "mousemove.ElementMouseTracker"
+      ].join(" "));
+      self.debugDiv().hide();
     },
 
-    bind: function($element, options) {
+    add: function($element, options) {
       var self = this;
 
       if (self.instances.length == 0) self.init();
@@ -106,21 +113,18 @@
       return instance;
     },
 
-    unbind: function($element) {
+    remove: function(instance) {
       var self = this;
 
-      var index;
-      // forEach doesn't let you break out of the loop?!?
-      for (var i=0; i<self.instances.length; i++) {
-        var instance = self.instances[i];
-        if (instance.$element == $element) {
-          index = i;
-          break;
-        }
-      }
-
+      var index = $.v.indexOf(self.instances, instance);
       instance.destroy();
       self.instances.splice(index, 1); // remove at index
+      if (self.activeInstance.mouseWithin == instance) {
+        delete self.activeInstance.mouseWithin;
+      }
+      if (self.activeInstance.mouseHeldWithin == instance) {
+        delete self.activeInstance.mouseHeldWithin;
+      }
 
       if (self.instances.length == 0) self.destroy();
     },
@@ -148,20 +152,6 @@
       var instances = [self.activeInstance.mouseHeldWithin, self.activeInstance.mouseWithin];
       return $.v(instances).chain().compact().uniq().value();
     }
-
-    /*
-    _trigger: function(/* eventName1, eventName2, ..., event *\/) {
-      var self = this;
-      var eventNames = Array.prototype.slice(arguments);
-      var event = eventNames.pop();
-      var instances = [self.activeInstance.mouseHeldWithin, self.activeInstance.mouseWithin];
-      $.v(instances).chain().compact().uniq().each(function(instance) {
-        $.v.each(eventNames, function(eventName) {
-          instance.trigger.call(instance, eventName, event);
-        })
-      })
-    }
-    */
   };
   window.ElementMouseTracker = ElementMouseTracker;
 
@@ -169,23 +159,6 @@
     ElementMouseTracker.instance.prototype.init.apply(this, arguments);
   }
   ElementMouseTracker.instance.prototype = {
-    /*
-    $element: null,
-    options: {},
-    customEvents: {},
-
-    pos: {
-      abs: {x: null, y: null},
-      rel: {x: null, y: null}
-    },
-    isDown: false,
-    downAt: {
-      abs: {x: null, y: null},
-      rel: {x: null, y: null}
-    },
-    isDragging: false,
-    */
-
     init: function($element, options) {
       var self = this;
 
@@ -369,7 +342,15 @@
 
     _removeEvents: function() {
       var self = this;
-      self.$element.unbind(".ElementMouseTracker");
+      self.$element.unbind([
+        "mouseover.ElementMouseTracker",
+        "mouseout.ElementMouseTracker",
+        "mouseenter.ElementMouseTracker",
+        "mouseleave.ElementMouseTracker",
+        "mousedown.ElementMouseTracker",
+        "click.ElementMouseTracker",
+        "contextmenu.ElementMouseTracker"
+      ].join(" "));
     },
 
     _distance: function(v1, v2) {
@@ -378,19 +359,21 @@
   }
 
   $.ender({
-    mouseTracker: function(options) {
+    mouseTracker: function() {
       var mouseTracker;
       if (this.data('mouseTracker')) {
         mouseTracker = this.data('mouseTracker');
-      } else {
-        mouseTracker = ElementMouseTracker.bind(this, arguments[0]);
+      } else if ($.v.is.obj(arguments[0])) {
+        mouseTracker = ElementMouseTracker.add(this, arguments[0]);
         this.data('mouseTracker', mouseTracker);
       }
 
       if (typeof arguments[0] == 'string') {
         if (arguments[0] == 'destroy') {
-          ElementMouseTracker.unbind(this);
+          ElementMouseTracker.remove(mouseTracker);
           this.data('mouseTracker', null);
+        } else if (arguments[0] == '__instance__') {
+          return mouseTracker;
         } else {
           var value = mouseTracker[arguments[0]];
           if (typeof value == 'function') {

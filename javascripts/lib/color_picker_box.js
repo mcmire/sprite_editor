@@ -16,8 +16,9 @@
       y: null
     },
 
-    init: function($parent) {
+    init: function($parent, options) {
       var self = this;
+      self.options = options;
 
       self.$container = $('<div class="square_color_picker dialog" />').hide();
 
@@ -25,24 +26,33 @@
       self._addLightnessDiv();
       self._addColorFields();
       self._addColorSample();
+      self._addCloseButton();
 
       return self;
     },
 
-    open: function() {
+    open: function(color) {
       var self = this;
+
+      if (self.options.open) self.options.open();
+
       self.$container.show();
       self.$container.center();
+
+      self.currentColor = color;
       self._setColorFields();
       self._positionHueSatSelectorFromColor();
       self._positionLightnessSelectorFromColor();
       self._setColorSample();
+
       self._addEvents();
     },
 
-    destroy: function() {
+    close: function() {
       var self = this;
+      self.$container.hide();
       self._removeEvents();
+      if (self.options.close) self.options.close();
     },
 
     _addHueSatDiv: function() {
@@ -147,6 +157,17 @@
       self.$container.append(self.$colorSampleDiv);
     },
 
+    _addCloseButton: function() {
+      var self = this;
+      var $p = $('<p class="clear" style="text-align: center; margin-top: 30px" />');
+      self.$closeButton = $('<a href="#" />').html("Close box");
+      self.$closeButton.bind('click', function() {
+        self.close();
+      })
+      $p.append(self.$closeButton);
+      self.$container.append($p);
+    },
+
     _addEvents: function() {
       var self = this;
       self.$hueSatDiv.mouseTracker({
@@ -171,7 +192,9 @@
     },
 
     _removeEvents: function() {
-      self.$hueSatDiv.trackMouse('destroy');
+      var self = this;
+      self.$hueSatDiv.mouseTracker('destroy');
+      self.$lightnessDiv.mouseTracker('destroy');
     },
 
     _setColorFields: function() {

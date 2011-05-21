@@ -153,7 +153,7 @@
       self._createColorPickerBox();
       self._createPreviewBox();
       self._addEvents();
-      self.redraw();
+      //self.redraw();
 
       return self;
     },
@@ -255,28 +255,29 @@
 
       var $fgColorSampleDiv = $('<div class="color_sample" />');
       $fgColorSampleDiv.css("background-color", "rgb("+self.currentFgColor.toRGBString()+")");
+      $fgColorSampleDiv.bind('click', function() {
+        self.colorPickerBox.open(self.currentFgColor);
+      })
       $boxDiv.append($fgColorSampleDiv);
 
       var $bgColorSampleDiv = $('<div class="color_sample" />');
       $bgColorSampleDiv.css("background-color", "rgb("+self.currentBgColor.toRGBString()+")");
+      $bgColorSampleDiv.bind('click', function() {
+        self.colorPickerBox.open(self.currentBgColor);
+      })
       $boxDiv.append($bgColorSampleDiv);
 
-      //self.colorPickerBox = SpriteEditor.ColorPickerBox.init($boxDiv);
-      //$boxDiv.append(self.colorPickerBox.$container);
-    },
-
-    _openColorPickerBox: function() {
-      var self = this;
-      self._removePixelEditorCanvasEvents();
-      self._showMask();
-      self.colorPickerBox.open();
-    },
-
-    _closeColorPickerBox: function() {
-      var self = this;
-      self.colorPickerBox.close();
-      self._hideMask();
-      self._addPixelEditorCanvasEvents();
+      self.colorPickerBox = SpriteEditor.ColorPickerBox.init($boxDiv, {
+        open: function() {
+          self._removePixelEditorCanvasEvents();
+          //self._showMask();
+        },
+        close: function() {
+          //self._hideMask();
+          self._addPixelEditorCanvasEvents();
+        }
+      });
+      $(document.body).append(self.colorPickerBox.$container);
     },
 
     _createPreviewBox: function() {
@@ -378,7 +379,10 @@
 
     _removeKeyboardEvents: function() {
       var self = this;
-      $(document).unbind('.keyboard');
+      $(document).unbind([
+        'keydown.keyboard',
+        'keyup.keyboard'
+      ].join(" "));
     },
 
     _addPixelEditorCanvasEvents: function() {
@@ -431,7 +435,8 @@
           event.preventDefault();
         },
         "mousemove": function(event) {
-          self._setCurrentCells(self.pixelEditorCanvas.$element.mouseTracker('pos'));
+          var mouse = self.pixelEditorCanvas.$element.mouseTracker('pos');
+          self._setCurrentCells(mouse);
         },
         "mousedragstart": function(event) {
           self.selectedCells = [];
@@ -447,10 +452,10 @@
               self._setCurrentCellsToFilled();
             }
           }
-        }
+        }//,
+        //debug: true
       })
-      // Yeah, the whole [...] thing is a quirk in Bonzo
-      $([window]).bind({
+      $(window).bind({
         "blur.pixelEditor": function() {
           self.stop();
         }
@@ -459,8 +464,14 @@
 
     _removePixelEditorCanvasEvents: function() {
       var self = this;
+      $(document).unbind([
+        'keydown.pixelEditor',
+        'keyup.pixelEditor'
+      ].join(" "));
+      // XXX: The issue now is that when we re-initialize the mouse tracker,
+      // the events do not seem to get bound correctly
       self.pixelEditorCanvas.$element.mouseTracker('destroy');
-      $(window).unbind('.pixelEditor');
+      $(window).unbind('blur.pixelEditor');
     },
 
     _setCurrentCells: function(mouse) {
@@ -629,6 +640,11 @@
     _showMask: function() {
       var self = this;
       self.$maskDiv.show();
+    },
+
+    _hideMask: function() {
+      var self = this;
+      self.$maskDiv.hide();
     }
   });
   window.SpriteEditor = SpriteEditor;
