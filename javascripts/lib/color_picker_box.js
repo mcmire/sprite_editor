@@ -10,11 +10,6 @@
     hueSatCanvas: null,
     lightnessCanvas: null,
     colorFields: {},
-    currentMouse: {
-      isDown: false,
-      x: null,
-      y: null
-    },
 
     init: function(options) {
       var self = this;
@@ -170,6 +165,14 @@
 
     _addEvents: function() {
       var self = this;
+      $(document).bind({
+        "keyup.ColorPickerBox": function(event) {
+          var key = event.keyCode;
+          if (key == Keyboard.ESC_KEY) {
+            self.close();
+          }
+        }
+      })
       self.$hueSatDiv.mouseTracker({
         'mousedown mousedrag': function() {
           self._positionHueSatSelectorFromMouse();
@@ -195,6 +198,7 @@
 
     _removeEvents: function() {
       var self = this;
+      $(document).unbind("keyup.ColorPickerBox");
       self.$hueSatDiv.mouseTracker('destroy');
       self.$lightnessDiv.mouseTracker('destroy');
     },
