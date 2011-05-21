@@ -1,39 +1,35 @@
 (function(window, document, $, undefined) {
 
-  var Keyboard = {
-    SHIFT_KEY: 16,
-    CTRL_KEY: 17,
-    ALT_KEY: 18,
-    META_KEY: 91,
-
-    pressedKeys: {}
-  }
-
   var checkboxes = {};
 
   $(document).bind({
     keydown: function(event) {
       var key = event.keyCode;
       $keyCodeField.attr('value', key);
-      Keyboard.pressedKeys[key] = true;
-      if (key in checkboxes) checkboxes[key].attr('checked', 'checked');
-      event.preventDefault();
+      if (key in checkboxes) {
+        checkboxes[key].attr('checked', 'checked');
+      }
+      // Cancel keystrokes (most importantly tab) except for key combinations
+      // that consist of a modifier key + another key so that we can press
+      // Command-R (for instance) to refresh the page
+      if ($.v.indexOf(Keyboard.modifierKeys, key) == -1 && !Keyboard.modifierKeyPressed(event)) {
+        event.preventDefault();
+      }
     },
     keyup: function(event) {
       var key = event.keyCode;
       $keyCodeField.attr('value', "");
-      delete Keyboard.pressedKeys[key];
-      if (key in checkboxes) checkboxes[key].removeAttr('checked');
+      if (key in checkboxes) {
+        checkboxes[key].removeAttr('checked');
+      }
       if ($.v.keys(Keyboard.pressedKeys).length == 0) {
         $.v.each(checkboxes, function(key, $box) { $box.removeAttr('checked') })
       }
     }
   });
-  // Yeah, the whole [...] thing is a quirk in Bonzo
-  $([window]).bind({
+  $(window).bind({
     blur: function(event) {
       $keyCodeField.attr('value', "");
-      Keyboard.pressedKeys = {};
       $.v.each(checkboxes, function(key, $box) { $box.removeAttr('checked') });
     }
   });

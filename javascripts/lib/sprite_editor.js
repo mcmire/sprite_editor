@@ -102,16 +102,6 @@
     }
   };
 
-  var Keyboard = {
-    SHIFT_KEY: 16,
-    CTRL_KEY: 17,
-    ALT_KEY: 18,
-    META_KEY: 91,
-    Z_KEY: 90,
-
-    pressedKeys: {}
-  };
-
   $.extend(SpriteEditor, {
     $container: null,
     $leftPane: null,
@@ -362,28 +352,8 @@
 
     _addEvents: function() {
       var self = this;
-      self._addKeyboardEvents();
+      Keyboard.init();
       self._addPixelEditorCanvasEvents();
-    },
-
-    _addKeyboardEvents: function() {
-      var self = this;
-      $(document).bind({
-        "keydown.keyboard": function(event) {
-          Keyboard.pressedKeys[event.keyCode] = true;
-        },
-        "keyup.keyboard": function(event) {
-          delete Keyboard.pressedKeys[event.keyCode];
-        }
-      });
-    },
-
-    _removeKeyboardEvents: function() {
-      var self = this;
-      $(document).unbind([
-        'keydown.keyboard',
-        'keyup.keyboard'
-      ].join(" "));
     },
 
     _addPixelEditorCanvasEvents: function() {
