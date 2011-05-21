@@ -21,8 +21,8 @@ body {
   z-index: 1;
   width: 100%;
   height: 100%;
-  background-color: black;
-  opacity: 0.2;
+  background-color: white;
+  opacity: 0.3;
 }
 
 canvas {
@@ -210,6 +210,9 @@ input[type="submit"], input[type="button"], select {
   }
   .color_sample:last-child {
     margin-right: 0;
+  }
+  .color_sample.selected {
+    border: 2px solid black;
   }
 }
 

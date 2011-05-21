@@ -114,6 +114,10 @@
     pixelEditorCanvas: null,
     pixelGridCanvas: null,
     previewCanvas: null,
+    colorSampleDivs: {
+      foreground: null,
+      background: null,
+    },
     currentCell: null,
     cells: [],
     currentColor: {
@@ -237,7 +241,7 @@
       var $header = $("<h3/>").html("Color");
       $boxDiv.append($header);
 
-      var colorSampleDivs = $.v.reduce(["foreground", "background"], function(hash, colorType) {
+      self.colorSampleDivs = $.v.reduce(["foreground", "background"], function(hash, colorType) {
         var $div = $('<div class="color_sample" />');
         $div.bind({
           click: function() {
@@ -254,6 +258,8 @@
         return hash;
       }, {});
 
+      self._selectColorType(self.currentColor.type);
+
       self.colorPickerBox = SpriteEditor.ColorPickerBox.init({
         open: function() {
           self._removePixelEditorCanvasEvents();
@@ -265,10 +271,17 @@
           self.currentColor.beingEdited = null;
         },
         change: function(color) {
-          colorSampleDivs[self.currentColor.beingEdited].trigger('update');
+          self.colorSampleDivs[self.currentColor.beingEdited].trigger('update');
         }
       });
       $(document.body).append(self.colorPickerBox.$container);
+    },
+
+    _selectColorType: function(colorType) {
+      var self = this;
+      self.colorSampleDivs[self.currentColor.type].removeClass('selected');
+      self.currentColor.type = colorType;
+      self.colorSampleDivs[colorType].addClass('selected');
     },
 
     _createPreviewBox: function() {
@@ -365,11 +378,11 @@
             // Ctrl-Z or Command-Z: Undo last action
             self.cellHistory.undo();
           } else if (key == Keyboard.SHIFT_KEY) {
-            self.currentColor.type = 'background';
+            self._selectColorType('background');
           }
         },
         "keyup.pixelEditor": function() {
-          self.currentColor.type = 'foreground';
+          self._selectColorType('foreground');
         }
       })
       self.pixelEditorCanvas.$element.mouseTracker({
@@ -439,8 +452,6 @@
         'keydown.pixelEditor',
         'keyup.pixelEditor'
       ].join(" "));
-      // XXX: The issue now is that when we re-initialize the mouse tracker,
-      // the events do not seem to get bound correctly
       self.pixelEditorCanvas.$element.mouseTracker('destroy');
       $(window).unbind('blur.pixelEditor');
     },
