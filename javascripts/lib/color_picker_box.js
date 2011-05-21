@@ -185,7 +185,7 @@
     _positionHueSatSelectorFromMouse: function() {
       var self = this;
       // This 5 here is just a value I found matches up with the center of the selector image
-      var mouse = self.$hueSatDiv.mouseTracker('getPosition').rel;
+      var mouse = self.$hueSatDiv.mouseTracker('pos').rel;
       var top = mouse.y - 5;
       var left = mouse.x - 5;
       self.$hueSatSelectorDiv.css("background-position", left+"px "+top+"px");
@@ -193,7 +193,7 @@
 
     _positionLightnessSelectorFromMouse: function() {
       var self = this;
-      var mouse = self.$lightnessDiv.mouseTracker('getPosition').rel;
+      var mouse = self.$lightnessDiv.mouseTracker('pos').rel;
       // This 5 here is just a value I found matches up with the center of the selector image
       var top = mouse.y - 5;
       self.$lightnessDiv.css("background-position", "0px "+top+"px");
@@ -240,7 +240,7 @@
     },
     _px2sat: function() {
       var self = this;
-      var pos = self.$hueSatDiv.mouseTracker('getPosition').rel;
+      var pos = self.$hueSatDiv.mouseTracker('pos').rel;
       var y = pos.y;
       var h = self.hueSatCanvasSize.height;
       // y = 0..height -> s = 100..0
@@ -258,7 +258,7 @@
     },
     _px2hue: function() {
       var self = this;
-      var pos = self.$hueSatDiv.mouseTracker('getPosition').rel;
+      var pos = self.$hueSatDiv.mouseTracker('pos').rel;
       var x = pos.x;
       var w = self.hueSatCanvasSize.width;
       var h = Math.round((360 * x) / w);
@@ -275,7 +275,7 @@
     },
     _px2lit: function() {
       var self = this;
-      var pos = self.$lightnessDiv.mouseTracker('getPosition').rel;
+      var pos = self.$lightnessDiv.mouseTracker('pos').rel;
       var y = pos.y;
       var h = self.lightnessCanvasSize.height;
       // y = 0..height -> l = 100..0

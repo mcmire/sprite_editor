@@ -254,10 +254,6 @@
       }
     },
 
-    getPosition: function() {
-      return this.pos;
-    },
-
     mousemove: function(event) {
       var self = this;
 
@@ -395,10 +391,15 @@
         if (arguments[0] == 'destroy') {
           ElementMouseTracker.unbind(this);
           this.data('mouseTracker', null);
-        } else if (typeof mouseTracker[arguments[0]] === 'function') {
-          return mouseTracker[arguments[0]].apply( mouseTracker, Array.prototype.slice.call(arguments, 1) );
         } else {
-          throw "Couldn't find function '"+arguments[0]+"'!"
+          var value = mouseTracker[arguments[0]];
+          if (typeof value == 'function') {
+            return value.apply( mouseTracker, Array.prototype.slice.call(arguments, 1) );
+          } else if (typeof value != 'undefined') {
+            return value;
+          } else {
+            throw "'"+arguments[0]+"' is not a property of ElementMouseTracker!"
+          }
         }
       }
 

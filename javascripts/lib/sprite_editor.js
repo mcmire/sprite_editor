@@ -387,8 +387,8 @@
           self.cellHistory.close();
           event.preventDefault();
         },
-        mousemove: function(event) {
-          self._setCurrentCells(self.pixelEditorCanvas.$element.mouseTracker('getPosition'));
+        "mousemove": function(event) {
+          self._setCurrentCells(self.pixelEditorCanvas.$element.mouseTracker('pos'));
         },
         mousedragstart: function(event) {
           self.selectedCells = [];
@@ -531,7 +531,8 @@
     _highlightCurrentCells: function() {
       var self = this;
       var ctx = self.pixelEditorCanvas.ctx;
-      if (self.currentCells && !(self.mouse.dragging || self.pressedKeys[16]) && self.currentTool == "pencil") {
+      var isDragging = self.pixelEditorCanvas.$element.mouseTracker('isDragging');
+      if (self.currentCells && !(isDragging || self.pressedKeys[16]) && self.currentTool == "pencil") {
         ctx.save();
           ctx.fillStyle = 'rgba('+self.currentColor.toRGBString()+',0.5)';
           $.v.each(self.currentCells, function(cell) {
