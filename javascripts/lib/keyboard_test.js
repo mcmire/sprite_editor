@@ -1,8 +1,8 @@
-(function(window, document, $, _, undefined) {
+(function(window, document, $, undefined) {
 
   var pressedKeys = {};
 
-  bean.add(window, {
+  $(document).bind({
     keydown: function(event) {
       keyCodeField.value = event.keyCode;
       if (event.shiftKey) shiftCheckbox.checked = true;
@@ -14,7 +14,7 @@
     keyup: function(event) {
       keyCodeField.value = "";
       delete pressedKeys[event.keyCode];
-      if (_.keys(pressedKeys).length == 0) {
+      if ($.v.keys(pressedKeys).length == 0) {
         shiftCheckbox.checked = false;
         altCheckbox.checked   = false;
         ctrlCheckbox.checked  = false;
@@ -22,14 +22,14 @@
       }
     }
   })
-  
+
   var p = document.createElement("p");
     p.innerHTML += "Key code:"
     var keyCodeField = document.createElement("input")
       keyCodeField.type = "text";
     p.appendChild(keyCodeField);
   document.body.appendChild(p);
-  
+
   var p = document.createElement("p");
     var label = document.createElement("label");
       label.innerHTML += "shift";
@@ -37,21 +37,21 @@
         shiftCheckbox.type = "checkbox";
       label.appendChild(shiftCheckbox);
     p.appendChild(label);
-    
+
     var label = document.createElement("label");
       label.innerHTML += "alt";
       var altCheckbox = document.createElement("input");
         altCheckbox.type = "checkbox";
       label.appendChild(altCheckbox);
     p.appendChild(label);
-    
+
     var label = document.createElement("label");
       label.innerHTML += "ctrl";
       var ctrlCheckbox = document.createElement("input");
         ctrlCheckbox.type = "checkbox";
       label.appendChild(ctrlCheckbox);
     p.appendChild(label);
-    
+
     var label = document.createElement("label");
       label.innerHTML += "meta";
       var metaCheckbox = document.createElement("input");
@@ -59,5 +59,5 @@
       label.appendChild(metaCheckbox);
     p.appendChild(label);
   document.body.appendChild(p);
-  
-})(window, window.document, window.$, window._);
+
+})(window, window.document, window.ender);
