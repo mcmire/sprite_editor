@@ -337,6 +337,8 @@
       })
     },
 
+    // TODO: when the paint bucket tool is selected, hide the brush sizes box
+    // and set the brush size to 1
     _createBrushSizesBox: function() {
       var self = this;
 
@@ -477,7 +479,7 @@
           i1 = Math.floor(y1 / self.cellSize),
           i2 = Math.floor(y2 / self.cellSize);
       // Now that we have a bounding box of pixels, enumerate through all
-      // pixels in this bounding box
+      // pixels in this bounding box and add them to the set of current cells
       for (var i=i1; i<=i2; i++) {
         for (var j=j1; j<=j2; j++) {
           var row = self.cells[i];
@@ -525,7 +527,7 @@
       // and mark them as filled with the current color
       $.v.each(self.cells, function(row, i) {
         $.v.each(row, function(cell, j) {
-          if ((!cell.color && !currentCellColor) || cell.color.isEqual(currentCellColor)) {
+          if ((!currentCellColor && !cell.color) || (cell.color && cell.color.isEqual(currentCellColor))) {
             self.cellHistory.add(cell);
             cell.color = self.currentColor[self.currentColor.type].clone();
           }
