@@ -75,4 +75,4 @@ vertical-align: middle;
 #preview_box canvas { border: 1px solid rgba(255, 0, 0, 0.3); margin-left: auto; margin-right: auto; }
 #preview_box canvas:nth-child(2) { margin-bottom: 20px; }
 
-#save_and_load { margin-bottom: 10px; }
+#import_export { margin-bottom: 10px; }

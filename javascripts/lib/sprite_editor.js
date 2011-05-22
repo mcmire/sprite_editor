@@ -143,7 +143,7 @@
       self._createMask();
       self._initCells();
       self._createWrapperDivs();
-      self._createSaveAndLoadDiv();
+      self._createImportExportDiv();
       self._createPixelGridCanvas();
       self._createPixelEditorCanvas();
       self._createToolBox();
@@ -481,10 +481,10 @@
       })
     },
 
-    _createSaveAndLoadDiv: function() {
+    _createImportExportDiv: function() {
       var self = this;
-      var $saveAndLoadDiv = $('<div id="save_and_load" />');
-      var $form = $('<form action="/" method="post"><button>Save</button></form>');
+      var $importExportDiv = $('<div id="import_export" />');
+      var $form = $('<form action="/" method="post"><button>Export PNG</button></form>');
       $form.bind('submit', function() {
         $form.find('input').remove(); // in case user presses back button and re-submits
         var data = self.previewCanvas.element.toDataURL("image/png");
@@ -492,8 +492,8 @@
         var $input = $('<input name="data" type="hidden" />').val(data);
         $form.append($input);
       })
-      $saveAndLoadDiv.append($form);
-      self.$centerPane.append($saveAndLoadDiv);
+      $importExportDiv.append($form);
+      self.$centerPane.append($importExportDiv);
     },
 
     _setCurrentCells: function(mouse) {
