@@ -177,6 +177,114 @@
       return self;
     },
 
+    _addEvents: function() {
+      var self = this;
+      Keyboard.init();
+      self._addPixelEditorCanvasEvents();
+
+      $(document).bind({
+        "keydown.colorBox": function(event) {
+          var key = event.keyCode;
+          if (key == Keyboard.X_KEY) {
+            self._switchForegroundAndBackgroundColor();
+          }
+        }
+      })
+    },
+
+    _removeEvents: function() {
+      var self = this;
+      self._removePixelEditorCanvasEvents();
+      $(document).unbind("keydown.colorBox");
+    },
+
+    _addPixelEditorCanvasEvents: function() {
+      var self = this;
+      $(document).bind({
+        "keydown.pixelEditor": function(event) {
+          var key = event.keyCode;
+          if (key == Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
+            // Ctrl-Z or Command-Z: Undo last action
+            self.cellHistory.undo();
+          } else if (key == Keyboard.SHIFT_KEY) {
+            self._selectColorType('background');
+          }
+        },
+        "keyup.pixelEditor": function() {
+          self._selectColorType('foreground');
+        }
+      })
+      self.pixelEditorCanvas.$element.mouseTracker({
+        "mouseover": function(event) {
+          self.start();
+        },
+        "mouseout": function(event) {
+          self._unsetCurrentCells();
+          self.stop();
+          self.redraw();
+        },
+        "mousedown": function(event) {
+          self.cellHistory.open();
+          event.preventDefault();
+        },
+        "mouseup": function(event) {
+          switch (self.currentTool) {
+            case "pencil":
+              if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
+                self._setCurrentCellsToUnfilled();
+              } else {
+                self._setCurrentCellsToFilled();
+              }
+              break;
+            case "bucket":
+              if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
+                self._setCellsLikeCurrentToUnfilled();
+              } else {
+                self._setCellsLikeCurrentToFilled();
+              }
+              break;
+          }
+          self.cellHistory.close();
+          event.preventDefault();
+        },
+        "mousemove": function(event) {
+          var mouse = self.pixelEditorCanvas.$element.mouseTracker('pos');
+          self._setCurrentCells(mouse);
+        },
+        "mousedragstart": function(event) {
+          self.selectedCells = [];
+        },
+        "mousedrag": function(event) {
+          if (self.currentTool == "pencil") {
+            // FIXME: If you drag too fast it will skip some cells!
+            // Use the current mouse position and the last mouse position and
+            //  fill in or erase cells in between.
+            if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
+              self._setCurrentCellsToUnfilled();
+            } else {
+              self._setCurrentCellsToFilled();
+            }
+          }
+        }//,
+        //debug: true
+      })
+      $(window).bind({
+        "blur.pixelEditor": function() {
+          self.stop();
+        }
+      })
+    },
+
+    _removePixelEditorCanvasEvents: function() {
+      var self = this;
+      $(document).unbind([
+        'keydown.pixelEditor',
+        'keyup.pixelEditor'
+      ].join(" "));
+      self.pixelEditorCanvas.$element.mouseTracker('destroy');
+      $(window).unbind('blur.pixelEditor');
+    },
+
     _initCells: function() {
       var self = this;
       for (var i=0; i<self.heightInCells; i++) {
@@ -370,114 +478,6 @@
           grid.$element.trigger('click');
         }
       })
-    },
-
-    _addEvents: function() {
-      var self = this;
-      Keyboard.init();
-      self._addPixelEditorCanvasEvents();
-
-      $(document).bind({
-        "keydown.colorBox": function(event) {
-          var key = event.keyCode;
-          if (key == Keyboard.X_KEY) {
-            self._switchForegroundAndBackgroundColor();
-          }
-        }
-      })
-    },
-
-    _removeEvents: function() {
-      var self = this;
-      self._removePixelEditorCanvasEvents();
-      $(document).unbind("keydown.colorBox");
-    },
-
-    _addPixelEditorCanvasEvents: function() {
-      var self = this;
-      $(document).bind({
-        "keydown.pixelEditor": function(event) {
-          var key = event.keyCode;
-          if (key == Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
-            // Ctrl-Z or Command-Z: Undo last action
-            self.cellHistory.undo();
-          } else if (key == Keyboard.SHIFT_KEY) {
-            self._selectColorType('background');
-          }
-        },
-        "keyup.pixelEditor": function() {
-          self._selectColorType('foreground');
-        }
-      })
-      self.pixelEditorCanvas.$element.mouseTracker({
-        "mouseover": function(event) {
-          self.start();
-        },
-        "mouseout": function(event) {
-          self._unsetCurrentCells();
-          self.stop();
-          self.redraw();
-        },
-        "mousedown": function(event) {
-          self.cellHistory.open();
-          event.preventDefault();
-        },
-        "mouseup": function(event) {
-          switch (self.currentTool) {
-            case "pencil":
-              if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
-                self._setCurrentCellsToUnfilled();
-              } else {
-                self._setCurrentCellsToFilled();
-              }
-              break;
-            case "bucket":
-              if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
-                self._setCellsLikeCurrentToUnfilled();
-              } else {
-                self._setCellsLikeCurrentToFilled();
-              }
-              break;
-          }
-          self.cellHistory.close();
-          event.preventDefault();
-        },
-        "mousemove": function(event) {
-          var mouse = self.pixelEditorCanvas.$element.mouseTracker('pos');
-          self._setCurrentCells(mouse);
-        },
-        "mousedragstart": function(event) {
-          self.selectedCells = [];
-        },
-        "mousedrag": function(event) {
-          if (self.currentTool == "pencil") {
-            // FIXME: If you drag too fast it will skip some cells!
-            // Use the current mouse position and the last mouse position and
-            //  fill in or erase cells in between.
-            if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
-              self._setCurrentCellsToUnfilled();
-            } else {
-              self._setCurrentCellsToFilled();
-            }
-          }
-        }//,
-        //debug: true
-      })
-      $(window).bind({
-        "blur.pixelEditor": function() {
-          self.stop();
-        }
-      })
-    },
-
-    _removePixelEditorCanvasEvents: function() {
-      var self = this;
-      $(document).unbind([
-        'keydown.pixelEditor',
-        'keyup.pixelEditor'
-      ].join(" "));
-      self.pixelEditorCanvas.$element.mouseTracker('destroy');
-      $(window).unbind('blur.pixelEditor');
     },
 
     _setCurrentCells: function(mouse) {
