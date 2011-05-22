@@ -143,6 +143,7 @@
       self._createMask();
       self._initCells();
       self._createWrapperDivs();
+      self._createSaveAndLoadDiv();
       self._createPixelGridCanvas();
       self._createPixelEditorCanvas();
       self._createToolBox();
@@ -478,6 +479,21 @@
           grid.$element.trigger('click');
         }
       })
+    },
+
+    _createSaveAndLoadDiv: function() {
+      var self = this;
+      var $saveAndLoadDiv = $('<div id="save_and_load" />');
+      var $form = $('<form action="/" method="post"><button>Save</button></form>');
+      $form.bind('submit', function() {
+        $form.find('input').remove(); // in case user presses back button and re-submits
+        var data = self.previewCanvas.element.toDataURL("image/png");
+        data = data.replace(/^data:image\/png;base64,/, "");
+        var $input = $('<input name="data" type="hidden" />').val(data);
+        $form.append($input);
+      })
+      $saveAndLoadDiv.append($form);
+      self.$centerPane.append($saveAndLoadDiv);
     },
 
     _setCurrentCells: function(mouse) {
