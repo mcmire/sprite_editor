@@ -43,7 +43,7 @@
       self.actual = {x: x, y: y};
       self.enlarged = {x: x*editor.cellSize, y: y*editor.cellSize};
     },
-    key: function() {
+    coords: function() {
       var self = this;
       return [self.actual.x, self.actual.y].join(",")
     },
@@ -85,8 +85,8 @@
     add: function(cell) {
       var self = this;
       cell = cell.clone();
-      if (!(cell.key() in self.currentEvent.hash)) {
-        self.currentEvent.hash[cell.key()] = cell;
+      if (!(cell.coords() in self.currentEvent.hash)) {
+        self.currentEvent.hash[cell.coords()] = cell;
         self.currentEvent.array.push(cell);
       }
     },
