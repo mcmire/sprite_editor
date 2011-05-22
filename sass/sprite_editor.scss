@@ -238,7 +238,7 @@ input[type="submit"], input[type="button"], select {
     z-index: 10;
   }
   .hue_sat_selector {
-    background-image: url(../images/color_picker_hue_sat_selector.gif);
+    background-image: url(/images/color_picker_hue_sat_selector.gif);
     background-repeat: no-repeat;
     z-index: 10;
     cursor: crosshair;
@@ -246,7 +246,7 @@ input[type="submit"], input[type="button"], select {
   .lightness_div {
     float: right;
     margin-left: 10px;
-    background-image: url(../images/color_picker_lightness_selector.gif);
+    background-image: url(/images/color_picker_lightness_selector.gif);
     background-repeat: no-repeat;
   }
   .lightness_canvas {

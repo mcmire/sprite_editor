@@ -1,8 +1,11 @@
 source :rubygems
 
-gem 'serve'
+gem 'sinatra', '1.1.4'
 gem 'compass', '0.11.beta.2'
-gem 'rb-fsevent'
-gem 'guard-shell'
-gem 'guard-livereload'
-gem 'jasmine'
+
+group :development do
+  gem 'rb-fsevent'
+  gem 'guard-shell'
+  gem 'guard-livereload'
+  gem 'jasmine'
+end
