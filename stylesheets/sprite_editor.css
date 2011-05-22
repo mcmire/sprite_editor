@@ -65,8 +65,8 @@ vertical-align: middle;
 .square_color_picker .hue_sat_div { float: left; position: relative; }
 .square_color_picker .hue_sat_canvas, .square_color_picker .hue_sat_selector { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
 .square_color_picker .hue_sat_canvas { z-index: 10; }
-.square_color_picker .hue_sat_selector { background-image: url(/images/color_picker_hue_sat_selector.gif); background-repeat: no-repeat; z-index: 10; cursor: crosshair; }
-.square_color_picker .lightness_div { float: right; margin-left: 10px; background-image: url(/images/color_picker_lightness_selector.gif); background-repeat: no-repeat; }
+.square_color_picker .hue_sat_selector { background-image: url(../images/color_picker_hue_sat_selector.gif); background-repeat: no-repeat; z-index: 10; cursor: crosshair; }
+.square_color_picker .lightness_div { float: right; margin-left: 10px; background-image: url(../images/color_picker_lightness_selector.gif); background-repeat: no-repeat; }
 .square_color_picker .lightness_canvas { position: relative; left: 11px; cursor: row-resize; }
 .square_color_picker .color_fields, .square_color_picker .color_sample { margin-top: 10px; }
 .square_color_picker .color_fields { clear: both; float: left; }
