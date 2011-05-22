@@ -237,7 +237,7 @@
     _positionLightnessSelectorFromColor: function() {
       var self = this;
       var top = self._lit2px();
-      self.$lightnessDiv.css("background-position", "0 0");
+      self.$lightnessDiv.css("background-position", "0px "+top+"px");
     },
 
     _setHueAndSatFromSelectorPosition: function() {
