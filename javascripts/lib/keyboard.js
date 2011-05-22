@@ -7,6 +7,7 @@
     CTRL_KEY: 17,
     ALT_KEY: 18,
     META_KEY: 91,
+    X_KEY: 88,
     Z_KEY: 90,
 
     pressedKeys: {},

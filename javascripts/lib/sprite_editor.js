@@ -262,12 +262,12 @@
 
       self.colorPickerBox = SpriteEditor.ColorPickerBox.init({
         open: function() {
-          self._removePixelEditorCanvasEvents();
+          self._removeEvents();
           self._showMask();
         },
         close: function() {
           self._hideMask();
-          self._addPixelEditorCanvasEvents();
+          self._addEvents();
           self.currentColor.beingEdited = null;
         },
         change: function(color) {
@@ -282,6 +282,15 @@
       self.colorSampleDivs[self.currentColor.type].removeClass('selected');
       self.currentColor.type = colorType;
       self.colorSampleDivs[colorType].addClass('selected');
+    },
+
+    _switchForegroundAndBackgroundColor: function() {
+      var self = this;
+      var tmp = self.currentColor.foreground;
+      self.currentColor.foreground = self.currentColor.background;
+      self.currentColor.background = tmp;
+      self.colorSampleDivs.foreground.trigger('update');
+      self.colorSampleDivs.background.trigger('update');
     },
 
     _createPreviewBox: function() {
@@ -327,7 +336,6 @@
         $li.append($img);
         $ul.append($li);
 
-        // For some reason this doesn't work right if we just use click()... bug??
         $img.bind('click', function() {
           self.currentTool = tool;
           $imgs.removeClass("selected");
@@ -353,7 +361,6 @@
         var grid = Grid.create(self, self.cellSize*brushSize, self.cellSize*brushSize);
         $grids.push(grid.element);
         $boxDiv.append(grid.$element);
-        // For some reason this doesn't work right if we just use click()... bug??
         grid.$element.bind('click', function() {
           self.currentBrushSize = brushSize;
           $grids.removeClass("selected");
@@ -369,6 +376,21 @@
       var self = this;
       Keyboard.init();
       self._addPixelEditorCanvasEvents();
+
+      $(document).bind({
+        "keydown.colorBox": function(event) {
+          var key = event.keyCode;
+          if (key == Keyboard.X_KEY) {
+            self._switchForegroundAndBackgroundColor();
+          }
+        }
+      })
+    },
+
+    _removeEvents: function() {
+      var self = this;
+      self._removePixelEditorCanvasEvents();
+      $(document).unbind("keydown.colorBox");
     },
 
     _addPixelEditorCanvasEvents: function() {
