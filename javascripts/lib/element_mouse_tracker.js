@@ -77,7 +77,7 @@
       // user moves the mouse outside of the canvas.
       //
       $(document).bind({
-        "mouseup.ElementMouseTracker": function() {
+        "mouseup.ElementMouseTracker": function(event) {
           $.v.each(self.activeInstances(), function(inst) { inst.triggerHandler('mouseup', event) });
           var inst = self.activeInstance.mouseHeldWithin;
           if (inst && inst.isDragging) inst.triggerHandler('mousedragstop');
