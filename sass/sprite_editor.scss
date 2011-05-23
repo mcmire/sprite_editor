@@ -282,3 +282,6 @@ input[type="submit"], input[type="button"], select {
 #import_export {
   margin-bottom: 10px;
 }
+#import, #export {
+  display: inline;
+}

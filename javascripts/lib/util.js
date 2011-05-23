@@ -15,13 +15,15 @@
       for (var prop in props) {
         if (props.hasOwnProperty(prop)) {
           if ((prop in obj) && typeof obj[prop] == "function") {
-            var _super = obj[prop],
-                _new   = props[prop];
-            obj[prop] = function() {
-              var args = Array.prototype.slice.call(arguments);
-              args.unshift(_super);
-              return _new.apply(obj, args);
-            }
+            (function() {
+              var _super = obj[prop],
+                  _new   = props[prop];
+              obj[prop] = function() {
+                var args = Array.prototype.slice.call(arguments);
+                args.unshift(_super);
+                return _new.apply(obj, args);
+              }
+            })()
           } else {
             obj[prop] = props[prop];
           }

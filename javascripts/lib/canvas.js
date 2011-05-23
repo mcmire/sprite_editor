@@ -13,6 +13,11 @@
     return c;
   }
   Canvas.Context = {
+    getImageData: function(_super, x, y, width, height) {
+      var imageData = _super.call(this, x, y, width, height);
+      $.extend(imageData, Canvas.ImageData);
+      return imageData;
+    },
     createImageData: function(_super, width, height) {
       var imageData = _super.call(this, width, height);
       $.extend(imageData, Canvas.ImageData);
@@ -20,8 +25,20 @@
     }
   };
   Canvas.ImageData = {
-    // http://beej.us/blog/2010/02/html5s-canvas-part-ii-pixel-manipulation/
-    fillPixel: function(x, y, r, g, b, a) {
+    // Adapted from:
+    // <http://beej.us/blog/2010/02/html5s-canvas-part-ii-pixel-manipulation/>
+
+    getPixel: function(x, y) {
+      var index = (x + y * this.width) * 4;
+      return {
+        red: this.data[index+0],
+        green: this.data[index+1],
+        blue: this.data[index+2],
+        alpha: this.data[index+3]
+      }
+    },
+
+    setPixel: function(x, y, r, g, b, a) {
       var index = (x + y * this.width) * 4;
       this.data[index+0] = r;
       this.data[index+1] = g;

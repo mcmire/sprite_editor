@@ -78,7 +78,7 @@
             var h = Math.round(x * (360 / c.width));
             var s = Math.round(y * (-100 / c.height) + 100);
             color = self.currentColor.withHSL({hue: h, saturation: s});
-            imageData.fillPixel(x, y, color.red, color.green, color.blue, 255);
+            imageData.setPixel(x, y, color.red, color.green, color.blue, 255);
           }
         }
         c.ctx.putImageData(imageData, 0, 0);
@@ -123,7 +123,7 @@
         var l = Math.round((-100 / c.height) * y + 100);
         color = self.currentColor.withHSL({lightness: l});
         for (var x=0; x<c.width; x++) {
-          imageData.fillPixel(x, y, color.red, color.green, color.blue, 255);
+          imageData.setPixel(x, y, color.red, color.green, color.blue, 255);
         }
       }
       c.ctx.putImageData(imageData, 0, 0);

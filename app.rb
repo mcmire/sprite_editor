@@ -7,12 +7,12 @@ get "/?" do
 end
 
 post "/?" do
-  body = Base64.decode64(params[:data])
-  [200, {
+  status 200
+  headers \
     "Content-Type" => "image/png",
-    "Content-Length" => Rack::Utils.bytesize(body),
+    "Content-Length" => Rack::Utils.bytesize(params[:data]),
     "Content-Disposition" => "attachment; filename=image.png"
-  }, body]
+  body Base64.decode64(params[:data])
 end
 
 get "/keyboard_test/?" do

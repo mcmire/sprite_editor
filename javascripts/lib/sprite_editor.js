@@ -38,8 +38,8 @@
     init: function(editor, x, y) {
       var self = this;
       self.editor = editor;
-      self.j = x;
-      self.i = y;
+      self.x = x;
+      self.y = y;
       self.actual = {x: x, y: y};
       self.enlarged = {x: x*editor.cellSize, y: y*editor.cellSize};
     },
@@ -97,7 +97,7 @@
       var self = this;
       var cells = self.events.pop();
       $.v.each(cells, function(cell) {
-        self.editor.cells[cell.i][cell.j] = cell;
+        self.editor.cells[cell.x][cell.y] = cell;
       })
     }
   };
@@ -484,15 +484,113 @@
     _createImportExportDiv: function() {
       var self = this;
       var $importExportDiv = $('<div id="import_export" />');
-      var $form = $('<form action="/" method="post"><button>Export PNG</button></form>');
-      $form.bind('submit', function() {
-        $form.find('input').remove(); // in case user presses back button and re-submits
+
+      var $importDiv = $('<div id="import" />');
+      var $importErrorSpan = $('<span id="import_error" style="display: none" />');
+      var $importFileInput = $('<input type="file" style="position: absolute; top: -10000px; left: -10000px" />');
+      var $importFileButton = $('<button>Import PNG</button>');
+      $importFileButton.bind('click', function() {
+        // Make the file chooser pop up
+        $importFileInput.trigger('click');
+      })
+      $importFileInput.bind('change', function(event)
+      {
+        // We'd like to handle the uploaded file asynchronously. Conventionally
+        // we'd use Ajax and an iframe to do this, but this is always been sort
+        // of a hack in my opinion. Fortunately, this is 2011 and we now have
+        // support for the W3C File API in at least two of the major browsers
+        // (Firefox 3.6 and Chrome 6 -- not sure about the others).
+        //
+        // As you can see the following solution is unbelievably clean. The
+        // first thing is that file inputs now have a #files method which is an
+        // array of File objects corresponding to the files that the user
+        // uploaded (it's an array in case the file input had a "multiple"
+        // property). Each File object has properties like `type`, `size`, etc.
+        // We use these to make sure the user is uploading small PNGs.
+        //
+        // The second thing is the FileReader class which can be used to read
+        // data from File objects. One of its methods is #readAsDataURL, which
+        // returns a data: URI that corresponds to the image data. How does that
+        // help? Well, remember that the `src` attribute of an <img> accepts a
+        // URL (it doesn't matter what format). So we simply make a new <img>
+        // tag and feed it the data: URI.
+        //
+        // So that's great, but we need to get that image and map it onto the
+        // pixel editor, so how do we do that? Well, remember that Canvas
+        // lets us draw an image element using the #drawImage method. So
+        // first we make a new Canvas (with the same width and height as the
+        // image) and do exactly that. That gets us an actual size version of
+        // the image in canvas form, but we need to update the enlarged version
+        // (the canvas that the user will actually interact with, with the
+        // pixels). So the final step in the importing process is to read the
+        // pixel data from this temporary canvas (using #createImageData and
+        // #getPixelData) and fill in the cells in the enlarged canvas manually.
+        //
+        // If you want more info about the HTML File API, see:
+        //
+        // * <http://demos.hacks.mozilla.org/openweb/uploadingFiles/>
+        // * <http://www.html5rocks.com/tutorials/file/dndfiles/>
+        // * <http://dev.w3.org/2006/webapi/FileAPI/>
+        //
+        var input = $importFileInput[0];
+        var file = input.files[0];
+        var error = "";
+        if (!file) {
+          error = "Please select a file."
+        } else if (!file.type || file.type != "image/png") {
+          // file.type will be empty if the type couldn't be detected
+          error = "Sorry, you can only import PNGs."
+        } else if (file.size > 1000) {
+          error = "Sorry, the image you're trying to export is too big."
+        }
+        if (error) {
+          $importErrorSpan.html(error).show();
+        } else {
+          $importErrorSpan.hide();
+          var reader = new FileReader();
+          reader.onload = function(event) {
+            var img = document.createElement("img");
+            img.src = event.target.result;
+
+            // We *could* update the preview canvas here, but it already gets
+            // updated automatically when redraw() is called.
+            //
+            var c = Canvas.create(img.width, img.height);
+            c.ctx.drawImage(img, 0, 0);
+            var imageData = c.ctx.getImageData(0, 0, img.width, img.height);
+            for (var x=0; x<img.width; x++) {
+              for (var y=0; y<img.height; y++) {
+                var color = imageData.getPixel(x, y);
+                // transparent black means the pixel wasn't set
+                if (color.red != 0 && color.green != 0 && color.blue != 0 && color.alpha != 0) {
+                  self.cells[y][x].color = Color.fromRGB(color.red, color.green, color.blue);
+                }
+              }
+            }
+            self.redraw();
+          }
+          reader.readAsDataURL(file);
+        }
+      })
+      $importDiv.append($importErrorSpan);
+      $importDiv.append($importFileInput);
+      $importDiv.append($importFileButton);
+      $importExportDiv.append($importDiv);
+
+      // XXX: Getting an error in the Chrome console when the form is submitted:
+      //
+      //   POST http://localhost:5005/ undefined (undefined)
+      //
+      // I'm not sure what this means??
+      //
+      var $exportForm = $('<form id="export" action="/" method="POST"><input name="data" type="hidden" /><button type="submit">Export PNG</button></form>');
+      $exportForm.bind('submit', function() {
         var data = self.previewCanvas.element.toDataURL("image/png");
         data = data.replace(/^data:image\/png;base64,/, "");
-        var $input = $('<input name="data" type="hidden" />').val(data);
-        $form.append($input);
+        $exportForm.find('input').val(data);
       })
-      $importExportDiv.append($form);
+      $importExportDiv.append($exportForm);
+
       self.$centerPane.append($importExportDiv);
     },
 
@@ -635,7 +733,7 @@
             if (cell.color) {
               c.ctx.fillStyle = 'rgb('+cell.color.toRGBString()+')';
               c.ctx.fillRect(cell.enlarged.x+1, cell.enlarged.y+1, self.cellSize-1, self.cellSize-1);
-              pc.imageData.fillPixel(cell.actual.x, cell.actual.y, cell.color.red, cell.color.green, cell.color.blue, 255);
+              pc.imageData.setPixel(cell.actual.x, cell.actual.y, cell.color.red, cell.color.green, cell.color.blue, 255);
             }
           })
         })

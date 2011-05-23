@@ -76,3 +76,5 @@ vertical-align: middle;
 #preview_box canvas:nth-child(2) { margin-bottom: 20px; }
 
 #import_export { margin-bottom: 10px; }
+
+#import, #export { display: inline; }
