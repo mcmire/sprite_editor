@@ -1,34 +1,40 @@
-# sprite editor *(to be renamed)*
+# sprite editor
 
-Making pixels fun to work with... since about a week ago.
+## What is this?
+
+For the [Canvas-based RPG game](http://github.com/mcmire/rpg) that [@levicole](http://github.com/levicole) and I are working on, we needed a way to create images for sprites and background tiles. The thing is, most image editors really aren't that great at editing pixels. We needed something that was 1) simple and 2) fast. So why not a simple little tool that runs in the browser?
+
+## Before you get started
+
+Bundler is being used to load the few dependencies this app has at runtime, so you'll want to make sure you have that installed. You shouldn't have to install the dependencies themselves, though -- in the spirit of [vendor everything](http://ryan.mcgeary.org/2011/02/09/vendor-everything-still-applies/), all the gems that this app requires are cached in `vendor/cache`. Is this a magic folder? No, and in fact the first time you try to run the app you'll probably get LoadErrors because Bundler won't see your gems. So you'll need to do this:
+
+    bundle install --path vendor
+
+That will populate `.bundle/config` with the `--path` option you just passed, so from now on Bundler will use this when loading gems.
+
+Note that because we're using a custom gem path, you'll need to prefix all commands with `bundle exec`.
 
 ## Running
 
-All the gems that this app requires are cached in `vendor/cache`, so you shouldn't have to install anything.
+In order for the load image functionality to work, this app has to be backed by a web server. We're just using Sinatra, so to boot the app all you have to say is:
 
-You'll need to launch a web server to run the app itself. Technically, you don't need to do this, but the app makes Ajax requests to itself and this only works if it's being run through a web server (otherwise you get a same-origin violation). To do this, run:
+    bundle exec rackup -p PORT
 
-    bundle exec serve PORT
-
-Now visit http://localhost:PORT.
+Now visit <http://localhost:PORT>, and you're off to the races.
 
 ## Developing
 
-Sass is being used for stylesheets (but of course). [Guard](http://github.com/guard/guard) gives you a way to regenerate CSS files when you update corresponding Sass files. So, simply run:
+The only thing you really need to know is that Sass is being used for stylesheets. To play nice with Sinatra, CSS files are generated and stored in the repo. It would be a pain to do this manually, so [Guard](http://github.com/guard/guard) monitors the `sass/` directory, and when you update a Sass file, the corresponding CSS file is generated. So, before you start writing code, simply run:
 
     bundle exec guard
-
-Now, develop away!
 
 ## Architecture
 
 Except for a few images, the sprite editor is built entirely using Javascript, CSS, and the HTML5 Canvas API.
 
-As mentioned before, [Sass](http://sass-lang.org) is being used to generate CSS.
+One thing you need to know is that instead of using jQuery, we've opted to use a collection of microframeworks, packaged together using [Ender](http://ender.no.de). Probably this is not totally necessary, as I haven't bother to optimize the sprite editor yet, but I think the idea Ender brings to the table is pretty neat, so I'm trying it out. While working with several modules is a bit more cumbersome, the reduced size of these microframeworks compared to jQuery is very encouraging (as an example, our package measures 70kb compared to jQuery 1.5.2, which is 221kb!).
 
-As for the Javascript, instead of using jQuery, I've opted to use a collection of microframeworks, packaged together using [Ender](http://ender.no.de). Probably this is not totally necessary, as I haven't bother to optimize the sprite editor yet, but I think the idea Ender brings to the table is pretty neat, so I'm trying it out. While working with several modules is a bit more cumbersome, the reduced size of these microframeworks compared to jQuery is very encouraging (as an example, our package measures 70kb compared to jQuery 1.5.2, which is 221kb!).
-
-The concatened version of the package we are using is located at javascripts/ender.js for you to inspect. It's important to note that these modules approximate, but don't exactly match, the jQuery API. You'll want to read up on each one. Here's the module list:
+The concatened version of the package we are using is located at javascripts/ender.js for you to inspect. It's important to note that these modules approximate, but don't exactly match, the jQuery API. You'll want to read up on each one. Here's the full list of modules in our package:
 
 * [domReady](http://github.com/ded/domready) - A cross-browser domReady. With Ender, this is available as `$.domReady(function() { ... })`.
 * [Bonzo](http://github.com/ded/bonzo) + [Qwery](http://github.com/ded/qwery) - A DOM utility library and DOM selector engine. With Ender, you can say e.g. `$('div > p).hide()`, `$('<div />).attr("id", "foo")`, etc.
