@@ -55,51 +55,185 @@
     }
   })
 
+  // CellHistory is responsible for storing the state history of cells in
+  // the pixel grid, and for providing the undo/redo functionality by
+  // applying different states of the history to the pixel grid.
+  //
+  // The different states of the grid in time is kept in an array, where each
+  // element in the array is a Cell object. Reversing and restoring history is
+  // actually a little complicated. To achieve this, there are two pointers into
+  // the history array we keep track of: currentIndex and nextIndex.
+  // Here we show how this works by giving a example session.
+  //
+  //   initial {
+  //     [ (nil) ]
+  //         ^.. nextIndex
+  //   <-- currIndex (nil)
+  //   }
+  //
+  //   new state {
+  //     # The previous state of the pixel grid (which is actually just empty
+  //     # versions of the cells which have been changed) is saved as state 1
+  //     # ("empty"). nextIndex is incremented, and currIndex is set to nextIndex.
+  //     [ empty, (nil) ]
+  //                ^.. nextIndex
+  //                ^.. currIndex
+  //   }
+  //
+  //   undo {
+  //     # The current state is saved as state 2 ("blue"), and "empty" is loaded.
+  //     # nextIndex remains and only currIndex is decremented.
+  //     [ empty, blue, (nil) ]
+  //                ^.. nextIndex
+  //         ^.. currIndex
+  //   }
+  //
+  //   new state {
+  //     # Since currIndex and nextIndex are not equal, the previous state does
+  //     # not need to be saved. Instead, the history array is truncated at
+  //     # nextIndex, and only currIndex is incremented.
+  //     [ empty, (nil) ]
+  //                ^.. nextIndex
+  //                ^.. currIndex
+  //   }
+  //
+  //   new state {
+  //     # The previous state is again saved as state 2 ("blue"), and both
+  //     # nextIndex and currIndex are incremented.
+  //     [ empty, blue, (nil) ]
+  //                      ^.. nextIndex
+  //                      ^.. currIndex
+  //   }
+  //
+  //   undo {
+  //     # The current state is saved as state 3 ("green"), and "blue" is loaded.
+  //     # Again, only currIndex is decremented.
+  //     [ empty, blue, green ]
+  //                      ^.. nextIndex
+  //                ^.. currIndex
+  //   }
+  //
+  //   undo {
+  //     # Since currIndex and nextIndex are not equal, the current state isn't
+  //     # saved. "empty" is loaded, and currIndex and nextIndex are decremented.
+  //     # Also, we can't undo anymore since currIndex is 0.
+  //     [ empty, blue, green ]
+  //                ^.. nextIndex
+  //         ^.. currIndex
+  //   }
+  //
+  //   redo {
+  //     # "blue" is loaded, and currIndex and nextIndex are incremented.
+  //     [ empty, blue, green ]
+  //                      ^.. nextIndex
+  //               ^.. currIndex
+  //   }
+  //
+  //   redo {
+  //     # "green" is loaded, and currIndex and nextIndex are incremented.
+  //     # Also, we can't redo anymore since currIndex == events.length-1.
+  //     [ empty, blue, green, (nil) ]
+  //                             ^.. nextIndex
+  //                      ^.. currIndex
+  //   }
+  //
+  //   new state {
+  //     # Since currIndex and nextIndex are not equal, the previous state does
+  //     # not need to be saved. Instead, the history array is truncated at
+  //     # nextIndex (although that's not strictly necessary), and only
+  //     # currIndex is incremented.
+  //     [ empty, blue, green, (nil) ]
+  //                             ^.. nextIndex
+  //                             ^.. currIndex
+  //   }
+  //
   var CellHistory = {
     fixedSize: 100, // # of actions
     init: function(editor) {
       var self = this;
       self.editor = editor;
-      self.events = [];
-      self.currentEvent = { // Set
-        hash: null,
-        array: null
-      };
+
+      self.states = [];
+      self.workingState = { hash: null, array: null };
+      self.nextIndex = 0;
+      self.currentIndex = null;
+
       return self;
     },
     open: function() {
       var self = this;
-      // Limit history to a fixed size
-      if (self.events.length == self.fixedSize) self.events.shift();
-      self.currentEvent.array = [];
-      self.currentEvent.hash = {};
+      self.workingState.array = [];
+      self.workingState.hash = {};
     },
     close: function() {
       var self = this;
-      if (self.currentEvent.array && self.currentEvent.array.length > 0) {
-        self.events.push(self.currentEvent.array);
+      if (self.workingState.array && self.workingState.array.length > 0) {
+        // Limit history to a fixed size
+        if (self.states.length == self.fixedSize) self.states.shift();
+        // If the state of the grid was changed following an undo, all history after now is overwritten
+        if (self.currentIndex && self.currentIndex != self.nextIndex) {
+          self.states.length = self.nextIndex;
+        } else {
+          self.states[self.nextIndex] = self.workingState.array;
+          self.nextIndex++;
+        }
+        self.currentIndex = self.nextIndex;
       }
-      self.currentEvent.array = null;
-      self.currentEvent.hash = null;
+      self.workingState.array = null;
+      self.workingState.hash = null;
     },
     add: function(cell) {
       var self = this;
       cell = cell.clone();
-      if (!(cell.coords() in self.currentEvent.hash)) {
-        self.currentEvent.hash[cell.coords()] = cell;
-        self.currentEvent.array.push(cell);
+      // Prevent duplicate entries
+      if (!(cell.coords() in self.workingState.hash)) {
+        self.workingState.hash[cell.coords()] = cell;
+        self.workingState.array.push(cell);
       }
     },
     undo: function() {
-      // Kind of weird to have this here as it kind of violates some sort of
-      // responsibility principle since it's directly editing the editor,
-      // but whatever...
       var self = this;
-      var cells = self.events.pop();
+
+      if (self.currentIndex == self.nextIndex) {
+        // Copy current state of the pixel grid in case user wants to redo
+        var state = [];
+        $.v.each(self.editor.cells, function(i, row) {
+          $.v.each(row, function(j, cell) {
+            state.push(cell.clone());
+          })
+        })
+        self.states[self.nextIndex] = state;
+      }
+
+      var cells = self.states[self.nextIndex-1];
       $.v.each(cells, function(cell) {
-        self.editor.cells[cell.x][cell.y] = cell;
+        self.editor.cells[cell.y][cell.x] = cell;
       })
-    }
+      self.editor.redraw();
+
+      self.currentIndex--;
+      self.nextIndex = self.currentIndex + 1;
+    },
+    canUndo: function() {
+      var self = this;
+      return (typeof self.states[self.nextIndex-1] != "undefined");
+    },
+    redo: function() {
+      var self = this;
+
+      var cells = self.states[self.nextIndex];
+      $.v.each(cells, function(cell) {
+        self.editor.cells[cell.y][cell.x] = cell;
+      })
+      self.editor.redraw();
+
+      self.currentIndex++;
+      self.nextIndex++;
+    },
+    canRedo: function() {
+      var self = this;
+      return (typeof self.states[self.nextIndex] != "undefined");
+    },
   };
 
   $.extend(SpriteEditor, {
@@ -205,8 +339,13 @@
         "keydown.pixelEditor": function(event) {
           var key = event.keyCode;
           if (key == Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
-            // Ctrl-Z or Command-Z: Undo last action
-            self.cellHistory.undo();
+            if (event.shiftKey) {
+              // Ctrl-Shift-Z or Command-Shift-Z: Redo last action
+              if (self.cellHistory.canRedo()) self.cellHistory.redo()
+            } else {
+              // Ctrl-Z or Command-Z: Undo last action
+              if (self.cellHistory.canUndo()) self.cellHistory.undo();
+            }
           } else if (key == Keyboard.SHIFT_KEY) {
             self._selectColorType('background');
           }
@@ -519,7 +658,7 @@
         // pixel editor, so how do we do that? Well, remember that Canvas
         // lets us draw an image element using the #drawImage method. So
         // first we make a new Canvas (with the same width and height as the
-        // image) and do exactly that. That gets us an actual size version of
+        // image) and call this method. That gets us an actual size version of
         // the image in canvas form, but we need to update the enlarged version
         // (the canvas that the user will actually interact with, with the
         // pixels). So the final step in the importing process is to read the
@@ -553,15 +692,14 @@
             img.src = event.target.result;
 
             // We *could* update the preview canvas here, but it already gets
-            // updated automatically when redraw() is called.
-            //
+            // updated automatically when redraw() is called
             var c = Canvas.create(img.width, img.height);
             c.ctx.drawImage(img, 0, 0);
             var imageData = c.ctx.getImageData(0, 0, img.width, img.height);
             for (var x=0; x<img.width; x++) {
               for (var y=0; y<img.height; y++) {
                 var color = imageData.getPixel(x, y);
-                // transparent black means the pixel wasn't set
+                // Transparent black means the pixel wasn't set
                 if (color.red != 0 && color.green != 0 && color.blue != 0 && color.alpha != 0) {
                   self.cells[y][x].color = Color.fromRGB(color.red, color.green, color.blue);
                 }
@@ -637,8 +775,8 @@
       if (self.currentCells) {
         $.v.each(self.currentCells, function(cell) {
           self.cellHistory.add(cell);
-          // Clone so when changing the current color we don't change all cells
-          // filled with that color
+          // Make a copy of the current color object so that if the current
+          // color changes it doesn't change all cells that have that color
           cell.color = self.currentColor[self.currentColor.type].clone();
         })
       }
