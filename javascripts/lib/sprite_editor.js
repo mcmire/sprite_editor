@@ -55,106 +55,112 @@
     }
   })
 
-  // CellHistory is responsible for storing the state history of cells in
-  // the pixel grid, and for providing the undo/redo functionality by
-  // applying different states of the history to the pixel grid.
-  //
-  // The different states of the grid in time is kept in an array, where each
-  // element in the array is a Cell object. Reversing and restoring history is
-  // actually a little complicated. To achieve this, there are two pointers into
-  // the history array we keep track of: currentIndex and nextIndex.
-  // Here we show how this works by giving a example session.
-  //
-  //   initial {
-  //     [ (nil) ]
-  //         ^.. nextIndex
-  //   <-- currIndex (nil)
-  //   }
-  //
-  //   new state {
-  //     # The previous state of the pixel grid (which is actually just empty
-  //     # versions of the cells which have been changed) is saved as state 1
-  //     # ("empty"). nextIndex is incremented, and currIndex is set to nextIndex.
-  //     [ empty, (nil) ]
-  //                ^.. nextIndex
-  //                ^.. currIndex
-  //   }
-  //
-  //   undo {
-  //     # The current state is saved as state 2 ("blue"), and "empty" is loaded.
-  //     # nextIndex remains and only currIndex is decremented.
-  //     [ empty, blue, (nil) ]
-  //                ^.. nextIndex
-  //         ^.. currIndex
-  //   }
-  //
-  //   new state {
-  //     # Since currIndex and nextIndex are not equal, the previous state does
-  //     # not need to be saved. Instead, the history array is truncated at
-  //     # nextIndex, and only currIndex is incremented.
-  //     [ empty, (nil) ]
-  //                ^.. nextIndex
-  //                ^.. currIndex
-  //   }
-  //
-  //   new state {
-  //     # The previous state is again saved as state 2 ("blue"), and both
-  //     # nextIndex and currIndex are incremented.
-  //     [ empty, blue, (nil) ]
-  //                      ^.. nextIndex
-  //                      ^.. currIndex
-  //   }
-  //
-  //   undo {
-  //     # The current state is saved as state 3 ("green"), and "blue" is loaded.
-  //     # Again, only currIndex is decremented.
-  //     [ empty, blue, green ]
-  //                      ^.. nextIndex
-  //                ^.. currIndex
-  //   }
-  //
-  //   undo {
-  //     # Since currIndex and nextIndex are not equal, the current state isn't
-  //     # saved. "empty" is loaded, and currIndex and nextIndex are decremented.
-  //     # Also, we can't undo anymore since currIndex is 0.
-  //     [ empty, blue, green ]
-  //                ^.. nextIndex
-  //         ^.. currIndex
-  //   }
-  //
-  //   redo {
-  //     # "blue" is loaded, and currIndex and nextIndex are incremented.
-  //     [ empty, blue, green ]
-  //                      ^.. nextIndex
-  //               ^.. currIndex
-  //   }
-  //
-  //   redo {
-  //     # "green" is loaded, and currIndex and nextIndex are incremented.
-  //     # Also, we can't redo anymore since currIndex == events.length-1.
-  //     [ empty, blue, green, (nil) ]
-  //                             ^.. nextIndex
-  //                      ^.. currIndex
-  //   }
-  //
-  //   new state {
-  //     # Since currIndex and nextIndex are not equal, the previous state does
-  //     # not need to be saved. Instead, the history array is truncated at
-  //     # nextIndex (although that's not strictly necessary), and only
-  //     # currIndex is incremented.
-  //     [ empty, blue, green, (nil) ]
-  //                             ^.. nextIndex
-  //                             ^.. currIndex
-  //   }
-  //
+ /*!
+  * CellHistory is responsible for storing the version history of cells in
+  * the pixel grid, and for providing the undo/redo functionality by
+  * applying different versions of the history to the pixel grid.
+  *
+  * The different versions of the grid in time is kept in an array, where each
+  * element in the array is a Cell object. Reversing and restoring history is
+  * actually a little complicated. To achieve this, there are two pointers into
+  * the history array we keep track of: currIndex and nextIndex.
+  * Here we show how they're used by giving a example workflow a user might have.
+  *
+  *   initial {
+  *     # The initial state of the grid, where all cells are transparent,
+  *     # is represented by an empty array. nextIndex is 0 and currIndex is nil.
+  *     [ (nil) ]
+  *         ^.. nextIndex
+  *   <-- currIndex
+  *   }
+  *
+  *   new version {
+  *     # Let's say the user changes some of the cells to blue. The cells that
+  *     # have been changed are saved as version 1 -- we'll call it "blue" for
+  *     # short. currIndex points to this version, and nextIndex points to
+  *     # the next one.
+  *     [ blue, (null) ]
+  *               ^.. nextIndex
+  *         ^.. currIndex
+  *   }
+  *
+  *   undo {
+  *     # The user undoes the changes, reverting the grid back to all transparent.
+  *     # Note that the "blue" version remains in the history. currIndex is set
+  *     # back to nil, and nextIndex points to the "blue" version.
+  *     [ blue, (null) ]
+  *        ^.. nextIndex
+  *     <-- currIndex
+  *   }
+  *
+  *   new version {
+  *     # Let's say the user fills in some different cells with green. The
+  *     # "blue" version will be overwritten since nextIndex points to it.
+  *     # currIndex is again set to 0 and nextIndex points to the next one.
+  *     [ green, (nil) ]
+  *                ^.. nextIndex
+  *         ^.. currIndex
+  *   }
+  *
+  *   new version {
+  *     # The user fills in some different cells with red. This version is saved
+  *     # as version 2 ("red") and both currIndex and nextIndex are incremented.
+  *     [ green, red, (nil) ]
+  *                      ^.. nextIndex
+  *               ^.. currIndex
+  *   }
+  *
+  *   undo {
+  *     # currIndex and nextIndex are decremented, and since currIndex points
+  *     # to the "green" version, that one is loaded.
+  *     [ green, red ]
+  *               ^.. nextIndex
+  *         ^.. currIndex
+  *   }
+  *
+  *   undo {
+  *     # nextIndex is decremented, and since currIndex is 0, it's set to nil.
+  #     # And since it's nil, the grid is cleared, and we can't undo anymore.
+  *     [ green, red ]
+  *         ^.. nextIndex
+  *     <-- currIndex
+  *   }
+  *
+  *   redo {
+  *     # Let's say the user decides they want to restore history now.
+  *     # nextIndex is incremented, and since currIndex is nil, it's set to 0.
+  *     # It's now pointing to the "green" version, so that's loaded.
+  *     [ green, red ]
+  *               ^.. nextIndex
+  *         ^.. currIndex
+  *   }
+  *
+  *   redo {
+  *     # currIndex and nextIndex are both incremented, and the "red" version
+  *     # is loaded. Also, note we can't redo anymore since nextIndex points
+  *     # to the last element in the array.
+  *     [ green, red, (nil) ]
+  *                     ^.. nextIndex
+  *               ^.. currIndex
+  *   }
+  *
+  *   new version {
+  *     # Finally, the user fills in some cells with blue again. This gets added
+  *     # to the history, and currIndex and nextIndex are incremented.
+  *     [ green, red, blue, (nil) ]
+  *                           ^.. nextIndex
+  *                    ^.. currIndex
+  *   }
+  *
+  */
   var CellHistory = {
     fixedSize: 100, // # of actions
     init: function(editor) {
       var self = this;
       self.editor = editor;
 
-      self.states = [];
-      self.workingState = { hash: null, array: null };
+      self.versions = [];
+      self.workingVersion = { hash: null, array: null };
       self.nextIndex = 0;
       self.currentIndex = null;
 
@@ -162,50 +168,50 @@
     },
     open: function() {
       var self = this;
-      self.workingState.array = [];
-      self.workingState.hash = {};
+      self.workingVersion.array = [];
+      self.workingVersion.hash = {};
     },
     close: function() {
       var self = this;
-      if (self.workingState.array && self.workingState.array.length > 0) {
+      if (self.workingVersion.array && self.workingVersion.array.length > 0) {
         // Limit history to a fixed size
-        if (self.states.length == self.fixedSize) self.states.shift();
-        // If the state of the grid was changed following an undo, all history after now is overwritten
+        if (self.versions.length == self.fixedSize) self.versions.shift();
+        // If the version of the grid was changed following an undo, all history after now is overwritten
         if (self.currentIndex && self.currentIndex != self.nextIndex) {
-          self.states.length = self.nextIndex;
+          self.versions.length = self.nextIndex;
         } else {
-          self.states[self.nextIndex] = self.workingState.array;
+          self.versions[self.nextIndex] = self.workingVersion.array;
           self.nextIndex++;
         }
         self.currentIndex = self.nextIndex;
       }
-      self.workingState.array = null;
-      self.workingState.hash = null;
+      self.workingVersion.array = null;
+      self.workingVersion.hash = null;
     },
     add: function(cell) {
       var self = this;
       cell = cell.clone();
       // Prevent duplicate entries
-      if (!(cell.coords() in self.workingState.hash)) {
-        self.workingState.hash[cell.coords()] = cell;
-        self.workingState.array.push(cell);
+      if (!(cell.coords() in self.workingVersion.hash)) {
+        self.workingVersion.hash[cell.coords()] = cell;
+        self.workingVersion.array.push(cell);
       }
     },
     undo: function() {
       var self = this;
 
       if (self.currentIndex == self.nextIndex) {
-        // Copy current state of the pixel grid in case user wants to redo
-        var state = [];
+        // Copy current version of the pixel grid in case user wants to redo
+        var version = [];
         $.v.each(self.editor.cells, function(i, row) {
           $.v.each(row, function(j, cell) {
-            state.push(cell.clone());
+            version.push(cell.clone());
           })
         })
-        self.states[self.nextIndex] = state;
+        self.versions[self.nextIndex] = version;
       }
 
-      var cells = self.states[self.nextIndex-1];
+      var cells = self.versions[self.nextIndex-1];
       $.v.each(cells, function(cell) {
         self.editor.cells[cell.y][cell.x] = cell;
       })
@@ -216,12 +222,12 @@
     },
     canUndo: function() {
       var self = this;
-      return (typeof self.states[self.nextIndex-1] != "undefined");
+      return (typeof self.versions[self.nextIndex-1] != "undefined");
     },
     redo: function() {
       var self = this;
 
-      var cells = self.states[self.nextIndex];
+      var cells = self.versions[self.nextIndex];
       $.v.each(cells, function(cell) {
         self.editor.cells[cell.y][cell.x] = cell;
       })
@@ -232,7 +238,7 @@
     },
     canRedo: function() {
       var self = this;
-      return (typeof self.states[self.nextIndex] != "undefined");
+      return (typeof self.versions[self.nextIndex] != "undefined");
     },
   };
 
