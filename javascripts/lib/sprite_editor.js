@@ -62,183 +62,188 @@
   *
   * The different versions of the grid in time is kept in an array, where each
   * element in the array is a Cell object. Reversing and restoring history is
-  * actually a little complicated. To achieve this, there are two pointers into
-  * the history array we keep track of: currIndex and nextIndex.
-  * Here we show how they're used by giving a example workflow a user might have.
+  * made possible by keeping track of two pointers into the array:
+  * the index of the current version, and the index of the next version.
   *
-  *   initial {
+  * Here's how the undo functionality works:
+  *
+  *   0. initial {
   *     # The initial state of the grid, where all cells are transparent,
-  *     # is represented by an empty array. nextIndex is 0 and currIndex is nil.
-  *     [ (nil) ]
-  *         ^.. nextIndex
+  *     # is represented by an empty array. nextIndex is 0 and currIndex is -1.
+  *     [ (undefined) ]
+  *            ^.. nextIndex
   *   <-- currIndex
   *   }
   *
-  *   new version {
+  *   1. new version {
   *     # Let's say the user changes some of the cells to blue. The cells that
   *     # have been changed are saved as version 1 -- we'll call it "blue" for
   *     # short. currIndex points to this version, and nextIndex points to
   *     # the next one.
-  *     [ blue, (null) ]
-  *               ^.. nextIndex
+  *     [ blue, (undefined) ]
+  *                  ^.. nextIndex
   *         ^.. currIndex
   *   }
   *
-  *   undo {
-  *     # The user undoes the changes, reverting the grid back to all transparent.
-  *     # Note that the "blue" version remains in the history. currIndex is set
-  *     # back to nil, and nextIndex points to the "blue" version.
-  *     [ blue, (null) ]
-  *        ^.. nextIndex
-  *     <-- currIndex
-  *   }
-  *
-  *   new version {
-  *     # Let's say the user fills in some different cells with green. The
-  *     # "blue" version will be overwritten since nextIndex points to it.
-  *     # currIndex is again set to 0 and nextIndex points to the next one.
-  *     [ green, (nil) ]
-  *                ^.. nextIndex
-  *         ^.. currIndex
-  *   }
-  *
-  *   new version {
-  *     # The user fills in some different cells with red. This version is saved
-  *     # as version 2 ("red") and both currIndex and nextIndex are incremented.
-  *     [ green, red, (nil) ]
-  *                      ^.. nextIndex
+  *   2. new version {
+  *     # Now let's say the user fills in some different cells with green.
+  *     # Version 2 is added -- we'll call it "green". currIndex and nextIndex
+  *     # are also both incremented.
+  *     [ blue, green, (undefined) ]
+  *                         ^.. nextIndex
   *               ^.. currIndex
   *   }
   *
-  *   undo {
-  *     # currIndex and nextIndex are decremented, and since currIndex points
-  *     # to the "green" version, that one is loaded.
-  *     [ green, red ]
-  *               ^.. nextIndex
-  *         ^.. currIndex
+  *   3. new version {
+  *     # Now the user fills in some different cells with red. Version 3 is
+  *     # added, and currIndex and nextIndex are again both incremented.
+  *     [ blue, green, red, (undefined) ]
+  *                              ^.. nextIndex
+  *                     ^.. currIndex
   *   }
   *
-  *   undo {
-  *     # nextIndex is decremented, and since currIndex is 0, it's set to nil.
-  #     # And since it's nil, the grid is cleared, and we can't undo anymore.
-  *     [ green, red ]
-  *         ^.. nextIndex
-  *     <-- currIndex
-  *   }
-  *
-  *   redo {
-  *     # Let's say the user decides they want to restore history now.
-  *     # nextIndex is incremented, and since currIndex is nil, it's set to 0.
-  *     # It's now pointing to the "green" version, so that's loaded.
-  *     [ green, red ]
-  *               ^.. nextIndex
-  *         ^.. currIndex
-  *   }
-  *
-  *   redo {
-  *     # currIndex and nextIndex are both incremented, and the "red" version
-  *     # is loaded. Also, note we can't redo anymore since nextIndex points
-  *     # to the last element in the array.
-  *     [ green, red, (nil) ]
+  *   4. undo {
+  *     # Now for something different: the user wants to undo the red cells
+  *     # he just filled in. The cells filled in the "red" version are cleared,
+  *     # and nextIndex and currIndex are both decremented. Note that the "red"
+  *     # version is still saved, however.
+  *     [ blue, green, red ]
   *                     ^.. nextIndex
   *               ^.. currIndex
   *   }
   *
-  *   new version {
-  *     # Finally, the user fills in some cells with blue again. This gets added
-  *     # to the history, and currIndex and nextIndex are incremented.
-  *     [ green, red, blue, (nil) ]
-  *                           ^.. nextIndex
-  *                    ^.. currIndex
+  *   5. undo {
+  *     # The user undoes a second time: the cells filled in the "green"
+  *     # version are cleared, and nextIndex and currIndex are both decremented.
+  *     # Again, not only is the "red" version still around, but the "green"
+  *     # one is, too.
+  *     [ blue, green, red ]
+  *               ^.. nextIndex
+  *        ^.. currIndex
   *   }
+  *
+  *   6. undo {
+  *     # The user undoes a third time: the cells filled in the "blue"
+  *     # version are cleared, and nextIndex and currIndex are both decremented.
+  *     # Note that the user cannot undo beyond this point, as currIndex is -1.
+  *     [ blue, green, red ]
+  *         ^.. nextIndex
+  *   <-- currIndex
+  *   }
+  *
+  *   6. new version {
+  *     # Now the user decides to make a change by filling in some cells with
+  *     # yellow. At this point, all of the versions saved so far can no longer
+  *     # be kept -- they will have to be overwritten since history has been
+  *     # changed. currIndex is changed to point to the new "yellow" version,
+  *     # and nextIndex follows.
+  *     [ yellow, (undefined) ]
+  *                    ^.. nextIndex
+  *         ^.. currIndex
+  *   }
+  *
+  * Now for the redo functionality:
+  *
+  *   6. redo {
+  *     # Imagine that instead of making a new change as in the last version,
+  *     # the user decides to redo. In this case, the cells in the "blue"
+  *     # version (which nextIndex points to) are applied, and both currIndex
+  *     # and nextIndex get incremented.
+  *     [ blue, green, red ]
+  *               ^.. nextIndex
+  *        ^.. currIndex
+  *   }
+  *
+  *   7. redo {
+  *     # The user redoes a second time. The cells in the "green" version are
+  *     # applied, and both currIndex and nextIndex get incremented.
+  *     [ blue, green, red ]
+  *                     ^.. nextIndex
+  *               ^.. currIndex
+  *   }
+  *
+  *   7. redo {
+  *     # Finally, the user redoes a third time. The cells in the "red" version
+  *     # are applied, and both currIndex and nextIndex get incremented.
+  *     # Note that the user cannot redo past this point, since nextIndex
+  *     # is past the end of the array.
+  *     [ blue, green, red, (undefined) ]
+  *                              ^.. nextIndex
+  *                     ^.. currIndex
+  *   }
+  *
+  * One final thing. Up to this point we've been using two pointers, but if
+  * you look closely, you'll notice that currIndex is always 1 one behind
+  * nextIndex. So it turns out we can take this out, and where we were using
+  * currIndex, we can now use nextIndex-1. So that's what we do below.
   *
   */
   var CellHistory = {
     fixedSize: 100, // # of actions
+
+    versions: [],
+    workingVersion: {},
+    numWorkingCells: 0,
+    nextIndex: 0,
+
     init: function(editor) {
       var self = this;
       self.editor = editor;
-
-      self.versions = [];
-      self.workingVersion = { hash: null, array: null };
-      self.nextIndex = 0;
-      self.currentIndex = null;
-
       return self;
     },
     open: function() {
       var self = this;
-      self.workingVersion.array = [];
-      self.workingVersion.hash = {};
+      self.workingVersion = {};
+      self.numWorkingCells = 0;
     },
     close: function() {
       var self = this;
-      if (self.workingVersion.array && self.workingVersion.array.length > 0) {
+      if (self.numWorkingCells > 0) {
         // Limit history to a fixed size
         if (self.versions.length == self.fixedSize) self.versions.shift();
-        // If the version of the grid was changed following an undo, all history after now is overwritten
-        if (self.currentIndex && self.currentIndex != self.nextIndex) {
-          self.versions.length = self.nextIndex;
-        } else {
-          self.versions[self.nextIndex] = self.workingVersion.array;
-          self.nextIndex++;
-        }
-        self.currentIndex = self.nextIndex;
+        // If the user just performed an undo, all future history which was
+        // saved is now gone - POOF!
+        self.versions.length = self.nextIndex;
+        self.versions[self.nextIndex] = $.v.values(self.workingVersion);
+        self.nextIndex++;
       }
-      self.workingVersion.array = null;
-      self.workingVersion.hash = null;
+      self.workingVersion = {};
+      self.numWorkingCells = 0;
     },
     add: function(cell) {
       var self = this;
-      cell = cell.clone();
-      // Prevent duplicate entries
-      if (!(cell.coords() in self.workingVersion.hash)) {
-        self.workingVersion.hash[cell.coords()] = cell;
-        self.workingVersion.array.push(cell);
-      }
+      self.workingVersion[cell.coords()] = cell.clone();
+      self.numWorkingCells++;
     },
     undo: function() {
       var self = this;
 
-      if (self.currentIndex == self.nextIndex) {
-        // Copy current version of the pixel grid in case user wants to redo
-        var version = [];
-        $.v.each(self.editor.cells, function(i, row) {
-          $.v.each(row, function(j, cell) {
-            version.push(cell.clone());
-          })
-        })
-        self.versions[self.nextIndex] = version;
-      }
-
       var cells = self.versions[self.nextIndex-1];
       $.v.each(cells, function(cell) {
-        self.editor.cells[cell.y][cell.x] = cell;
+        self.editor.cells[cell.y][cell.x].color = null;
       })
       self.editor.redraw();
 
-      self.currentIndex--;
-      self.nextIndex = self.currentIndex + 1;
+      self.nextIndex--;
     },
     canUndo: function() {
       var self = this;
-      return (typeof self.versions[self.nextIndex-1] != "undefined");
+      return (self.nextIndex >= 1);
     },
     redo: function() {
       var self = this;
 
       var cells = self.versions[self.nextIndex];
       $.v.each(cells, function(cell) {
-        self.editor.cells[cell.y][cell.x] = cell;
+        self.editor.cells[cell.y][cell.x] = cell.clone();
       })
       self.editor.redraw();
 
-      self.currentIndex++;
       self.nextIndex++;
     },
     canRedo: function() {
       var self = this;
-      return (typeof self.versions[self.nextIndex] != "undefined");
+      return (self.nextIndex <= self.versions.length-1);
     },
   };
 
@@ -780,10 +785,10 @@
       var self = this;
       if (self.currentCells) {
         $.v.each(self.currentCells, function(cell) {
-          self.cellHistory.add(cell);
           // Make a copy of the current color object so that if the current
           // color changes it doesn't change all cells that have that color
           cell.color = self.currentColor[self.currentColor.type].clone();
+          self.cellHistory.add(cell);
         })
       }
     },
@@ -792,8 +797,8 @@
       var self = this;
       if (self.currentCells) {
         $.v.each(self.currentCells, function(cell) {
-          self.cellHistory.add(cell);
           cell.color = null;
+          self.cellHistory.add(cell);
         })
       }
     },
@@ -808,8 +813,8 @@
       $.v.each(self.cells, function(row, i) {
         $.v.each(row, function(cell, j) {
           if ((!currentCellColor && !cell.color) || (cell.color && cell.color.isEqual(currentCellColor))) {
-            self.cellHistory.add(cell);
             cell.color = self.currentColor[self.currentColor.type].clone();
+            self.cellHistory.add(cell);
           }
         })
       })
@@ -825,8 +830,8 @@
       $.v.each(self.cells, function(row, i) {
         $.v.each(row, function(cell, j) {
           if (cell.color && cell.color.isEqual(currentCellColor)) {
-            self.cellHistory.add(cell);
             cell.color = null;
+            self.cellHistory.add(cell);
           }
         })
       })
