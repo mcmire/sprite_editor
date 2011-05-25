@@ -3,7 +3,7 @@ require 'base64'
 require 'pp'
 
 get "/?" do
-  erb :"index"
+  erb :index
 end
 
 post "/?" do
@@ -16,5 +16,5 @@ post "/?" do
 end
 
 get "/keyboard_test/?" do
-  erb :"keyboard_test"
+  erb :keyboard_test
 end
