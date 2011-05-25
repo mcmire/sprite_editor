@@ -45,6 +45,10 @@
     },
     coords: function() {
       var self = this;
+      return [self.actual.x, self.actual.y].join(",");
+    },
+    coordsAsJson: function() {
+      var self = this;
       return JSON.stringify(self.actual);
     },
     clone: function() {
@@ -110,12 +114,12 @@
     },
     add: function(cell, callback) {
       var self = this;
-      if (cell.coords() in self.workingVersion) return;
+      if (cell.coordsAsJson() in self.workingVersion) return;
       var change = {};
       change['old'] = cell.clone();
       callback();
       change['new'] = cell.clone();
-      self.workingVersion[cell.coords()] = change;
+      self.workingVersion[cell.coordsAsJson()] = change;
       self.numWorkingCells++;
     },
     undo: function() {
