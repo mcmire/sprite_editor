@@ -201,7 +201,8 @@
       self._createColorPickerBox();
       self._createPreviewBox();
       self._addEvents();
-      //self.redraw();
+      self.redraw();
+      self.autoSaveTimer = setInterval(function() { self.save() }, 30000);
 
       return self;
     },
@@ -226,6 +227,17 @@
       var self = this;
       clearInterval(self.timer);
       return self;
+    },
+
+    save: function(){
+      var self = this;
+      localStorage.setItem('pixel_editor.saved', 'true')
+      $.v.each(self.cells, function(row){
+        $.v.each(row, function(cell){
+          var cellJSON = cell.color;
+          localStorage.setItem('cells.'+cell.coords(), JSON.stringify(cellJSON));
+        });
+      })
     },
 
     _addEvents: function() {
@@ -343,10 +355,21 @@
 
     _initCells: function() {
       var self = this;
+      var needsReload = (localStorage.getItem('pixel_editor.saved') == 'true');
       for (var i=0; i<self.heightInCells; i++) {
         var row = self.cells[i] = [];
         for (var j=0; j<self.widthInCells; j++) {
           row[j] = new Cell(self, j, i);
+          if (needsReload){
+            if(localStorage['cells.'+j+','+i] != 'undefined'){
+              var color = JSON.parse(localStorage['cells.'+j+','+i]);
+            } else {
+              var color = null;
+            }
+            if (color && color.red != 0 && color.green != 0 && color.blue != 0 && color.alpha != 0) {
+              row[j].color = Color.fromRGB(color.red, color.green, color.blue).clone();
+            }
+          }
         }
       }
     },
@@ -606,7 +629,7 @@
           reader.onload = function(event) {
             var img = document.createElement("img");
             img.src = event.target.result;
-
+            console.log(img.src);
             // We *could* update the preview canvas here, but it already gets
             // updated automatically when redraw() is called
             var c = Canvas.create(img.width, img.height);
