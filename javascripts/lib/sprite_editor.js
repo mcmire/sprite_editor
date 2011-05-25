@@ -596,7 +596,7 @@
           // file.type will be empty if the type couldn't be detected
           error = "Sorry, you can only import PNGs."
         } else if (file.size > 1000) {
-          error = "Sorry, the image you're trying to export is too big."
+          error = "Sorry, the image you're trying to import is too big."
         }
         if (error) {
           $importErrorSpan.html(error).show();
