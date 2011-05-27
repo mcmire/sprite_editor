@@ -1,63 +1,11 @@
 (function(window, document, $, undefined) {
 
-  // The ElementMouseTracker tracks the mouse in the context of an element,
-  // and also provides a way to hook into dragging events.
-  //
-  // To track the mouse in the context of an element, we can create a new
-  // instance of ElementMouseTracker and attach some events to the element.
-  // This is easily done with ElementMouseTracker.add():
-  //
-  //   mouseTracker = ElementMouseTracker.add($element);
-  //
-  // This makes and returns a new instance of ElementMouseTracker.instance.
-  // You can do what you want with it (we store it with the element).
-  //
-  // You may also pass an option hash to specify callbacks for mouse events
-  // which will be called at the appropriate time. An example would be:
-  //
-  //   mouseTracker = ElementMouseTracker.add($element, {
-  //     mousedragstart: function(event) {
-  //       doSomethingBasedOnMousePos(self.pos);
-  //     }
-  //   });
-  //
-  // The list of possible mouse events not only includes native events and the
-  // extra compatibility events that Bean provides, but also special events
-  // which this class provides which are related to dragging. All of these
-  // callbacks are executed whenever they occur on the element being tracked,
-  // except for mouseup, which is executed on the document level, since we still
-  // want that to occur even if the user's mouse moves outside of the element.
-  // The possible events are:
-  //
-  //   mouseup
-  //   mousedown
-  //   mouseover
-  //   mouseout
-  //   mouseenter
-  //   mouseleave
-  //   mousemove
-  //   mousedragstart
-  //     Invoked the first time the mouse is being dragged, starting from the
-  //     element
-  //   mousedrag
-  //     Invoked repeatedly while the mouse is being dragged within the element
-  //   mousedragstop
-  //     Invoked if the mouse was being dragged and is now released, or when it
-  //     leaves the element
-  //   mouseglide
-  //     Invoved repeatedly while the mouse is being moved over the element but
-  //     not being dragged
-  //
-  // Your callback will be passed an event object as though it were a real
-  // event handler.
-  //
-  // When you no longer need to track the mouse with an element, you'll need
-  // to do some cleanup to detach these events. You can do this with
-  // ElementMouseTracker.remove(). Note that you pass the mouse tracker instance
-  // you received from ElementMouseTracker.add() instead of the element:
-  //
-  //   ElementMouseTracker.remove(mouseTracker);
-  //
+ /*!
+  * The ElementMouseTracker tracks the mouse in the context of an element by
+  * binding events to it and then storing information such as the mouse position
+  * and whether or not the mouse is being dragged within the element. It also
+  * provides a way to hook into dragging events.
+  */
   var ElementMouseTracker = {
     instances: [],
     activeInstance: {
@@ -102,6 +50,50 @@
       self.debugDiv().hide();
     },
 
+   /*!
+    * Starts tracking the mouse in the context of an element.
+    *
+    * We first wrap the given element in an instance of the
+    * ElementMouseTracker.instance class, which takes care of binding
+    * mouse-related event handlers to the element. Since multiple elements may
+    * be bound at the same time, we then store this instance in an array so
+    * that we have access to it later.
+    *
+    * You may specify an option hash to customize the events which are bound
+    * on the element. The list of possible events not only includes native
+    * events and the extra cross-browser-compatible events that Bean provides,
+    * but also special events which are related to dragging. All of these
+    * handlers are executed whenever they occur on the element being tracked,
+    * except for mouseup, which is executed on the document level, as we
+    * still want that to occur even if the user's mouse moves outside of the
+    * element. Here is the full list of events:
+    *
+    *   mouseup
+    *   mousedown
+    *   mouseover
+    *   mouseout
+    *   mouseenter
+    *   mouseleave
+    *   mousemove
+    *   mousedragstart
+    *     Invoked the first time the mouse is being dragged, starting from the
+    *     element
+    *   mousedrag
+    *     Invoked repeatedly while the mouse is being dragged within the element
+    *   mousedragstop
+    *     Invoked if the mouse was being dragged and is now released, or when it
+    *     leaves the element
+    *   mouseglide
+    *     Invoved repeatedly while the mouse is being moved over the element but
+    *     not being dragged
+    *
+    * The custom dragging events are derived from either mousemove or mouseup,
+    * so you still have access to an event object, which will be passed to
+    * your handler function as with the other events.
+    *
+    * Returns the instance of ElementMouseTracker.instance. You'll want to
+    * store this somewhere so you can destroy it later.
+    */
     add: function($element, options) {
       var self = this;
 
@@ -113,6 +105,11 @@
       return instance;
     },
 
+   /*!
+    * Given an instance of ElementMouseTracker.instance previously obtained from
+    * add(), does some cleanup to remove the event handlers from the associated
+    * element and then remove the instance from the instances array.
+    */
     remove: function(instance) {
       var self = this;
 
@@ -342,6 +339,7 @@
 
     _removeEvents: function() {
       var self = this;
+      // Grr, Bean doesn't let you do unbind(".ElementMouseTracker") yet
       self.$element.unbind([
         "mouseover.ElementMouseTracker",
         "mouseout.ElementMouseTracker",
