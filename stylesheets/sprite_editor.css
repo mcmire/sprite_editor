@@ -30,12 +30,12 @@ input[type="submit"], input[type="button"], select { cursor: pointer; }
 
 #center_pane { text-align: center; }
 
-#pixel_editor_canvas { border: 1px solid red; cursor: pointer; display: inline; }
-
 #right_pane { float: right; width: 250px; }
 
 .box { border: 1px solid #333; border-radius: 4px; padding: 20px; /*float: left;*/ overflow: auto; background-color: white; }
 .box h3 { margin: -20px; margin-bottom: 20px; background-color: #333; color: white; padding: 5px 10px; font-size: 15px; text-align: center; }
+
+#working_canvas { border: 1px solid red; cursor: pointer; display: inline; }
 
 #tool_box { width: 130px; overflow: auto; margin-bottom: 20px; }
 #tool_box ul, #tool_box li { list-style-type: none; padding: 0; margin: 0; text-align: center; }

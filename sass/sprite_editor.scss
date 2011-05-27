@@ -107,11 +107,6 @@ input[type="submit"], input[type="button"], select {
 #center_pane {
   text-align: center;
 }
-#pixel_editor_canvas {
-  border: 1px solid red;
-  cursor: pointer;
-  display: inline;
-}
 #right_pane {
   float: right;
   width: 250px;
@@ -134,6 +129,12 @@ input[type="submit"], input[type="button"], select {
     font-size: 15px;
     text-align: center;
   }
+}
+
+#working_canvas {
+  border: 1px solid red;
+  cursor: pointer;
+  display: inline;
 }
 
 #tool_box {
