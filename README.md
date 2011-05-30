@@ -4,29 +4,25 @@
 
 For the [Canvas-based RPG game](http://github.com/mcmire/rpg) that [@levicole](http://github.com/levicole) and I are working on, we needed a way to create images for sprites and background tiles. The thing is, most image editors really aren't that great at editing pixels. We needed something that was 1) simple and 2) fast. So why not a simple little tool that runs in the browser?
 
-## Before you get started
+## Preparation
 
-Bundler is being used to load the few dependencies this app has at runtime, so you'll want to make sure you have that installed. You shouldn't have to install the dependencies themselves, though -- in the spirit of [vendor everything](http://ryan.mcgeary.org/2011/02/09/vendor-everything-still-applies/), all the gems that this app requires are cached in `vendor/cache`. Is this a magic folder? No, and in fact the first time you try to run the app you'll probably get LoadErrors because Bundler won't see your gems. So you'll need to do this:
+Bundler is being used to load the few dependencies this app has at runtime, so you'll want to make sure you have that installed. Then run:
 
-    bundle install --path vendor
-
-That will populate `.bundle/config` with the `--path` option you just passed, so from now on Bundler will use this when loading gems.
-
-Note that because we're using a custom gem path, you'll need to prefix all commands with `bundle exec`.
+    bundle install
 
 ## Running
 
 In order for the load image functionality to work, this app has to be backed by a web server. We're just using Sinatra, so to boot the app all you have to say is:
 
-    bundle exec rackup -p PORT
+    rackup -p PORT
 
 Now visit <http://localhost:PORT>, and you're off to the races.
 
 ## Developing
 
-The only thing you really need to know is that Sass is being used for stylesheets. To play nice with Sinatra, CSS files are generated and stored in the repo. It would be a pain to do this manually, so [Guard](http://github.com/guard/guard) monitors the `sass/` directory, and when you update a Sass file, the corresponding CSS file is generated. So, before you start writing code, simply run:
+Sass is being used for stylesheets. To play nice with Sinatra, CSS files are generated and stored in the repo. It would be a pain to do this manually, so [Guard](http://github.com/guard/guard) monitors the `sass/` directory, and when you update a Sass file, the corresponding CSS file is generated. So, before you start writing code, simply run:
 
-    bundle exec guard
+    guard
 
 ## Architecture
 
@@ -48,6 +44,6 @@ The concatened version of the package we are using is located at javascripts/end
 
 There's a public Pivotal Tracker project here: <https://www.pivotaltracker.com/projects/289453>
 
-## Resources
+## Credits
 
-The HSL part of the color picker was stolen from http://hslpicker.com (source [here](https://github.com/imathis/hsl-color-picker/)). I really like that a lot.
+The HSL part of the color picker was stolen from <http://hslpicker.com> (source [here](https://github.com/imathis/hsl-color-picker/)). I really like that a lot.
