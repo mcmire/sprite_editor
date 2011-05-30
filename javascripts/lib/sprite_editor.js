@@ -155,6 +155,121 @@
     },
   };
 
+  var Tools = {
+    toolNames: ["pencil", "bucket"],
+    init: function(editor, canvases) {
+      var self = this;
+      $.v.each(self.toolNames, function(name) {
+        self[name].init(editor, canvases);
+      })
+      return self;
+    }
+  };
+  Tools.base = {
+    init: function(editor, canvases) {
+      var self = this;
+      self.editor = editor;
+      self.canvases = canvases;
+    },
+    trigger: function(name, event) {
+      var self = this;
+      if (typeof self[name] != "undefined") {
+        self[name](event);
+      }
+    }
+  };
+  Tools.pencil = $.extend({}, Tools.base, {
+    mousedown: function(event) {
+      this._handle(event);
+    },
+    mousedrag: function(event) {
+      this._handle(event);
+    },
+    _handle: function(event) {
+      var self = this;
+      // FIXME: If you drag too fast it will skip some cells!
+      // Use the current mouse position and the last mouse position and
+      //  fill in or erase cells in between.
+      if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
+        self._setCurrentCellsToUnfilled();
+      } else {
+        self._setCurrentCellsToFilled();
+      }
+    },
+    _setCurrentCellsToFilled: function() {
+      var self = this;
+      var cc   = self.editor.currentColor;
+      if (self.canvases.currentCells) {
+        $.v.each(self.canvases.currentCells, function(cell) {
+          self.canvases.cellHistory.add(cell, function() {
+            // Make a copy of the current color object so that if the current
+            // color changes it doesn't change all cells that have that color
+            cell.color = cc[cc.type].clone();
+          })
+        })
+      }
+    },
+    _setCurrentCellsToUnfilled: function() {
+      var self = this;
+      if (self.canvases.currentCells) {
+        $.v.each(self.canvases.currentCells, function(cell) {
+          self.cellHistory.add(cell, function() {
+            cell.color = null;
+          })
+        })
+      }
+    }
+  });
+  Tools.bucket = $.extend({}, Tools.base, {
+    mousedown: function(event) {
+      this._handle(event);
+    },
+    _handle: function(event) {
+      var self = this;
+      if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
+        self._setCellsLikeCurrentToUnfilled();
+      } else {
+        self._setCellsLikeCurrentToFilled();
+      }
+    },
+    _setCellsLikeCurrentToFilled: function() {
+      var self = this;
+      var cc  = self.editor.currentColor,
+          ccc = self.canvases.currentCells[0].color;
+      // Copy the color of the current cell as it will change during this loop
+      // (since one of the cells that matches the current color is the current cell itself)
+      if (ccc) ccc = ccc.clone();
+      // Look for all cells with the color (or non-color) of the current cell
+      // and mark them as filled with the current color
+      $.v.each(self.canvases.cells, function(row, i) {
+        $.v.each(row, function(cell, j) {
+          if ((!ccc && !cell.color) || (cell.color && cell.color.isEqual(ccc))) {
+            self.canvases.cellHistory.add(cell, function() {
+              cell.color = cc[cc.type].clone();
+            })
+          }
+        })
+      })
+    },
+    _setCellsLikeCurrentToUnfilled: function() {
+      var self = this;
+      // Copy this as the color of the current cell will change during this loop
+      var currentCellColor = self.canvases.currentCells[0].color;
+      if (currentCellColor) currentCellColor = currentCellColor.clone();
+      // Look for all cells with the color of the current cell
+      // and mark them as unfilled
+      $.v.each(self.canvases.cells, function(row, i) {
+        $.v.each(row, function(cell, j) {
+          if (cell.color && cell.color.isEqual(currentCellColor)) {
+            self.canvases.cellHistory.add(function() {
+              cell.color = null;
+            })
+          }
+        })
+      })
+    }
+  });
+
   var DrawingCanvases = {
     timer: null,
     width: null,
@@ -162,7 +277,7 @@
     workingCanvas: null,
     gridBgCanvas: null,
     previewCanvas: null,
-    currentCell: null,
+    currentCells: [],
     cells: [],
     cellHistory: null,
 
@@ -215,8 +330,8 @@
     save: function(){
       var self = this;
       localStorage.setItem('pixel_editor.saved', 'true')
-      $.v.each(self.cells, function(row){
-        $.v.each(row, function(cell){
+      $.v.each(self.cells, function(row) {
+        $.v.each(row, function(cell) {
           var cellJSON = cell.color;
           localStorage.setItem('cells.'+cell.coords(), JSON.stringify(cellJSON));
         });
@@ -230,7 +345,7 @@
         var row = self.cells[i] = [];
         for (var j=0; j<self.widthInCells; j++) {
           row[j] = new Cell(self, j, i);
-          if (needsReload){
+          if (needsReload) {
             if(localStorage['cells.'+j+','+i] != 'undefined'){
               var color = JSON.parse(localStorage['cells.'+j+','+i]);
             } else {
@@ -252,7 +367,7 @@
           if (key == Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
             if (event.shiftKey) {
               // Ctrl-Shift-Z or Command-Shift-Z: Redo last action
-              if (self.cellHistory.canRedo()) self.cellHistory.redo()
+              if (self.cellHistory.canRedo()) self.cellHistory.redo();
             } else {
               // Ctrl-Z or Command-Z: Undo last action
               if (self.cellHistory.canUndo()) self.cellHistory.undo();
@@ -275,26 +390,12 @@
           self.draw();
         },
         "mousedown": function(event) {
+          self.editor.tools[self.editor.currentTool].trigger('mousedown', event);
           self.cellHistory.open();
           event.preventDefault();
         },
         "mouseup": function(event) {
-          switch (self.editor.currentTool) {
-            case "pencil":
-              if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
-                self._setCurrentCellsToUnfilled();
-              } else {
-                self._setCurrentCellsToFilled();
-              }
-              break;
-            case "bucket":
-              if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
-                self._setCellsLikeCurrentToUnfilled();
-              } else {
-                self._setCellsLikeCurrentToFilled();
-              }
-              break;
-          }
+          self.editor.tools[self.editor.currentTool].trigger('mouseup', event);
           self.cellHistory.close();
           event.preventDefault();
         },
@@ -306,16 +407,7 @@
           self.selectedCells = [];
         },
         "mousedrag": function(event) {
-          if (self.editor.currentTool == "pencil") {
-            // FIXME: If you drag too fast it will skip some cells!
-            // Use the current mouse position and the last mouse position and
-            //  fill in or erase cells in between.
-            if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
-              self._setCurrentCellsToUnfilled();
-            } else {
-              self._setCurrentCellsToFilled();
-            }
-          }
+          self.editor.tools[self.editor.currentTool].trigger('mousedrag', event);
         }//,
         //debug: true
       })
@@ -410,69 +502,6 @@
       self.currentCells = null;
     },
 
-    _setCurrentCellsToFilled: function() {
-      var self = this;
-      var cc  = self.editor.currentColor;
-      if (self.currentCells) {
-        $.v.each(self.currentCells, function(cell) {
-          self.cellHistory.add(cell, function() {
-            // Make a copy of the current color object so that if the current
-            // color changes it doesn't change all cells that have that color
-            cell.color = cc[cc.type].clone();
-          })
-        })
-      }
-    },
-
-    _setCurrentCellsToUnfilled: function() {
-      var self = this;
-      if (self.currentCells) {
-        $.v.each(self.currentCells, function(cell) {
-          self.cellHistory.add(cell, function() {
-            cell.color = null;
-          })
-        })
-      }
-    },
-
-    _setCellsLikeCurrentToFilled: function() {
-      var self = this;
-      var cc  = self.editor.currentColor,
-          ccc = self.currentCells[0].color;
-      // Copy the color of the current cell as it will change during this loop
-      // (since one of the cells that matches the current color is the current cell itself)
-      if (ccc) ccc = ccc.clone();
-      // Look for all cells with the color (or non-color) of the current cell
-      // and mark them as filled with the current color
-      $.v.each(self.cells, function(row, i) {
-        $.v.each(row, function(cell, j) {
-          if ((!ccc && !cell.color) || (cell.color && cell.color.isEqual(ccc))) {
-            self.cellHistory.add(cell, function() {
-              cell.color = cc[cc.type].clone();
-            })
-          }
-        })
-      })
-    },
-
-    _setCellsLikeCurrentToUnfilled: function() {
-      var self = this;
-      // Copy this as the color of the current cell will change during this loop
-      var currentCellColor = self.currentCells[0].color;
-      if (currentCellColor) currentCellColor = currentCellColor.clone();
-      // Look for all cells with the color of the current cell
-      // and mark them as unfilled
-      $.v.each(self.cells, function(row, i) {
-        $.v.each(row, function(cell, j) {
-          if (cell.color && cell.color.isEqual(currentCellColor)) {
-            self.cellHistory.add(function() {
-              cell.color = null;
-            })
-          }
-        })
-      })
-    },
-
     _clearWorkingCanvas: function() {
       var self = this;
       var wc = self.workingCanvas;
@@ -539,16 +568,17 @@
   }
 
   var SpriteEditor = {
+    toolNames: ["pencil", "bucket", "select"],
+    tools: {},
+
     $container: null,
     $leftPane: null,
     $centerPane: null,
     $rightPane: null,
-
     colorSampleDivs: {
       foreground: null,
       background: null,
     },
-
     currentColor: {
       type: 'foreground',
       foreground: Color.fromRGB(172, 85, 255),
@@ -563,6 +593,7 @@
       Keyboard.init();
 
       self.canvases = DrawingCanvases.init(self);
+      self.tools = Tools.init(self, self.canvases);
 
       self.$container = $('#main');
       self._createMask();
@@ -818,24 +849,24 @@
       $boxDiv.append($ul);
 
       var $imgs = $([]);
-      $.v.each(["pencil", "bucket"], function(tool) {
+      $.v.each(Tools.toolNames, function(name) {
         var $li = $("<li/>");
 
         var $img = $("<img/>");
         $img.addClass("tool")
             .attr("width", 24)
             .attr("height", 24)
-            .attr("src", "images/"+tool+".png");
+            .attr("src", "images/"+name+".png");
         $imgs.push($img[0]);
         $li.append($img);
         $ul.append($li);
 
         $img.bind('click', function() {
-          self.currentTool = tool;
+          self.currentTool = name;
           $imgs.removeClass("selected");
           $img.addClass("selected");
         })
-        if (self.currentTool == tool) $img.trigger('click');
+        if (self.currentTool == name) $img.trigger('click');
       })
     },
 
