@@ -11,25 +11,37 @@
     // is prepended with a reference to function A (you could call it the "_super"
     // reference).
     //
-    extend: function(obj, props) {
-      for (var prop in props) {
-        if (props.hasOwnProperty(prop)) {
-          if ((prop in obj) && typeof obj[prop] == "function") {
-            (function() {
-              var _super = obj[prop],
-                  _new   = props[prop];
-              obj[prop] = function() {
-                var args = Array.prototype.slice.call(arguments);
-                args.unshift(_super);
-                return _new.apply(obj, args);
+    extend: function(/*[deep, ]target, objects...*/) {
+      var args = Array.prototype.slice.call(arguments);
+      var deep = false, target, objects;
+      if (typeof args[0] == "boolean") {
+        deep = args.shift();
+      }
+      target = args.shift();
+      objects = args;
+
+      var self = this;
+      $.v.each(objects, function(obj) {
+        for (var prop in obj) {
+          if (!obj.hasOwnProperty(prop)) continue;
+          if (prop in target && typeof target[prop] == "function") {
+            (function(_super, _new) {
+              target[prop] = function() {
+                var tmp = target._super;
+                target._super = _super;
+                var rv = _new.apply(target, arguments);
+                target._super = tmp;
+                return rv;
               }
-            })()
+            })(target[prop], obj[prop])
+          } else if ($.v.is.obj(obj[prop])) {
+            target[prop] = self.extend(deep, {}, obj[prop]);
           } else {
-            obj[prop] = props[prop];
+            target[prop] = obj[prop];
           }
         }
-      }
-      return obj;
+      })
+      return target;
     },
 
     // Makes a shallow clone of the given object. That is, any properties which

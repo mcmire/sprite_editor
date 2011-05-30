@@ -13,13 +13,13 @@
     return c;
   }
   Canvas.Context = {
-    getImageData: function(_super, x, y, width, height) {
-      var imageData = _super.call(this, x, y, width, height);
+    getImageData: function(x, y, width, height) {
+      var imageData = this._super.call(this, x, y, width, height);
       $.extend(imageData, Canvas.ImageData);
       return imageData;
     },
-    createImageData: function(_super, width, height) {
-      var imageData = _super.call(this, width, height);
+    createImageData: function(width, height) {
+      var imageData = this._super.call(this, width, height);
       $.extend(imageData, Canvas.ImageData);
       return imageData;
     }
