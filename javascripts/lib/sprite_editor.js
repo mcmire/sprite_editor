@@ -78,7 +78,6 @@
   * "new" copies of the changed cells therein, and moving forward the pointer.
   * (Technically, for slightly cleaner code, the pointer points to the next
   * version after the current one, but the idea is the same.)
-  *
   */
   var CellHistory = {
     fixedSize: 100, // # of actions
@@ -300,16 +299,8 @@
           event.preventDefault();
         },
         "mousemove": function(event) {
-          /*
-          var $e = self.workingCanvas.$element,
-              thisPos = $e.mouseTracker('pos'),
-              lastPos = $e.mouseTracker('lastPos');
+          var mouse = self.workingCanvas.$element.mouseTracker('pos');
           self._setCurrentCells(mouse);
-          if (thisPos.x)
-          */
-          var $e = self.workingCanvas.$element,
-              thisPos = $e.mouseTracker('pos');
-          self._setCurrentCells(thisPos);
         },
         "mousedragstart": function(event) {
           self.selectedCells = [];
@@ -330,7 +321,7 @@
       })
       $(window).bind({
         "blur.pixelEditor": function() {
-          //self.stop();
+          self.stop();
         }
       })
     },
