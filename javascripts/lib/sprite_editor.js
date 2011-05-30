@@ -316,8 +316,8 @@
       self._clearWorkingCanvas();
       self._clearPreviewCanvas();
       self._clearTiledPreviewCanvas();
-      self._highlightCurrentCells();
       self._fillCells();
+      self._highlightCurrentCells();
       self._updateTiledPreviewCanvas();
     },
 
@@ -530,6 +530,11 @@
       if (self.currentCells && !(isDragging || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) && self.editor.currentTool == "pencil") {
         var cc = self.editor.currentColor;
         ctx.save();
+          ctx.fillStyle = '#fff';
+          $.v.each(self.currentCells, function(cell) {
+            ctx.fillRect(cell.workingCanvas.x+1, cell.workingCanvas.y+1, self.cellSize-1, self.cellSize-1);
+          })
+
           ctx.fillStyle = 'rgba('+cc[cc.type].toRGBString()+',0.5)';
           $.v.each(self.currentCells, function(cell) {
             ctx.fillRect(cell.workingCanvas.x+1, cell.workingCanvas.y+1, self.cellSize-1, self.cellSize-1);
