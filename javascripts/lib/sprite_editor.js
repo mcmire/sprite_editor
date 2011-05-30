@@ -25,8 +25,9 @@
       var fontSize = 11;
       c.ctx.font = fontSize+"px Helvetica";
       var text = (width / cellSize) + "px";
-      var metrics = c.ctx.measureText(text);
+      // Place the text that indicates the brush size in the center of the canvas
       // I don't know why it's /4 here, but it is...
+      var metrics = c.ctx.measureText(text);
       c.ctx.fillText(text, width/2-metrics.width/2, height/2+fontSize/4);
     });
   }
@@ -35,17 +36,25 @@
     Cell.prototype.init.apply(this, arguments);
   }
   $.extend(Cell.prototype, {
-    init: function(editor, x, y) {
+    init: function(editor, i, j) {
       var self = this;
       self.editor = editor;
-      self.x = x;
-      self.y = y;
-      self.previewCanvas = {x: x, y: y};
-      self.workingCanvas = {x: x*editor.cellSize, y: y*editor.cellSize};
+
+      self.i = i;
+      self.j = j;
+      self.previewCanvas = {x: j, y: i};
+
+      self.x = j * editor.cellSize;
+      self.y = i * editor.cellSize;
+      self.workingCanvas = {x: self.x, y: self.y};
+    },
+    clear: function() {
+      var self = this;
+      self.color = null;
     },
     coords: function() {
       var self = this;
-      return [self.previewCanvas.x, self.previewCanvas.y].join(",");
+      return [self.j, self.i].join(",");
     },
     coordsAsJson: function() {
       var self = this;
@@ -53,7 +62,7 @@
     },
     clone: function() {
       var self = this;
-      var cell = new Cell(self.editor, self.previewCanvas.x, self.previewCanvas.y);
+      var cell = new Cell(self.editor, self.i, self.j);
       if (self.color) cell.color = self.color.clone();
       return cell;
     }
@@ -156,7 +165,7 @@
   };
 
   var Tools = {
-    toolNames: ["pencil", "bucket"],
+    toolNames: ["pencil", "bucket", "select"],
     init: function(editor, canvases) {
       var self = this;
       $.v.each(self.toolNames, function(name) {
@@ -185,46 +194,50 @@
     mousedrag: function(event) {
       this._handle(event);
     },
+    draw: function() {
+      // ...
+    },
     _handle: function(event) {
       var self = this;
       // FIXME: If you drag too fast it will skip some cells!
       // Use the current mouse position and the last mouse position and
       //  fill in or erase cells in between.
       if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
-        self._setCurrentCellsToUnfilled();
+        self._setFocusedCellsToUnfilled();
       } else {
-        self._setCurrentCellsToFilled();
+        self._setFocusedCellsToFilled();
       }
     },
-    _setCurrentCellsToFilled: function() {
+    _setFocusedCellsToFilled: function() {
       var self = this;
       var cc   = self.editor.currentColor;
-      if (self.canvases.currentCells) {
-        $.v.each(self.canvases.currentCells, function(cell) {
+      if (self.canvases.focusedCells) {
+        self.canvases.cellHistory.open();
+        $.v.each(self.canvases.focusedCells, function(cell) {
           self.canvases.cellHistory.add(cell, function() {
             // Make a copy of the current color object so that if the current
             // color changes it doesn't change all cells that have that color
             cell.color = cc[cc.type].clone();
           })
         })
+        self.canvases.cellHistory.close();
       }
     },
-    _setCurrentCellsToUnfilled: function() {
+    _setFocusedCellsToUnfilled: function() {
       var self = this;
-      if (self.canvases.currentCells) {
-        $.v.each(self.canvases.currentCells, function(cell) {
-          self.cellHistory.add(cell, function() {
-            cell.color = null;
+      if (self.canvases.focusedCells) {
+        self.canvases.cellHistory.open();
+        $.v.each(self.canvases.focusedCells, function(cell) {
+          self.canvases.cellHistory.add(cell, function() {
+            cell.clear();
           })
         })
+        self.canvases.cellHistory.close();
       }
     }
   });
   Tools.bucket = $.extend({}, Tools.base, {
     mousedown: function(event) {
-      this._handle(event);
-    },
-    _handle: function(event) {
       var self = this;
       if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
         self._setCellsLikeCurrentToUnfilled();
@@ -232,15 +245,19 @@
         self._setCellsLikeCurrentToFilled();
       }
     },
+    draw: function() {
+      // ...
+    },
     _setCellsLikeCurrentToFilled: function() {
       var self = this;
       var cc  = self.editor.currentColor,
-          ccc = self.canvases.currentCells[0].color;
+          ccc = self.canvases.focusedCells[0].color;
       // Copy the color of the current cell as it will change during this loop
       // (since one of the cells that matches the current color is the current cell itself)
       if (ccc) ccc = ccc.clone();
       // Look for all cells with the color (or non-color) of the current cell
       // and mark them as filled with the current color
+      self.canvases.cellHistory.open();
       $.v.each(self.canvases.cells, function(row, i) {
         $.v.each(row, function(cell, j) {
           if ((!ccc && !cell.color) || (cell.color && cell.color.isEqual(ccc))) {
@@ -250,25 +267,167 @@
           }
         })
       })
+      self.canvases.cellHistory.close();
     },
     _setCellsLikeCurrentToUnfilled: function() {
       var self = this;
       // Copy this as the color of the current cell will change during this loop
-      var currentCellColor = self.canvases.currentCells[0].color;
+      var currentCellColor = self.canvases.focusedCells[0].color;
       if (currentCellColor) currentCellColor = currentCellColor.clone();
       // Look for all cells with the color of the current cell
       // and mark them as unfilled
+      self.canvases.cellHistory.open();
       $.v.each(self.canvases.cells, function(row, i) {
         $.v.each(row, function(cell, j) {
           if (cell.color && cell.color.isEqual(currentCellColor)) {
-            self.canvases.cellHistory.add(function() {
-              cell.color = null;
+            self.canvases.cellHistory.add(cell, function() {
+              cell.clear();
             })
           }
         })
       })
+      self.canvases.cellHistory.close();
     }
   });
+  Tools.select = $.extend({}, Tools.base, {
+    selectionStart: null,
+    selectionEnd: null,
+    offset: 0,
+
+    /*
+    init: function() {
+      var self = this;
+      self._super.apply(self, arguments);
+      self._clearSelection();
+    },
+    */
+
+    selectedCells: function() {
+      var self = this;
+      var selectedCells = [];
+      for (var i=self.selectionStart.i; i<=self.selectionEnd.i; i++) {
+        for (var j=self.selectionStart.j; j<=self.selectionEnd.j; j++) {
+          selectedCells.push(self.canvases.cells[i][j]);
+        }
+      }
+      return selectedCells;
+    },
+
+    select: function() {
+      var self = this;
+      self.canvases.workingCanvas.$element.addClass("crosshair");
+    },
+    unselect: function() {
+      var self = this;
+      self.canvases.workingCanvas.$element.removeClass("crosshair");
+    },
+    keydown: function(event) {
+      var self = this;
+      var key = event.keyCode;
+      if (key == Keyboard.X_KEY && (event.metaKey || event.ctrlKey)) {
+        var selectedCells = self.selectedCells();
+        // Ctrl-X: Cut selection
+        self.canvases.clipboard = $.v.map(selectedCells, function(cell) { return cell.clone() });
+        self._clearSelection();
+        self.canvases.cellHistory.open();
+        $.v.each(selectedCells, function(cell) {
+          self.canvases.cellHistory.add(cell, function() {
+            cell.clear();
+          });
+        })
+        self.canvases.cellHistory.close();
+      }
+    },
+    mousedragstart: function(event) {
+      var self = this;
+      self._clearSelection();
+      var c = self.canvases.focusedCell;
+      self.selectionStart = {x: c.x, y: c.y, i: c.i, j: c.j};
+      self.selectionEnd   = {x: c.x+self.canvases.cellSize, y: c.y+self.canvases.cellSize, i: c.i, j: c.j};
+    },
+    mousedrag: function(event) {
+      var self = this;
+      var c = self.canvases.focusedCell;
+      self.selectionEnd = {x: c.x+self.canvases.cellSize, y: c.y+self.canvases.cellSize, i: c.i, j: c.j};
+    },
+    mouseup: function(event) {
+      var self = this;
+      // If mouse is clicked out of the selection, clear the selection
+      var isDragging = self.canvases.workingCanvas.$element.mouseTracker('isDragging');
+      if (!isDragging && self._focusIsOutsideOfSelection()) {
+        self._clearSelection();
+      }
+    },
+    draw: function() {
+      var self = this;
+      if (!self.selectionStart || !self.selectionEnd) return;
+
+      var ctx = self.canvases.workingCanvas.ctx;
+      ctx.save();
+        // Draw a translucent black rectangle to mask everything outside of the
+        // selection, for clarity
+        /*
+        ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+        ctx.drawRect(0, 0, self.canvases.width, self.canvases.height);
+        */
+
+        // Draw a translucent rectangle that represents the selection area to
+        // make it stand out
+        ctx.fillStyle = "rgba(186, 229, 250, 0.3)";
+        ctx.beginPath();
+          ctx.moveTo(self.selectionStart.x, self.selectionStart.y);
+          ctx.lineTo(self.selectionEnd.x, self.selectionStart.y);
+          ctx.lineTo(self.selectionEnd.x, self.selectionEnd.y);
+          ctx.lineTo(self.selectionStart.x, self.selectionEnd.y);
+          ctx.lineTo(self.selectionStart.x, self.selectionStart.y);
+        ctx.fill();
+
+        // Draw a rectangle that represents the selection area, with an animated
+        // "marching ants" dotted border
+        ctx.strokeStyle = "#000";
+        ctx.beginPath();
+          // top
+          for (var x = self.selectionStart.x+self.offset; x < self.selectionEnd.x; x += 4) {
+            var y1 = self.selectionStart.y;
+            ctx.moveTo(x, y1+0.5);
+            ctx.lineTo(x+2, y1+0.5);
+          }
+          // right
+          for (var y = self.selectionStart.y+self.offset; y < self.selectionEnd.y; y += 4) {
+            var x2 = self.selectionEnd.x;
+            ctx.moveTo(x2+0.5, y);
+            ctx.lineTo(x2+0.5, y+2);
+          }
+          // bottom
+          for (var x = self.selectionEnd.x-self.offset; x > self.selectionStart.x+2; x -= 4) {
+            var y2 = self.selectionEnd.y;
+            ctx.moveTo(x, y2+0.5);
+            ctx.lineTo(x-2, y2+0.5);
+          }
+          // left
+          for (var y = self.selectionEnd.y-self.offset; y > self.selectionStart.y+2; y -= 4) {
+            var x1 = self.selectionStart.x;
+            ctx.moveTo(x1+0.5, y);
+            ctx.lineTo(x1+0.5, y-2);
+          }
+        ctx.stroke();
+      ctx.restore();
+      self.offset++;
+      self.offset %= 4;
+    },
+    _clearSelection: function() {
+      var self = this;
+      self.selectionStart = null;
+      self.selectionEnd = null;
+    },
+    _focusIsOutsideOfSelection: function() {
+      var self = this;
+      var c  = self.canvases.focusedCell,
+          sa = self.selectionStart,
+          sb = self.selectionEnd;
+      return (c.x < sa.x || c.x > sb.x || c.y < sa.y || c.y < sb.y);
+    }
+  })
 
   var DrawingCanvases = {
     timer: null,
@@ -277,11 +436,13 @@
     workingCanvas: null,
     gridBgCanvas: null,
     previewCanvas: null,
-    currentCells: [],
     cells: [],
+    focusedCell: null,
+    focusedCells: [],
     cellHistory: null,
+    clipboard: [],
 
-    tickInterval: 30,  // ms/frame
+    tickInterval: 80,  // ms/frame
     widthInCells: 16,  // cells
     heightInCells: 16, // cells
     cellSize: 30,      // pixels
@@ -296,6 +457,7 @@
       self._createWorkingCanvas();
       self._createPreviewCanvases();
       self.autoSaveTimer = setInterval(function() { self.save() }, 30000);
+      self.start();
 
       return self;
     },
@@ -317,7 +479,11 @@
       self._clearPreviewCanvas();
       self._clearTiledPreviewCanvas();
       self._fillCells();
-      self._highlightCurrentCells();
+      self._highlightFocusedCells();
+
+      var t = self.editor.currentTool();
+      if (typeof t.draw != "undefined") t.draw();
+
       self._updateTiledPreviewCanvas();
     },
 
@@ -344,7 +510,7 @@
       for (var i=0; i<self.heightInCells; i++) {
         var row = self.cells[i] = [];
         for (var j=0; j<self.widthInCells; j++) {
-          row[j] = new Cell(self, j, i);
+          row[j] = new Cell(self, i, j);
           if (needsReload) {
             if(localStorage['cells.'+j+','+i] != 'undefined'){
               var color = JSON.parse(localStorage['cells.'+j+','+i]);
@@ -363,6 +529,7 @@
       var self = this;
       $(document).bind({
         "keydown.pixelEditor": function(event) {
+          self.editor.currentTool().trigger('keydown', event);
           var key = event.keyCode;
           if (key == Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
             if (event.shiftKey) {
@@ -382,38 +549,40 @@
       })
       self.workingCanvas.$element.mouseTracker({
         "mouseover": function(event) {
-          self.start();
+          //self.start();
         },
         "mouseout": function(event) {
-          self._unsetCurrentCells();
-          self.stop();
+          self._unsetFocusedCells();
+          //self.stop();
           self.draw();
         },
         "mousedown": function(event) {
-          self.editor.tools[self.editor.currentTool].trigger('mousedown', event);
-          self.cellHistory.open();
+          self.editor.currentTool().trigger('mousedown', event);
           event.preventDefault();
         },
         "mouseup": function(event) {
-          self.editor.tools[self.editor.currentTool].trigger('mouseup', event);
-          self.cellHistory.close();
+          self.editor.currentTool().trigger('mouseup', event);
           event.preventDefault();
         },
         "mousemove": function(event) {
           var mouse = self.workingCanvas.$element.mouseTracker('pos');
-          self._setCurrentCells(mouse);
+          self._setFocusedCell(mouse);
+          self._setFocusedCells(mouse);
         },
         "mousedragstart": function(event) {
-          self.selectedCells = [];
+          self.editor.currentTool().trigger('mousedragstart', event);
         },
         "mousedrag": function(event) {
-          self.editor.tools[self.editor.currentTool].trigger('mousedrag', event);
+          self.editor.currentTool().trigger('mousedrag', event);
         }//,
         //debug: true
       })
       $(window).bind({
         "blur.pixelEditor": function() {
           self.stop();
+        },
+        "focus.pixelEditor": function() {
+          self.start();
         }
       })
     },
@@ -425,7 +594,7 @@
         'keyup.pixelEditor'
       ].join(" "));
       self.workingCanvas.$element.mouseTracker('destroy');
-      $(window).unbind('blur.pixelEditor');
+      $(window).unbind('blur.pixelEditor', 'focus.pixelEditor');
     },
 
     _createGridBgCanvas: function() {
@@ -464,42 +633,55 @@
       self.tiledPreviewCanvas.element.id = "tiled_preview_canvas";
     },
 
-    _setCurrentCells: function(mouse) {
+    _setFocusedCell: function(mouse) {
+      var self = this;
+
+      var x = mouse.rel.x,
+          y = mouse.rel.y;
+
+      var j = Math.floor(x / self.cellSize),
+          i = Math.floor(y / self.cellSize);
+
+      self.focusedCell = self.cells[i][j];
+    },
+
+    _setFocusedCells: function(mouse) {
       var self = this;
 
       var bs = (self.editor.currentBrushSize-1) * self.cellSize;
-      var x = mouse.rel.x;
-      var y = mouse.rel.y;
+      var x = mouse.rel.x,
+          y = mouse.rel.y;
 
-      var currentCells = [];
-      // Make a bounding box of pixels within the enlarged canvas based on
+      var focusedCells = [];
+      // Make a bounding box of pixels within the working canvas based on
       // the brush size
       var x1 = x - (bs / 2),
           x2 = x + (bs / 2),
           y1 = y - (bs / 2),
           y2 = y + (bs / 2);
-      // Scale each enlarged coord down to the actual pixel value
-      // on the sprite
+      // Scale each coordinate on the working canvas down to the coordinate
+      // on the preview canvas (which also serves as the cell coordinate
+      // within the cells array-of-arrays)
       var j1 = Math.floor(x1 / self.cellSize),
           j2 = Math.floor(x2 / self.cellSize),
           i1 = Math.floor(y1 / self.cellSize),
           i2 = Math.floor(y2 / self.cellSize);
-      // Now that we have a bounding box of pixels, enumerate through all
-      // pixels in this bounding box and add them to the set of current cells
+      // Now that we have a bounding box of cells, enumerate through all
+      // cells in the box and add them to the set of current cells
       for (var i=i1; i<=i2; i++) {
         for (var j=j1; j<=j2; j++) {
           var row = self.cells[i];
           if (row && row[j]) {
-            currentCells.push(row[j]);
+            focusedCells.push(row[j]);
           }
         }
       }
-      self.currentCells = currentCells;
+      self.focusedCells = focusedCells;
     },
 
-    _unsetCurrentCells: function() {
+    _unsetFocusedCells: function() {
       var self = this;
-      self.currentCells = null;
+      self.focusedCells = null;
     },
 
     _clearWorkingCanvas: function() {
@@ -523,20 +705,20 @@
       ptc.ctx.clearRect(0, 0, ptc.width, ptc.height);
     },
 
-    _highlightCurrentCells: function() {
+    _highlightFocusedCells: function() {
       var self = this;
       var ctx = self.workingCanvas.ctx;
       var isDragging = self.workingCanvas.$element.mouseTracker('isDragging');
-      if (self.currentCells && !(isDragging || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) && self.editor.currentTool == "pencil") {
+      if (self.focusedCells && !(isDragging || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) && self.editor.currentToolName == "pencil") {
         var cc = self.editor.currentColor;
         ctx.save();
           ctx.fillStyle = '#fff';
-          $.v.each(self.currentCells, function(cell) {
+          $.v.each(self.focusedCells, function(cell) {
             ctx.fillRect(cell.workingCanvas.x+1, cell.workingCanvas.y+1, self.cellSize-1, self.cellSize-1);
           })
 
           ctx.fillStyle = 'rgba('+cc[cc.type].toRGBString()+',0.5)';
-          $.v.each(self.currentCells, function(cell) {
+          $.v.each(self.focusedCells, function(cell) {
             ctx.fillRect(cell.workingCanvas.x+1, cell.workingCanvas.y+1, self.cellSize-1, self.cellSize-1);
           })
         ctx.restore();
@@ -585,11 +767,11 @@
       background: null,
     },
     currentColor: {
-      type: 'foreground',
+      type: "foreground",
       foreground: Color.fromRGB(172, 85, 255),
       background: Color.fromRGB(255, 38, 192)
     },
-    currentTool: "pencil",
+    currentToolName: "pencil",
     currentBrushSize: 1,
 
     init: function() {
@@ -867,12 +1049,21 @@
         $ul.append($li);
 
         $img.bind('click', function() {
-          self.currentTool = name;
+          if (name != self.currentToolName && typeof self.currentTool().unselect != "undefined") {
+            self.currentTool().unselect();
+          }
+          self.currentToolName = name;
           $imgs.removeClass("selected");
           $img.addClass("selected");
+          if (typeof self.tools[name].select != "undefined") {
+            self.tools[name].select();
+          }
         })
-        if (self.currentTool == name) $img.trigger('click');
+        if (self.currentToolName == name) $img.trigger('click');
       })
+    },
+    currentTool: function() {
+      return this.tools[this.currentToolName];
     },
 
     // TODO: when the paint bucket tool is selected, hide the brush sizes box

@@ -136,6 +136,9 @@ input[type="submit"], input[type="button"], select {
   cursor: pointer;
   display: inline;
 }
+#working_canvas.crosshair {
+  cursor: crosshair;
+}
 
 #tool_box {
   width: 130px;
