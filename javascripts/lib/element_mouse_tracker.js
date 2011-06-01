@@ -26,15 +26,21 @@
       //
       $(document).bind({
         "mouseup.ElementMouseTracker": function(event) {
-          $.v.each(self.activeInstances(), function(inst) { inst.triggerHandler('mouseup', event) });
           var inst = self.activeInstance.mouseHeldWithin;
-          if (inst && inst.isDragging) inst.triggerHandler('mousedragstop');
+          $.v.each(self.activeInstances(), function(inst) {
+            inst.triggerHandler('mouseup', event)
+          });
+          if (inst && inst.isDragging) {
+            inst.triggerHandler('mousedragstop');
+          }
           //event.stopPropagation();
           event.preventDefault();
         },
         "mousemove.ElementMouseTracker": function(event) {
           self.pos = {x: event.pageX, y: event.pageY};
-          $.v.each(self.activeInstances(), function(inst) { inst.triggerHandler('mousemove', event) });
+          $.v.each(self.activeInstances(), function(inst) {
+            inst.triggerHandler('mousemove', event);
+          });
           //event.stopPropagation();
           event.preventDefault();
         }
