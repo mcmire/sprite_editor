@@ -142,6 +142,9 @@ input[type="submit"], input[type="button"], select {
 #working_canvas.dropper {
   cursor: url(/images/dropper.cur), crosshair;
 }
+#working_canvas.move {
+  cursor: move;
+}
 
 #tool_box {
   width: 130px;
