@@ -171,6 +171,10 @@ ElementMouseTracker.instance = function($element, options) {
       }
     })
   })
+  // default options
+  if (typeof self.options.draggingDistance == "undefined") {
+    self.options.draggingDistance = 1;
+  }
 
   self.pos = {
     abs: {x: null, y: null},
@@ -232,7 +236,8 @@ ElementMouseTracker.instance.prototype = {
     // If dragging isn't set yet, set it until the mouse is lifted off
     if (self.isDown) {
       if (!self.isDragging) {
-        self.isDragging = (!self.draggingDistance || self._distance(self.downAt, self.pos.abs) > self.options.draggingDistance);
+        var dist = self._distance(self.downAt.abs, self.pos.abs);
+        self.isDragging = (dist >= self.options.draggingDistance);
         self.triggerHandler('mousedragstart', event);
       }
     } else {
@@ -352,7 +357,7 @@ ElementMouseTracker.instance.prototype = {
   },
 
   _distance: function(v1, v2) {
-    return Math.sqrt(Math.pow((v2.y - v1.y), 2) + Math.pow((v2.x - v1.x), 2));
+    return Math.floor(Math.sqrt(Math.pow((v2.y - v1.y), 2) + Math.pow((v2.x - v1.x), 2)));
   }
 }
 $.export('SpriteEditor.ElementMouseTracker', ElementMouseTracker);
