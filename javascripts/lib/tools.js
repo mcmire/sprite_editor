@@ -2,6 +2,7 @@
 
 var Tools = {
   toolNames: ["pencil", "bucket", "select", "dropper"],
+
   init: function(editor, canvases) {
     var self = this;
     $.v.each(self.toolNames, function(name) {
@@ -10,12 +11,14 @@ var Tools = {
     return self;
   }
 };
+
 Tools.base = {
   init: function(editor, canvases) {
     var self = this;
     self.editor = editor;
     self.canvases = canvases;
   },
+
   trigger: function(name, event) {
     var self = this;
     if (typeof self[name] != "undefined") {
@@ -23,6 +26,7 @@ Tools.base = {
     }
   }
 };
+
 Tools.dropper = $.extend({}, Tools.base, {
   select: function() {
     var self = this;
@@ -40,16 +44,20 @@ Tools.dropper = $.extend({}, Tools.base, {
     editor.colorSampleDivs[editor.currentColor.type].trigger("update");
   }
 })
+
 Tools.pencil = $.extend({}, Tools.base, {
   mousedown: function(event) {
     this._handle(event);
   },
+
   mousedrag: function(event) {
     this._handle(event);
   },
+
   draw: function() {
     // ...
   },
+
   _handle: function(event) {
     var self = this;
     // FIXME: If you drag too fast it will skip some cells!
@@ -61,6 +69,7 @@ Tools.pencil = $.extend({}, Tools.base, {
       self._setFocusedCellsToFilled();
     }
   },
+
   _setFocusedCellsToFilled: function() {
     var self = this;
     var cc   = self.editor.currentColor;
@@ -74,6 +83,7 @@ Tools.pencil = $.extend({}, Tools.base, {
       })
     }
   },
+
   _setFocusedCellsToUnfilled: function() {
     var self = this;
     if (self.canvases.focusedCells) {
@@ -85,6 +95,7 @@ Tools.pencil = $.extend({}, Tools.base, {
     }
   }
 });
+
 Tools.bucket = $.extend({}, Tools.base, {
   mousedown: function(event) {
     var self = this;
@@ -94,9 +105,11 @@ Tools.bucket = $.extend({}, Tools.base, {
       self._setCellsLikeCurrentToFilled();
     }
   },
+
   draw: function() {
     // ...
   },
+
   _setCellsLikeCurrentToFilled: function() {
     var self = this;
     var cc  = self.editor.currentColor,
@@ -116,6 +129,7 @@ Tools.bucket = $.extend({}, Tools.base, {
       })
     })
   },
+
   _setCellsLikeCurrentToUnfilled: function() {
     var self = this;
     // Copy this as the color of the current cell will change during this loop
@@ -134,37 +148,40 @@ Tools.bucket = $.extend({}, Tools.base, {
     })
   }
 });
+
 Tools.select = $.extend({}, Tools.base, {
   selectionStart: null,
   selectionEnd: null,
   selectedCells: [],
   makingSelection: false,
-  offset: 0,
+  animOffset: 0,
 
-  /*
-  init: function() {
+  reset: function() {
     var self = this;
-    self._super.apply(self, arguments);
-    self._clearSelection();
+    self.selectionStart = null;
+    self.selectionEnd = null;
+    self.selectedCells = [];
+    self.makingSelection = false;
   },
-  */
 
   select: function() {
     var self = this;
     self.canvases.workingCanvas.$element.addClass("crosshair");
   },
+
   unselect: function() {
     var self = this;
     self.canvases.workingCanvas.$element.removeClass("crosshair");
-    self._clearSelection();
+    // Ensure that if selection is active, it is merged into the canvas
+    self._exitSelection();
   },
+
   keydown: function(event) {
     var self = this;
     var key = event.keyCode;
     if (key == SpriteEditor.Keyboard.X_KEY && (event.metaKey || event.ctrlKey)) {
       // Ctrl-X: Cut selection
       self.canvases.clipboard = $.v.map(self.selectedCells, function(cell) { return cell.clone() });
-      self._clearSelection();
       self.canvases.cellHistory.save(function() {
         $.v.each(self.selectedCells, function(cell) {
           self.canvases.cellHistory.add(cell, function() {
@@ -172,8 +189,10 @@ Tools.select = $.extend({}, Tools.base, {
           });
         })
       });
+      self._exitSelection();
     }
   },
+
   mouseglide: function(event) {
     var self = this;
     if (self._focusIsInsideOfSelection()) {
@@ -182,6 +201,7 @@ Tools.select = $.extend({}, Tools.base, {
       self.canvases.workingCanvas.$element.removeClass("move");
     }
   },
+
   mousedragstart: function(event) {
     var self = this;
     // If something is selected and drag started from within the selection,
@@ -194,13 +214,13 @@ Tools.select = $.extend({}, Tools.base, {
     }
     // Otherwise, the user is making a new selection
     else {
-      self._clearSelection();
+      self._exitSelection();
       self.makingSelection = true;
       var c = self.canvases.focusedCell;
       self.selectionStart = c.loc.clone();
-      //self.selectionEnd   = {x: c.x+self.canvases.cellSize, y: c.y+self.canvases.cellSize, i: c.i, j: c.j};
     }
   },
+
   mousedrag: function(event) {
     var self = this;
     if (self.makingSelection) {
@@ -219,6 +239,7 @@ Tools.select = $.extend({}, Tools.base, {
       self.dragOffset = SpriteEditor.CellLocation.subtract(fc.loc, dc.loc);
     }
   },
+
   mousedragstop: function(event) {
     var self = this;
     if (!self.makingSelection) {
@@ -232,18 +253,17 @@ Tools.select = $.extend({}, Tools.base, {
     }
     self.makingSelection = false;
   },
+
   mouseup: function(event) {
     var self = this;
     // If mouse is clicked out of the selection, merge the selection layer
     // into the canvas and then clear the selection
     var isDragging = self.canvases.workingCanvas.$element.mouseTracker('isDragging');
-    if (!isDragging && self._focusIsOutsideOfSelection()) {
-      $.v.each(self.selectedCells, function(cell) {
-        self.canvases.cells[cell.loc.i][cell.loc.j] = cell.clone();
-      })
-      self._clearSelection();
+    if (!isDragging && self.selectionStart && self._focusIsOutsideOfSelection()) {
+      self._exitSelection();
     }
   },
+
   draw: function() {
     var self = this;
     if (!self.selectionStart || !self.selectionEnd) return;
@@ -287,25 +307,25 @@ Tools.select = $.extend({}, Tools.base, {
       ctx.strokeStyle = "#000";
       ctx.beginPath();
         // top
-        for (var x = ss.x+self.offset; x < se.x; x += 4) {
+        for (var x = ss.x+self.animOffset; x < se.x; x += 4) {
           var y1 = ss.y;
           ctx.moveTo(x, y1+0.5);
           ctx.lineTo(x+2, y1+0.5);
         }
         // right
-        for (var y = ss.y+self.offset; y < se.y; y += 4) {
+        for (var y = ss.y+self.animOffset; y < se.y; y += 4) {
           var x2 = se.x;
           ctx.moveTo(x2+0.5, y);
           ctx.lineTo(x2+0.5, y+2);
         }
         // bottom
-        for (var x = se.x-self.offset; x > ss.x+2; x -= 4) {
+        for (var x = se.x-self.animOffset; x > ss.x+2; x -= 4) {
           var y2 = se.y;
           ctx.moveTo(x, y2+0.5);
           ctx.lineTo(x-2, y2+0.5);
         }
         // left
-        for (var y = se.y-self.offset; y > ss.y+2; y -= 4) {
+        for (var y = se.y-self.animOffset; y > ss.y+2; y -= 4) {
           var x1 = ss.x;
           ctx.moveTo(x1+0.5, y);
           ctx.lineTo(x1+0.5, y-2);
@@ -315,16 +335,10 @@ Tools.select = $.extend({}, Tools.base, {
     ctx.restore();
     // Animate the "marching ants"
     // FIXME: Only animate on dragstop, not while dragging
-    self.offset++;
-    self.offset %= 4;
+    self.animOffset++;
+    self.animOffset %= 4;
   },
-  _clearSelection: function() {
-    var self = this;
-    self.selectionStart = null;
-    self.selectionEnd = null;
-    self.selectedCells = [];
-    self.makingSelection = false;
-  },
+
   _calculateSelectedCells: function() {
     var self = this;
     var selectedCells = [];
@@ -335,6 +349,16 @@ Tools.select = $.extend({}, Tools.base, {
     }
     self.selectedCells = selectedCells;
   },
+
+  // Merges the selection layer into the canvas and then clears the selection
+  _exitSelection: function() {
+    var self = this;
+    $.v.each(self.selectedCells, function(cell) {
+      self.canvases.cells[cell.loc.i][cell.loc.j] = cell.clone();
+    })
+    self.reset();
+  },
+
   _focusIsInsideOfSelection: function() {
     var self = this;
     var c  = self.canvases.focusedCell,
@@ -342,6 +366,7 @@ Tools.select = $.extend({}, Tools.base, {
         sb = self.selectionEnd;
     return (sa && sb && c.loc.i >= sa.i && c.loc.i <= sb.i && c.loc.j >= sa.j && c.loc.j <= sb.j);
   },
+
   _focusIsOutsideOfSelection: function() {
     var self = this;
     var c  = self.canvases.focusedCell,
