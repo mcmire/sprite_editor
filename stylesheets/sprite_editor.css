@@ -39,6 +39,8 @@ input[type="submit"], input[type="button"], select { cursor: pointer; }
 
 #working_canvas.crosshair { cursor: crosshair; }
 
+#working_canvas.dropper { cursor: url(/images/dropper.cur), crosshair; }
+
 #tool_box { width: 130px; overflow: auto; margin-bottom: 20px; }
 #tool_box ul, #tool_box li { list-style-type: none; padding: 0; margin: 0; text-align: center; }
 #tool_box li { display: inline-block; vertical-align: middle; margin-right: 20px; }

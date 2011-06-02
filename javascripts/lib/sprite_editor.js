@@ -165,7 +165,7 @@
   };
 
   var Tools = {
-    toolNames: ["pencil", "bucket", "select"],
+    toolNames: ["pencil", "bucket", "select", "dropper"],
     init: function(editor, canvases) {
       var self = this;
       $.v.each(self.toolNames, function(name) {
@@ -187,6 +187,25 @@
       }
     }
   };
+
+  Tools.dropper = $.extend({}, Tools.base, {
+    select: function() {
+      var self = this;
+      self.canvases.workingCanvas.$element.addClass("dropper");
+    },
+    unselect: function() {
+      var self = this;
+      self.canvases.workingCanvas.$element.removeClass("dropper");
+    },
+    mousedown: function(event){
+      var self = this;
+      var editor = self.editor;
+      var color = self.canvases.focusedCells[0].color.clone();
+      editor.currentColor[editor.currentColor.type] = color;
+      editor.colorSampleDivs[editor.currentColor.type].trigger("update");
+    }
+  })
+
   Tools.pencil = $.extend({}, Tools.base, {
     mousedown: function(event) {
       this._handle(event);
@@ -755,7 +774,7 @@
   }
 
   var SpriteEditor = {
-    toolNames: ["pencil", "bucket", "select"],
+    toolNames: ["pencil", "bucket", "select", "dropper"],
     tools: {},
 
     $container: null,

@@ -139,6 +139,9 @@ input[type="submit"], input[type="button"], select {
 #working_canvas.crosshair {
   cursor: crosshair;
 }
+#working_canvas.dropper {
+  cursor: url(/images/dropper.cur), crosshair;
+}
 
 #tool_box {
   width: 130px;
