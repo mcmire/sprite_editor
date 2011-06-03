@@ -159,7 +159,7 @@ Tools.select = $.extend({}, Tools.base, {
   selectedCells: [],
   makingSelection: false,
   animOffset: 0,
-  currentFrame: 0,
+  animateSelectionBox: false,
 
   reset: function() {
     var self = this;
@@ -224,6 +224,7 @@ Tools.select = $.extend({}, Tools.base, {
       var c = self.canvases.focusedCell;
       self.selectionStart = c.loc.clone();
     }
+    self.animateSelectionBox = false;
   },
 
   mousedrag: function(event) {
@@ -255,6 +256,7 @@ Tools.select = $.extend({}, Tools.base, {
       self.dragOffset = null;
     }
     self.makingSelection = false;
+    self.animateSelectionBox = true;
   },
 
   mouseup: function(event) {
@@ -331,14 +333,13 @@ Tools.select = $.extend({}, Tools.base, {
           ctx.lineTo(x1+0.5, y-2);
         }
       ctx.stroke();
-
     ctx.restore();
-    // Animate the "marching ants"
-    // FIXME: Only animate on dragstop, not while dragging
-    self.animOffset++;
-    self.animOffset %= 4;
 
-    self.currentFrame++;
+    if (self.animateSelectionBox) {
+      // Animate the "marching ants"
+      self.animOffset++;
+      self.animOffset %= 4;
+    }
   },
 
   _selectionCoords: function(offset) {
