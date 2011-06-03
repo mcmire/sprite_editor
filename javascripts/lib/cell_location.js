@@ -41,23 +41,27 @@ $.extend(CellLocation.prototype, {
     var self = this;
     self.i += offset.i;
     self.j += offset.j;
-    if (typeof offset.x == "undefined" && typeof offset.y == "undefined") {
+    //if (typeof offset.x == "undefined" && typeof offset.y == "undefined") {
       self._calculateXandY();
-    } else {
-      self.x += offset.x;
-      self.y += offset.y;
-    }
+    //} else {
+    //  self.x += offset.x;
+    //  self.y += offset.y;
+    //}
   },
   subtract: function(offset) {
     var self = this;
     self.i -= offset.i;
     self.j -= offset.j;
-    if (typeof offset.x == "undefined" && typeof offset.y == "undefined") {
+    //if (typeof offset.x == "undefined" && typeof offset.y == "undefined") {
       self._calculateXandY();
-    } else {
-      self.x -= offset.x;
-      self.y -= offset.y;
-    }
+    //} else {
+    //  self.x -= offset.x;
+    //  self.y -= offset.y;
+    //}
+  },
+  gt: function(other) {
+    var self = this;
+    return self.i > other.i || self.j > other.j;
   },
   clone: function() {
     var self = this;

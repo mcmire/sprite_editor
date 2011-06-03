@@ -159,6 +159,7 @@ Tools.select = $.extend({}, Tools.base, {
   selectedCells: [],
   makingSelection: false,
   animOffset: 0,
+  currentFrame: 0,
 
   reset: function() {
     var self = this;
@@ -232,9 +233,6 @@ Tools.select = $.extend({}, Tools.base, {
       // TODO: Support starting selection and dragging northwest instead of southeast
       var c = self.canvases.focusedCell;
       self.selectionEnd = c.loc.clone();
-      self.selectionEnd.x += self.canvases.cellSize;
-      self.selectionEnd.y += self.canvases.cellSize;
-      self._calculateSelectedCells();
     } else {
       // Move the selected cells by the amount the selection box has been dragged
       // TODO: Make this undoable
@@ -246,7 +244,9 @@ Tools.select = $.extend({}, Tools.base, {
 
   mousedragstop: function(event) {
     var self = this;
-    if (!self.makingSelection) {
+    if (self.makingSelection) {
+      self._calculateSelectedCells();
+    } else {
       // Apply the drag offset to the selection box and cells inside
       self.selectionStart.add(self.dragOffset);
       self.selectionEnd.add(self.dragOffset);
@@ -288,12 +288,11 @@ Tools.select = $.extend({}, Tools.base, {
         });
       }
 
-      var ss = self.dragOffset
-        ? SpriteEditor.CellLocation.add(self.selectionStart, self.dragOffset)
-        : self.selectionStart;
-      var se = self.dragOffset
-        ? SpriteEditor.CellLocation.add(self.selectionEnd, self.dragOffset)
-        : self.selectionEnd;
+      var coords = self._selectionCoords(self.dragOffset);
+      var ss = coords.selectionStart,
+          se = coords.selectionEnd;
+      //console.log("Coords: ", JSON.stringify(coords))
+      //if (self.currentFrame > 30) debugger;
 
       // Draw a translucent rectangle that represents the selection area to
       // make it stand out
@@ -341,6 +340,31 @@ Tools.select = $.extend({}, Tools.base, {
     // FIXME: Only animate on dragstop, not while dragging
     self.animOffset++;
     self.animOffset %= 4;
+
+    self.currentFrame++;
+  },
+
+  _selectionCoords: function(offset) {
+    var self = this;
+    var coords = {};
+    var ss = self.selectionStart.clone(),
+        se = self.selectionEnd.clone();
+    // If the selection box was created by dragging from bottom-right to top-left,
+    // reverse the start and end coordinates of the box
+    if (ss.gt(se)) {
+      coords.selectionStart = se;
+      coords.selectionEnd   = ss;
+    } else {
+      coords.selectionStart = ss;
+      coords.selectionEnd   = se;
+    }
+    if (offset) {
+      coords.selectionStart.add(offset);
+      coords.selectionEnd.add(offset);
+    }
+    coords.selectionEnd.x += self.canvases.cellSize;
+    coords.selectionEnd.y += self.canvases.cellSize;
+    return coords;
   },
 
   _calculateSelectedCells: function() {
