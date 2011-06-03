@@ -293,17 +293,6 @@ Tools.select = $.extend({}, Tools.base, {
       var ss = coords.selectionStart,
           se = coords.selectionEnd;
 
-      // Draw a translucent rectangle that represents the selection area to
-      // make it stand out
-      ctx.fillStyle = "rgba(186, 229, 250, 0.3)";
-      ctx.beginPath();
-        ctx.moveTo(ss.x, ss.y);
-        ctx.lineTo(se.x, ss.y);
-        ctx.lineTo(se.x, se.y);
-        ctx.lineTo(ss.x, se.y);
-        ctx.lineTo(ss.x, ss.y);
-      ctx.fill();
-
       // Draw a rectangle that represents the selection area, with an animated
       // "marching ants" dotted border
       ctx.strokeStyle = "#000";
