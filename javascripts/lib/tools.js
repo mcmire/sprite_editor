@@ -230,7 +230,6 @@ Tools.select = $.extend({}, Tools.base, {
     var self = this;
     if (self.makingSelection) {
       // Expand or contract the selection box
-      // TODO: Support starting selection and dragging northwest instead of southeast
       var c = self.canvases.focusedCell;
       self.selectionEnd = c.loc.clone();
     } else {
@@ -291,8 +290,6 @@ Tools.select = $.extend({}, Tools.base, {
       var coords = self._selectionCoords(self.dragOffset);
       var ss = coords.selectionStart,
           se = coords.selectionEnd;
-      //console.log("Coords: ", JSON.stringify(coords))
-      //if (self.currentFrame > 30) debugger;
 
       // Draw a translucent rectangle that represents the selection area to
       // make it stand out
@@ -382,7 +379,9 @@ Tools.select = $.extend({}, Tools.base, {
   _exitSelection: function() {
     var self = this;
     $.v.each(self.selectedCells, function(cell) {
-      self.canvases.cells[cell.loc.i][cell.loc.j] = cell.clone();
+      if (cell.color) {
+        self.canvases.cells[cell.loc.i][cell.loc.j] = cell.clone();
+      }
     })
     self.reset();
   },
