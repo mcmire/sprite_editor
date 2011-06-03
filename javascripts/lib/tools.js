@@ -42,9 +42,10 @@ Tools.dropper = $.extend({}, Tools.base, {
     var self = this;
     var editor = self.editor;
     var color = self.canvases.focusedCell.color;
-    if (color) color = color.clone();
-    editor.currentColor[editor.currentColor.type] = color;
-    editor.colorSampleDivs[editor.currentColor.type].trigger("update");
+    if (color) {
+      editor.currentColor[editor.currentColor.type] = color.clone();
+      editor.colorSampleDivs[editor.currentColor.type].trigger("update");
+    }
   }
 })
 
