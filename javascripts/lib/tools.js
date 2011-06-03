@@ -32,14 +32,17 @@ Tools.dropper = $.extend({}, Tools.base, {
     var self = this;
     self.canvases.workingCanvas.$element.addClass("dropper");
   },
+
   unselect: function() {
     var self = this;
     self.canvases.workingCanvas.$element.removeClass("dropper");
   },
+
   mousedown: function(event){
     var self = this;
     var editor = self.editor;
-    var color = self.canvases.focusedCell.color.clone();
+    var color = self.canvases.focusedCell.color;
+    if (color) color = color.clone();
     editor.currentColor[editor.currentColor.type] = color;
     editor.colorSampleDivs[editor.currentColor.type].trigger("update");
   }
