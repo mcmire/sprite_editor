@@ -289,35 +289,33 @@ Tools.select = $.extend({}, Tools.base, {
         });
       }
 
-      var coords = self._selectionCoords(self.dragOffset);
-      var ss = coords.selectionStart,
-          se = coords.selectionEnd;
+      var bounds = self._selectionBounds(self.dragOffset);
 
       // Draw a rectangle that represents the selection area, with an animated
       // "marching ants" dotted border
       ctx.strokeStyle = "#000";
       ctx.beginPath();
         // top
-        for (var x = ss.x+self.animOffset; x < se.x; x += 4) {
-          var y1 = ss.y;
+        for (var x = bounds.x1+self.animOffset; x < bounds.x2; x += 4) {
+          var y1 = bounds.y1;
           ctx.moveTo(x, y1+0.5);
           ctx.lineTo(x+2, y1+0.5);
         }
         // right
-        for (var y = ss.y+self.animOffset; y < se.y; y += 4) {
-          var x2 = se.x;
+        for (var y = bounds.y1+self.animOffset; y < bounds.y2; y += 4) {
+          var x2 = bounds.x2;
           ctx.moveTo(x2+0.5, y);
           ctx.lineTo(x2+0.5, y+2);
         }
         // bottom
-        for (var x = se.x-self.animOffset; x > ss.x+2; x -= 4) {
-          var y2 = se.y;
+        for (var x = bounds.x2-self.animOffset; x > bounds.x1+2; x -= 4) {
+          var y2 = bounds.y2;
           ctx.moveTo(x, y2+0.5);
           ctx.lineTo(x-2, y2+0.5);
         }
         // left
-        for (var y = se.y-self.animOffset; y > ss.y+2; y -= 4) {
-          var x1 = ss.x;
+        for (var y = bounds.y2-self.animOffset; y > bounds.y1+2; y -= 4) {
+          var x1 = bounds.x1;
           ctx.moveTo(x1+0.5, y);
           ctx.lineTo(x1+0.5, y-2);
         }
@@ -331,27 +329,39 @@ Tools.select = $.extend({}, Tools.base, {
     }
   },
 
-  _selectionCoords: function(offset) {
+  _selectionBounds: function(offset) {
     var self = this;
-    var coords = {};
-    var ss = self.selectionStart.clone(),
-        se = self.selectionEnd.clone();
-    // If the selection box was created by dragging from bottom-right to top-left,
-    // reverse the start and end coordinates of the box
-    if (ss.gt(se)) {
-      coords.selectionStart = se;
-      coords.selectionEnd   = ss;
+    var ss = self.selectionStart,
+        se = self.selectionEnd;
+    var bounds = {};
+    // Ensure that x2 > x1 and y2 > y1, as the following could happen if the
+    // selection box is created by the following motions:
+    // - dragging from top-right to bottom-left: x1 > x2
+    // - dragging from bottom-left to top-right: y1 > y2
+    // - dragging from bottom-right to top-left: both x1 > x2 and y1 > y2
+    if (ss.i > se.i) {
+      bounds.y1 = se.y;
+      bounds.y2 = ss.y;
     } else {
-      coords.selectionStart = ss;
-      coords.selectionEnd   = se;
+      bounds.y1 = ss.y;
+      bounds.y2 = se.y;
+    }
+    if (ss.j > se.j) {
+      bounds.x1 = se.x;
+      bounds.x2 = ss.x;
+    } else {
+      bounds.x1 = ss.x;
+      bounds.x2 = se.x;
     }
     if (offset) {
-      coords.selectionStart.add(offset);
-      coords.selectionEnd.add(offset);
+      bounds.x1 += offset.x;
+      bounds.x2 += offset.x;
+      bounds.y1 += offset.y;
+      bounds.y2 += offset.y;
     }
-    coords.selectionEnd.x += self.canvases.cellSize;
-    coords.selectionEnd.y += self.canvases.cellSize;
-    return coords;
+    bounds.x2 += self.canvases.cellSize;
+    bounds.y2 += self.canvases.cellSize;
+    return bounds;
   },
 
   _calculateSelectedCells: function() {
