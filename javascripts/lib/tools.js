@@ -39,7 +39,7 @@ Tools.dropper = $.extend({}, Tools.base, {
   mousedown: function(event){
     var self = this;
     var editor = self.editor;
-    var color = self.canvases.focusedCells[0].color.clone();
+    var color = self.canvases.focusedCell.color.clone();
     editor.currentColor[editor.currentColor.type] = color;
     editor.colorSampleDivs[editor.currentColor.type].trigger("update");
   }
