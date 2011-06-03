@@ -212,6 +212,10 @@ Tools.select = $.extend({}, Tools.base, {
     // If something is selected and drag started from within the selection,
     // then detach the selected cells from the canvas and put them in a
     // separate selection layer
+    //---
+    // FIXME: This actually removes the corresponding pixels from the preview
+    // canvas. Our cells array should have a concept of layers -- and so then
+    // to render the preview canvas we just flatten the layers
     if (self.selectionStart && self._focusIsInsideOfSelection()) {
       $.v.each(self.selectedCells, function(cell) {
         self.canvases.cells[cell.loc.i][cell.loc.j].clear();
@@ -230,15 +234,18 @@ Tools.select = $.extend({}, Tools.base, {
   mousedrag: function(event) {
     var self = this;
     if (self.makingSelection) {
-      // Expand or contract the selection box
-      var c = self.canvases.focusedCell;
-      self.selectionEnd = c.loc.clone();
+      // Expand or contract the selection box based on the location of the cell that has focus
+      self.selectionEnd = self.canvases.focusedCell.loc.clone();
     } else {
-      // Move the selected cells by the amount the selection box has been dragged
-      // TODO: Make this undoable
-      var dc = self.canvases.startDragAtCell,
-          fc = self.canvases.focusedCell;
-      self.dragOffset = SpriteEditor.CellLocation.subtract(fc.loc, dc.loc);
+      // Record the amount the selection box has been dragged.
+      // While the box is being dragged, the selected cells have virtual
+      // positions, and so the drag offset affects where the cells are drawn
+      // until the drag stops, at which point the virtual positions become
+      // real positions.
+      self.dragOffset = SpriteEditor.CellLocation.subtract(
+        self.canvases.startDragAtCell.loc,
+        self.canvases.focusedCell.loc
+      );
     }
   },
 
@@ -359,6 +366,8 @@ Tools.select = $.extend({}, Tools.base, {
       bounds.y1 += offset.y;
       bounds.y2 += offset.y;
     }
+    // Snap the bottom-right corner of the selection box to the bottom-right
+    // corner of the bottom-right cell
     bounds.x2 += self.canvases.cellSize;
     bounds.y2 += self.canvases.cellSize;
     return bounds;
@@ -375,9 +384,9 @@ Tools.select = $.extend({}, Tools.base, {
     self.selectedCells = selectedCells;
   },
 
-  // Merges the selection layer into the canvas and then clears the selection
   _exitSelection: function() {
     var self = this;
+    // Merge the selection layer into the canvas and then clear the selection
     $.v.each(self.selectedCells, function(cell) {
       if (cell.color) {
         self.canvases.cells[cell.loc.i][cell.loc.j] = cell.clone();
