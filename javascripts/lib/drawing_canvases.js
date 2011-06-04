@@ -1,6 +1,6 @@
 (function(window, document, $, undefined) {
 
-var DrawingCanvases = {
+var DrawingCanvases = $.extend(SpriteEditor.Eventable, {
   timer: null,
   width: null,
   height: null,
@@ -344,7 +344,7 @@ var DrawingCanvases = {
       tpc.ctx.fillRect(0, 0, tpc.width, tpc.height);
     tpc.ctx.restore();
   }
-}
+})
 $.export('SpriteEditor.DrawingCanvases', DrawingCanvases);
 
 })(window, window.document, window.ender);

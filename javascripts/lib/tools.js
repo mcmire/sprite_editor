@@ -153,7 +153,7 @@ Tools.bucket = $.extend({}, Tools.base, {
   }
 });
 
-Tools.select = $.extend({}, Tools.base, {
+Tools.select = $.extend({}, Tools.base, SpriteEditor.Eventable, {
   selectionStart: null,
   selectionEnd: null,
   selectedCells: [],
@@ -161,12 +161,46 @@ Tools.select = $.extend({}, Tools.base, {
   animOffset: 0,
   animateSelectionBox: false,
 
+  anchorSelection: function() {
+    var self = this;
+    // Merge the selection layer into the canvas
+    $.v.each(self.selectedCells, function(cell) {
+      if (cell.color) {
+        self.canvases.cells[cell.loc.i][cell.loc.j] = cell.clone();
+      }
+    })
+  },
+
   reset: function() {
     var self = this;
+    // Clear the selection box and reset other involved variables
     self.selectionStart = null;
     self.selectionEnd = null;
     self.selectedCells = [];
     self.makingSelection = false;
+  },
+
+  exitSelection: function() {
+    var self = this;
+    self.recordEvent(function() {
+      self.recordAction('anchorSelection');
+      self.recordAction('reset');
+    });
+  },
+
+  cutSelection: function() {
+    var self = this;
+    self.canvases.clipboard = $.v.map(self.selectedCells, function(cell) { return cell.clone() });
+    self.recordEvent(function() {
+      $.v.each(self.selectedCells, function(cell) {
+        self.canvases.recordAction('clearCell', cell);
+      })
+      self.recordAction('exitSelection');
+    })
+  },
+  uncutSelection: function() {
+    var self = this;
+
   },
 
   select: function() {
@@ -178,7 +212,7 @@ Tools.select = $.extend({}, Tools.base, {
     var self = this;
     self.canvases.workingCanvas.$element.removeClass("crosshair");
     // Ensure that if selection is active, it is merged into the canvas
-    self._exitSelection();
+    self.record('exitSelection');
   },
 
   keydown: function(event) {
@@ -186,15 +220,7 @@ Tools.select = $.extend({}, Tools.base, {
     var key = event.keyCode;
     if (key == SpriteEditor.Keyboard.X_KEY && (event.metaKey || event.ctrlKey)) {
       // Ctrl-X: Cut selection
-      self.canvases.clipboard = $.v.map(self.selectedCells, function(cell) { return cell.clone() });
-      self.canvases.cellHistory.save(function() {
-        $.v.each(self.selectedCells, function(cell) {
-          self.canvases.cellHistory.add(cell, function() {
-            cell.clear();
-          });
-        })
-      });
-      self._exitSelection();
+      self.record('cutSelection');
     }
   },
 
@@ -223,7 +249,7 @@ Tools.select = $.extend({}, Tools.base, {
     }
     // Otherwise, the user is making a new selection
     else {
-      self._exitSelection();
+      self.record('exitSelection');
       self.makingSelection = true;
       var c = self.canvases.focusedCell;
       self.selectionStart = c.loc.clone();
@@ -272,7 +298,7 @@ Tools.select = $.extend({}, Tools.base, {
     // into the canvas and then clear the selection
     var isDragging = self.canvases.workingCanvas.$element.mouseTracker('isDragging');
     if (!isDragging && self.selectionStart && self._focusIsOutsideOfSelection()) {
-      self._exitSelection();
+      self.record('exitSelection');
     }
   },
 
@@ -382,17 +408,6 @@ Tools.select = $.extend({}, Tools.base, {
       }
     }
     self.selectedCells = selectedCells;
-  },
-
-  _exitSelection: function() {
-    var self = this;
-    // Merge the selection layer into the canvas and then clear the selection
-    $.v.each(self.selectedCells, function(cell) {
-      if (cell.color) {
-        self.canvases.cells[cell.loc.i][cell.loc.j] = cell.clone();
-      }
-    })
-    self.reset();
   },
 
   _focusIsInsideOfSelection: function() {
