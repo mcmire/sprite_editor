@@ -35,7 +35,7 @@ $.ender({
               return rv;
             }
           })(target[prop], obj[prop])
-        } else if ($.v.is.obj(obj[prop])) {
+        } else if (deep && $.v.is.obj(obj[prop])) {
           target[prop] = self.extend(deep, {}, obj[prop]);
         } else {
           target[prop] = obj[prop];
