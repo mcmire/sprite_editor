@@ -27,12 +27,12 @@ var ElementMouseTracker = {
     $(document).bind({
       "mouseup.ElementMouseTracker": function(event) {
         var inst = self.activeInstance.mouseHeldWithin;
-        $.v.each(self.activeInstances(), function(inst) {
-          inst.triggerHandler('mouseup', event)
-        });
         if (inst && inst.isDragging) {
           inst.triggerHandler('mousedragstop');
         }
+        $.v.each(self.activeInstances(), function(inst) {
+          inst.triggerHandler('mouseup', event)
+        });
         //event.stopPropagation();
         event.preventDefault();
       },
