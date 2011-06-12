@@ -6,17 +6,17 @@
  * `i` and `j` are coordinates in the preview canvas (or row-column keys in
  * the cell array). `x` and `y` are coordinates in the working canvas.
  */
-var CellLocation = function(/* editor, i, j | obj */) {
+var CellLocation = function(/* app, i, j | obj */) {
   var self = this;
   if (arguments.length == 1) {
     var obj = arguments[0];
-    self.editor = obj.editor;
+    self.app = obj.app;
     self.i = obj.i;
     self.j = obj.j;
     self.x = obj.x;
     self.y = obj.y;
   } else {
-    self.editor = arguments[0];
+    self.app = arguments[0];
     self.i = arguments[1];
     self.j = arguments[2];
   }
@@ -25,40 +25,64 @@ var CellLocation = function(/* editor, i, j | obj */) {
   }
 }
 $.extend(CellLocation, {
-  add: function(l1, l2) {
-    l1 = l1.clone();
-    l1.add(l2);
-    return l1;
+  plus: function(l1, l2) {
+    return l1.plus(l2);
   },
-  subtract: function(l1, l2) {
-    l1 = l1.clone();
-    l1.subtract(l2);
-    return l1;
+  add: function() {
+    return this.plus.apply(this, arguments);
+  },
+  minus: function(l1, l2) {
+    return l1.minus(l2);
+  },
+  subtract: function() {
+    return this.minus.apply(this, arguments);
   }
 })
 $.extend(CellLocation.prototype, {
+  // Adds the coordinates in the given CellLocation to this CellLocation
   add: function(offset) {
     var self = this;
-    self.i += offset.i;
-    self.j += offset.j;
-    //if (typeof offset.x == "undefined" && typeof offset.y == "undefined") {
+    if (typeof offset.x == "undefined" && typeof offset.y == "undefined") {
+      self.x += offset.x;
+      self.y += offset.y;
+      self._calculateIandJ();
+    } else {
+      self.i += offset.i;
+      self.j += offset.j;
       self._calculateXandY();
-    //} else {
-    //  self.x += offset.x;
-    //  self.y += offset.y;
-    //}
+    }
   },
+  // Non-destructive version of #add.
+  // You'll probably want to use this sparingly.
+  plus: function(offset) {
+    var self = this;
+    var clone = self.clone();
+    clone.add(offset);
+    return clone;
+  },
+
+  // Subtracts this CellLocation from the coordinates of the given CellLocation
   subtract: function(offset) {
     var self = this;
-    self.i -= offset.i;
-    self.j -= offset.j;
-    //if (typeof offset.x == "undefined" && typeof offset.y == "undefined") {
+    if (typeof offset.x == "undefined" && typeof offset.y == "undefined") {
+      self.x -= offset.x;
+      self.y -= offset.y;
+      self._calculateIandJ();
+    } else {
+      self.i -= offset.i;
+      self.j -= offset.j;
       self._calculateXandY();
-    //} else {
-    //  self.x -= offset.x;
-    //  self.y -= offset.y;
-    //}
+    }
   },
+  // Non-destructive version of #subtract.
+  // You'll probably want to use this sparingly.
+  minus: function(offset) {
+    var self = this;
+    var clone = self.clone();
+    clone.subtract(offset);
+    return clone;
+  },
+
   gt: function(other) {
     var self = this;
     return self.i > other.i || self.j > other.j;
@@ -79,8 +103,13 @@ $.extend(CellLocation.prototype, {
   },
   _calculateXandY: function() {
     var self = this;
-    self.x = self.j * self.editor.cellSize;
-    self.y = self.i * self.editor.cellSize;
+    self.x = self.j * self.app.cellSize;
+    self.y = self.i * self.app.cellSize;
+  },
+  _calculateIandJ: function() {
+    var self = this;
+    self.i = self.y / self.app.cellSize;
+    self.j = self.x / self.app.cellSize;
   }
 })
 $.export('SpriteEditor.CellLocation', CellLocation);

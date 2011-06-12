@@ -1,6 +1,8 @@
 (function(window, document, $, undefined) {
 
-var App = {
+var App = {};
+SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App");
+$.extend(App, {
   $container: null,
   $leftPane: null,
   $centerPane: null,
@@ -14,7 +16,7 @@ var App = {
     foreground: SpriteEditor.Color.fromRGB(172, 85, 255),
     background: SpriteEditor.Color.fromRGB(255, 38, 192)
   },
-  currentToolName: "select",
+  currentToolName: "pencil",
   currentBrushSize: 1,
 
   init: function() {
@@ -23,7 +25,8 @@ var App = {
     SpriteEditor.Keyboard.init();
 
     self.canvases = SpriteEditor.DrawingCanvases.init(self);
-    self.tools = SpriteEditor.Tools.init(self, self.canvases);
+    self.tools    = SpriteEditor.Tools.init(self, self.canvases);
+    self.history  = SpriteEditor.EventHistory.init(self);
 
     self.$container = $('#main');
     self._createMask();
@@ -45,12 +48,29 @@ var App = {
   addEvents: function() {
     var self = this;
     self.canvases.addEvents();
-    $(document).bind({
-      "keydown.colorBox": function(event) {
+    self._bindEvents(document, {
+      keydown: function(event) {
         var key = event.keyCode;
-        if (key == SpriteEditor.Keyboard.X_KEY) {
+        if (key == SpriteEditor.Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
+          if (event.shiftKey) {
+            // Ctrl-Shift-Z or Command-Shift-Z: Redo last action
+            if (self.history.canRedo()) self.history.redo();
+          } else {
+            // Ctrl-Z or Command-Z: Undo last action
+            if (self.history.canUndo()) self.history.undo();
+          }
+        }
+        else if (key == SpriteEditor.Keyboard.X_KEY) {
           self._switchForegroundAndBackgroundColor();
         }
+        else if (key == SpriteEditor.Keyboard.SHIFT_KEY) {
+          self.selectColorType('background');
+        }
+        self.currentTool().trigger('keydown', event);
+      },
+      keyup: function(event) {
+        self.selectColorType('foreground');
+        self.currentTool().trigger('keyup', event);
       }
     })
   },
@@ -58,7 +78,7 @@ var App = {
   removeEvents: function() {
     var self = this;
     self.canvases.removeEvents();
-    $(document).unbind("keydown.colorBox");
+    self._unbindEvents(document, "keydown", "keyup");
   },
 
   _createWrapperDivs: function() {
@@ -380,7 +400,7 @@ var App = {
     var self = this;
     self.$maskDiv.hide();
   }
-};
+});
 $.export('SpriteEditor.App', App);
 
 })(window, window.document, window.ender);

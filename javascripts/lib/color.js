@@ -1,5 +1,9 @@
 (function(window, $) {
 
+// TODO: Add a way to clear a color without setting it to null
+// Maybe add an asClear() method similar to Cell
+// That way we don't have to constantly check for the existence of a cell's color
+
 var Color = function(color) {
   var self = this;
   self.red = color.red;
@@ -151,7 +155,7 @@ $.extend(Color.prototype, {
     var self = this;
     return 'hsla(' + [self.hue, self.saturation, self.lightness, self.alpha].join(", ") + ')';
   },
-  isEqual: function(other) {
+  eq: function(other) {
     var self = this;
     return other && (
       other.red == self.red &&
