@@ -72,7 +72,7 @@ var DrawingCanvases = (function() {
       return self;
     },
 
-    save: function(){
+    save: function() {
       var self = this;
       localStorage.setItem('pixel_editor.saved', 'true')
       $.v.each(self.cells, function(row) {
@@ -96,14 +96,7 @@ var DrawingCanvases = (function() {
         for (var j=0; j<self.widthInCells; j++) {
           row[j] = new SpriteEditor.Cell(self, i, j);
           if (needsReload) {
-            if (localStorage['cells.'+j+','+i] != 'undefined') {
-              var color = JSON.parse(localStorage['cells.'+j+','+i]);
-            } else {
-              var color = null;
-            }
-            if (color && color.red != 0 && color.green != 0 && color.blue != 0 && color.alpha != 0) {
-              row[j].color = SpriteEditor.Color.fromRGB(color.red, color.green, color.blue).clone();
-            }
+            row[j].color = new SpriteEditor.Color.HSL(JSON.parse(localStorage['cells.'+j+','+i]));
           }
         }
       }
@@ -179,8 +172,10 @@ var DrawingCanvases = (function() {
       var opts = opts || {};
       var color = opts.color || cell.color;
       var loc   = opts.loc   || cell.loc;
-      if (!color) return;
-      if (typeof color != "string") color = color.toRGBAString();
+      if (typeof color != "string") {
+        if (color.isClear()) return;
+        color = color.toRGB().toString();
+      }
       wc.ctx.fillStyle = color;
       wc.ctx.fillRect(loc.x+1, loc.y+1, self.cellSize-1, self.cellSize-1);
     },
@@ -188,8 +183,9 @@ var DrawingCanvases = (function() {
     drawPreviewCell: function(cell) {
       var self = this;
       var pc = self.previewCanvas;
-      if (!cell.color) return;
-      pc.imageData.setPixel(cell.loc.j, cell.loc.i, cell.color.red, cell.color.green, cell.color.blue, 255);
+      var color = cell.color.toRGB();
+      if (color.isClear()) return;
+      pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, 255);
     },
 
     _createGridBgCanvas: function() {
@@ -312,7 +308,7 @@ var DrawingCanvases = (function() {
           // know which color each cell would get replaced with
           $.v.each(self.focusedCells, function(cell) {
             self.drawWorkingCell(cell, {color: '#fff'});
-            self.drawWorkingCell(cell, {color: currentColor.withAlpha(0.5)});
+            self.drawWorkingCell(cell, {color: currentColor.with({alpha: 0.5})});
           })
         ctx.restore();
       }

@@ -229,7 +229,7 @@ input[type="submit"], input[type="button"], select {
 .square_color_picker {
   overflow: hidden;
 
-  .hue_sat_canvas, .lightness_canvas, .color_sample {
+  .hue_sat_canvas, .lum_canvas, .color_sample {
     border: 2px solid #666;
   }
 
@@ -253,13 +253,13 @@ input[type="submit"], input[type="button"], select {
     z-index: 10;
     cursor: crosshair;
   }
-  .lightness_div {
+  .lum_div {
     float: right;
     margin-left: 10px;
-    background-image: url(/images/color_picker_lightness_selector.gif);
+    background-image: url(/images/color_picker_lum_selector.gif);
     background-repeat: no-repeat;
   }
-  .lightness_canvas {
+  .lum_canvas {
     position: relative;
     left: 11px;
     cursor: row-resize;

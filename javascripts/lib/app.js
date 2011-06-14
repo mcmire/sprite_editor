@@ -13,8 +13,9 @@ $.extend(App, {
   },
   currentColor: {
     type: "foreground",
-    foreground: SpriteEditor.Color.fromRGB(172, 85, 255),
-    background: SpriteEditor.Color.fromRGB(255, 38, 192)
+    // These are always stored in HSL!
+    foreground: (new SpriteEditor.Color.RGB(172, 85, 255)).toHSL(),
+    background: (new SpriteEditor.Color.RGB(255, 38, 192)).toHSL()
   },
   currentToolName: "pencil",
   currentBrushSize: 1,
@@ -175,11 +176,13 @@ $.extend(App, {
           var imageData = c.ctx.getImageData(0, 0, img.width, img.height);
           for (var x=0; x<img.width; x++) {
             for (var y=0; y<img.height; y++) {
-              var color = imageData.getPixel(x, y);
-              // Transparent black means the pixel wasn't set
-              if (color.red != 0 && color.green != 0 && color.blue != 0 && color.alpha != 0) {
-                self.cells[y][x].color = SpriteEditor.Color.fromRGB(color.red, color.green, color.blue);
-              }
+              (function() {
+                var rgba = imageData.getPixel(x, y);
+                var color = SpriteEditor.Color.RGB(color.red, color.green, color.blue, color.alpha);
+                if (!color.isClear()) {
+                  self.cells[y][x].color = color;
+                }
+              })()
             }
           }
           self.draw();
@@ -231,7 +234,7 @@ $.extend(App, {
           self.colorPickerBox.open(self.currentColor[colorType]);
         },
         update: function() {
-          $div.css("background-color", self.currentColor[colorType].toRGBAString())
+          $div.css("background-color", self.currentColor[colorType].toRGB().toString())
         }
       })
       $div.trigger('update');

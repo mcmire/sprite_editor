@@ -2,13 +2,13 @@
 
 var ColorPickerBox = {
   hueSatCanvasSize: {width: 265, height: 300},
-  lightnessCanvasSize: {width: 25, height: 300},
-  //currentColor: SpriteEditor.Color.fromRGB(172, 85, 255),
-  currentColor: SpriteEditor.Color.fromRGB(255, 0, 0),
+  lumCanvasSize: {width: 25, height: 300},
+  // This is always stored in HSL!
+  currentColor: (new SpriteEditor.Color.RGB(255, 0, 0)).toHSL(),
 
   $container: null,
   hueSatCanvas: null,
-  lightnessCanvas: null,
+  lumCanvas: null,
   colorFields: {},
 
   init: function(options) {
@@ -69,7 +69,7 @@ var ColorPickerBox = {
     var self = this;
     self.hueSatCanvas = SpriteEditor.Canvas.create(self.hueSatCanvasSize.width, self.hueSatCanvasSize.height, function(c) {
       var imageData = c.ctx.createImageData(c.width, c.height);
-      var color;
+      var hsl = self.currentColor;
       // TODO: Use a gradient for this instead of manually filling in pixels
       for (var y=0; y<c.height; y++) {
         for (var x=0; x<c.width; x++) {
@@ -77,8 +77,8 @@ var ColorPickerBox = {
           // y = 0..height -> s = 100..0
           var h = Math.round(x * (360 / c.width));
           var s = Math.round(y * (-100 / c.height) + 100);
-          color = self.currentColor.withHSL({hue: h, saturation: s});
-          imageData.setPixel(x, y, color.red, color.green, color.blue, 255);
+          var rgb = hsl.with({hue: h, sat: s}).toRGB();
+          imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255);
         }
       }
       c.ctx.putImageData(imageData, 0, 0);
@@ -95,35 +95,35 @@ var ColorPickerBox = {
 
   _addLightnessDiv: function() {
     var self = this;
-    self.$lightnessDiv = $('<div class="lightness_div" />')
-    self.$lightnessDiv.css({
-      width: self.lightnessCanvasSize.width + 11,
-      height: self.lightnessCanvasSize.height
+    self.$lumDiv = $('<div class="lum_div" />')
+    self.$lumDiv.css({
+      width: self.lumCanvasSize.width + 11,
+      height: self.lumCanvasSize.height
     })
-    self.$container.append(self.$lightnessDiv);
+    self.$container.append(self.$lumDiv);
 
     self._addLightnessCanvas();
   },
 
   _addLightnessCanvas: function() {
     var self = this;
-    self.lightnessCanvas = SpriteEditor.Canvas.create(self.lightnessCanvasSize.width, self.lightnessCanvasSize.height);
-    self.lightnessCanvas.$element.addClass("lightness_canvas");
-    self.$lightnessDiv.append(self.lightnessCanvas.$element);
+    self.lumCanvas = SpriteEditor.Canvas.create(self.lumCanvasSize.width, self.lumCanvasSize.height);
+    self.lumCanvas.$element.addClass("lum_canvas");
+    self.$lumDiv.append(self.lumCanvas.$element);
   },
 
   _drawLightnessCanvas: function() {
     var self = this;
-    var c = self.lightnessCanvas;
+    var c = self.lumCanvas;
     var imageData = c.ctx.createImageData(c.width, c.height);
-    var color;
+    var hsl = self.currentColor;
     // TODO: Use a gradient for this instead of manually filling in pixels
     for (var y=0; y<c.height; y++) {
       // y = 0..height -> l = 100..0
       var l = Math.round((-100 / c.height) * y + 100);
-      color = self.currentColor.withHSL({lightness: l});
+      var rgb = hsl.with({lum: l}).toRGB();
       for (var x=0; x<c.width; x++) {
-        imageData.setPixel(x, y, color.red, color.green, color.blue, 255);
+        imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255);
       }
     }
     c.ctx.putImageData(imageData, 0, 0);
@@ -132,7 +132,7 @@ var ColorPickerBox = {
   _addColorFields: function() {
     var self = this;
     self.$colorFieldsDiv = $('<div class="color_fields" />');
-    $.v.each(SpriteEditor.Color.components, function(repName, rep) {
+    $.v.each(SpriteEditor.Color.componentsByRepresentation, function(repName, rep) {
       var $repDiv = $('<div class="'+repName+'_fields" />');
       $.v.each(rep, function(cpt) {
         var $colorSpan = $('<span />');
@@ -184,7 +184,7 @@ var ColorPickerBox = {
       }//,
       //debug: true
     })
-    self.$lightnessDiv.mouseTracker({
+    self.$lumDiv.mouseTracker({
       'mousedown mousedrag': function() {
         self._positionLightnessSelectorFromMouse();
         self._setLightnessFromSelectorPosition();
@@ -200,13 +200,18 @@ var ColorPickerBox = {
     var self = this;
     $(document).unbind("keyup.ColorPickerBox");
     self.$hueSatDiv.mouseTracker('destroy');
-    self.$lightnessDiv.mouseTracker('destroy');
+    self.$lumDiv.mouseTracker('destroy');
   },
 
   _setColorFields: function() {
     var self = this;
-    $.v(SpriteEditor.Color.components).chain().values().flatten().each(function(cpt) {
-      self.colorFields[cpt].val(String(self.currentColor[cpt]));
+    var hsl = self.currentColor,
+        rgb = hsl.toRGB();
+    $.v.each(SpriteEditor.Color.RGB.properties, function(prop) {
+      if (self.colorFields[prop]) self.colorFields[prop].val(String(rgb[prop]));
+    });
+    $.v.each(SpriteEditor.Color.HSL.properties, function(prop) {
+      if (self.colorFields[prop]) self.colorFields[prop].val(String(hsl[prop]));
     });
   },
 
@@ -221,10 +226,10 @@ var ColorPickerBox = {
 
   _positionLightnessSelectorFromMouse: function() {
     var self = this;
-    var mouse = self.$lightnessDiv.mouseTracker('pos').rel;
+    var mouse = self.$lumDiv.mouseTracker('pos').rel;
     // This 5 here is just a value I found matches up with the center of the selector image
     var top = mouse.y - 5;
-    self.$lightnessDiv.css("background-position", "0px "+top+"px");
+    self.$lumDiv.css("background-position", "0px "+top+"px");
   },
 
   _positionHueSatSelectorFromColor: function() {
@@ -236,31 +241,28 @@ var ColorPickerBox = {
 
   _positionLightnessSelectorFromColor: function() {
     var self = this;
-    var top = self._lit2px();
-    self.$lightnessDiv.css("background-position", "0px "+top+"px");
+    var top = self._lum2px();
+    self.$lumDiv.css("background-position", "0px "+top+"px");
   },
 
   _setHueAndSatFromSelectorPosition: function() {
     var self = this;
-    self.currentColor.hue = self._px2hue();
-    self.currentColor.saturation = self._px2sat();
-    self.currentColor.recalculateRGB();
+    self.currentColor = self.currentColor.with({ hue: self._px2hue(), sat: self._px2sat() });
   },
 
   _setLightnessFromSelectorPosition: function() {
     var self = this;
-    self.currentColor.lightness = self._px2lit();
-    self.currentColor.recalculateRGB();
+    self.currentColor = self.currentColor.with({ lum: self._px2lum() });
   },
 
   _setColorSample: function() {
     var self = this;
-    self.$colorSampleDiv.css("background-color", self.currentColor.toRGBAString());
+    self.$colorSampleDiv.css("background-color", self.currentColor.toRGB().toString());
   },
 
   _sat2px: function() {
     var self = this;
-    var s = self.currentColor.saturation;
+    var s = self.currentColor.sat;
     var h = self.hueSatCanvasSize.height;
     // s = 100..0 -> y = 0..height
     var y = Math.round(-s * (h / 100) + h);
@@ -293,19 +295,19 @@ var ColorPickerBox = {
     return h;
   },
 
-  _lit2px: function() {
+  _lum2px: function() {
     var self = this;
-    var l = self.currentColor.lightness;
-    var h = self.lightnessCanvasSize.height;
+    var l = self.currentColor.lum;
+    var h = self.lumCanvasSize.height;
     // l = 100..0 -> y = 0..height
     var y = Math.round(-l * (h / 100) + h);
     return y;
   },
-  _px2lit: function() {
+  _px2lum: function() {
     var self = this;
-    var pos = self.$lightnessDiv.mouseTracker('pos').rel;
+    var pos = self.$lumDiv.mouseTracker('pos').rel;
     var y = pos.y;
-    var h = self.lightnessCanvasSize.height;
+    var h = self.lumCanvasSize.height;
     // y = 0..height -> l = 100..0
     var l = Math.round(-100 * (y - h) / h);
     return l;

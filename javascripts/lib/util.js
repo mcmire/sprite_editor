@@ -25,13 +25,13 @@ $.ender({
     $.v.each(objects, function(obj) {
       for (var prop in obj) {
         if (!obj.hasOwnProperty(prop)) continue;
-        if (prop in target && typeof target[prop] == "function") {
+        if (typeof target[prop] == "function") {
           (function(_super, _new) {
             target[prop] = function() {
-              var tmp = target._super;
-              target._super = _super;
-              var rv = _new.apply(target, arguments);
-              target._super = tmp;
+              var tmp = this._super;
+              this._super = _super;
+              var rv = _new.apply(this, arguments);
+              this._super = tmp;
               return rv;
             }
           })(target[prop], obj[prop])

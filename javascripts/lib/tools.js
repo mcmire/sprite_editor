@@ -52,10 +52,8 @@ Tools.dropper = (function() {
       var self = this;
       var app = self.app;
       var color = self.canvases.focusedCell.color;
-      if (color) {
-        app.currentColor[app.currentColor.type] = color.clone();
-        app.colorSampleDivs[app.currentColor.type].trigger("update");
-      }
+      app.currentColor[app.currentColor.type] = color.clone();
+      app.colorSampleDivs[app.currentColor.type].trigger("update");
     }
   })
 
@@ -159,11 +157,7 @@ Tools.bucket = (function() {
       }
 
       var currentColor = t.app.currentColor[t.app.currentColor.type],
-          focusedColor = t.canvases.focusedCells[0].color;
-      // Copy the color of the cell that has focus as the color will change
-      // during this loop (since one of the cells that will get changed is the
-      // focused cell itself)
-      //if (focusedColor) focusedColor = focusedColor.clone();
+          focusedColor = t.canvases.focusedCells[0].color.clone();
 
       // Look for all cells with the color of the current cell (or look for all
       // empty cells, if the current cell is empty) and mark them as filled
@@ -171,7 +165,7 @@ Tools.bucket = (function() {
       var changedCells = [];
       $.v.each(t.canvases.cells, function(row, i) {
         $.v.each(row, function(cell, j) {
-          if ((!focusedColor && !cell.color) || (cell.color && cell.color.eq(focusedColor))) {
+          if (cell.color.eq(focusedColor)) {
             var before = cell;
             var after = cell.withColor(currentColor);
             row[j] = after;
@@ -204,14 +198,13 @@ Tools.bucket = (function() {
       }
 
       // Copy this as the color of the current cell will change during this loop
-      var focusedColor = t.canvases.focusedCells[0].color;
-      if (focusedColor) focusedColor = focusedColor.clone();
+      var focusedColor = t.canvases.focusedCells[0].color.clone();
       // Look for all cells with the color of the current cell
       // and mark them as unfilled
       var changedCells = [];
       $.v.each(t.canvases.cells, function(row, i) {
         $.v.each(row, function(cell, j) {
-          if (cell.color && cell.color.eq(focusedColor)) {
+          if (cell.color.eq(focusedColor)) {
             var before = cell;
             var after = cell.asClear();
             row[j] = after;
@@ -357,11 +350,6 @@ Tools.select = (function() {
         var srcAfter = srcBefore.asClear();
         t.canvases.cells[srcBefore.loc.i][srcBefore.loc.j] = srcAfter;
         changedCells.push({before: srcBefore, after: srcAfter});
-
-        console.log(srcBefore.loc.i+","+srcBefore.loc.j+" (before): "+(srcBefore.color ? srcBefore.color.toRGBAString() : "null"));
-        console.log(srcAfter.loc.i+","+srcAfter.loc.j+" (after): "+(srcAfter.color ? srcAfter.color.toRGBAString() : "null"));
-        console.log(tgtBefore.loc.i+","+tgtBefore.loc.j+" (before): "+(tgtBefore.color ? tgtBefore.color.toRGBAString() : "null"));
-        console.log(tgtAfter.loc.i+","+tgtAfter.loc.j+" (after): "+(tgtAfter.color ? tgtAfter.color.toRGBAString() : "null"));
       })
       event.canvases.changedCells = changedCells;
 

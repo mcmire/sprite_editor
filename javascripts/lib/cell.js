@@ -10,35 +10,42 @@ var Cell = function(/* app, i, j | obj */) {
   } else {
     self.app = arguments[0];
     self.loc = new SpriteEditor.CellLocation(arguments[0], arguments[1], arguments[2]);
+    self.color = new SpriteEditor.Color.HSL();
   }
 }
+
 $.extend(Cell.prototype, {
   clear: function() {
     var self = this;
-    self.color = null;
+    self.color = new SpriteEditor.Color.HSL();
   },
+
   asClear: function() {
     var self = this;
     var clone = self.clone();
     clone.clear();
     return clone;
   },
+
   withColor: function(color) {
     var self = this;
     var clone = self.clone();
     clone.color = color.clone();
     return clone;
   },
+
   coords: function() {
     var self = this;
     return [self.loc.j, self.loc.i].join(",");
   },
+
   clone: function() {
     var self = this;
     var cell = new Cell(self);
     return cell;
   }
 })
+
 $.export('SpriteEditor.Cell', Cell);
 
 })(window, window.document, window.ender);

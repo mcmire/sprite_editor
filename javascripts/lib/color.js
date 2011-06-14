@@ -1,36 +1,11 @@
 (function(window, $) {
 
-// TODO: Add a way to clear a color without setting it to null
-// Maybe add an asClear() method similar to Cell
-// That way we don't have to constantly check for the existence of a cell's color
-
-var Color = function(color) {
-  var self = this;
-  self.red = color.red;
-  self.green = color.green,
-  self.blue = color.blue;
-  self.hue = color.hue;
-  self.saturation = color.saturation;
-  self.lightness = color.lightness;
-  self.alpha = color.alpha;
-  if (typeof self.alpha == "undefined") {
-    self.alpha = 1;
-  }
-};
-$.extend(Color, {
-  components: {rgb: ['red', 'green', 'blue'], hsl: ['hue', 'saturation', 'lightness']},
+var Color = {
+  componentsByRepresentation: {
+    rgb: ['red', 'green', 'blue'],
+    hsl: ['hue', 'sat', 'lum']
+  },
   correctHue: true,
-
-  fromRGB: function(red, green, blue) {
-    var color = new Color({red: red, green: green, blue: blue});
-    color.recalculateHSL();
-    return color;
-  },
-  fromHSL: function(hue, saturation, lightness) {
-    var color = new Color({hue: hue, saturation: saturation, lightness: lightness});
-    color.recalculateRGB();
-    return color;
-  },
 
   // Much of the code in the next three methods were stolen from <http://hslpicker.com>,
   // which in turn was adapted from the SASS source
@@ -77,18 +52,19 @@ $.extend(Color, {
     else s = diff / (2 - sum);
 
     hsl.hue = h === null ? null : Math.round(h);
-    hsl.saturation = Math.round(s * 100);
-    hsl.lightness = Math.round(l * 100);
+    hsl.sat = Math.round(s * 100);
+    hsl.lum = Math.round(l * 100);
 
     return hsl;
   },
+
   hsl2rgb: function(hsl) {
     var self = this;
     var rgb = {};
 
     var h = (hsl.hue || 0) / 360;
-        s = hsl.saturation / 100;
-        l = hsl.lightness / 100;
+        s = hsl.sat / 100;
+        l = hsl.lum / 100;
 
     if (l <= 0.5) var q = l * (1 + s);
     else var q = l + s - (l * s);
@@ -105,6 +81,7 @@ $.extend(Color, {
 
     return rgb;
   },
+
   _hue2rgb: function(p, q, h) {
     if (h < 0) h += 1;
     else if (h > 1) h -= 1;
@@ -114,7 +91,188 @@ $.extend(Color, {
     else if ((h * 3) < 2) return p + (q - p) * ((2 / 3) - h) * 6;
     else return p;
   }
+};
+
+//------------------------------------------------------------------------------
+
+Color.RGB = function(red, green, blue, alpha) {
+  var self = this;
+  if (arguments.length == 1 && typeof arguments[0] == "object") {
+    var color = arguments[0];
+    $.v.each(Color.RGB.properties, function(prop) {
+      self[prop] = color[prop];
+    })
+  } else {
+    self.red = red;
+    self.green = green;
+    self.blue = blue;
+    if (typeof alpha == "undefined" && (typeof red != "undefined" || typeof green != "undefined" || typeof blue != "undefined")) {
+      self.alpha = 1;
+    } else {
+      self.alpha = alpha;
+    }
+  }
+}
+
+$.extend(Color.RGB, {
+  properties: "red green blue alpha".split(" ")
 });
+
+$.extend(Color.RGB.prototype, {
+  with: function(props) {
+    var self = this;
+    var clone = self.clone();
+    $.v.each(Color.RGB.properties, function(prop) {
+      if (prop in props) clone[prop] = props[prop];
+    })
+    return clone;
+  },
+
+  toRGB: function() {
+    return this;
+  },
+
+  toHSL: function() {
+    var self = this;
+    if (self.isClear()) {
+      return new Color.HSL();
+    } else {
+      var hsl = Color.rgb2hsl(self);
+      return new Color.HSL(hsl.hue, hsl.sat, hsl.lum, self.alpha);
+    }
+  },
+
+  isClear: function() {
+    var self = this;
+    return $.v.every(Color.RGB.properties, function(prop) { return typeof self[prop] == "undefined" });
+  },
+
+  clone: function() {
+    var self = this;
+    var clone = new Color.RGB(self);
+    return clone;
+  },
+
+  toString: function() {
+    var self = this;
+    var values = $.v.map(Color.RGB.properties, function(prop) { return self[prop] || 0 });
+    return 'rgba(' + values.join(", ") + ')';
+  },
+
+  eq: function(other) {
+    var self = this;
+    return $.v.every(Color.RGB.properties, function(prop) { return self[prop] == other[prop] });
+  }
+})
+
+//------------------------------------------------------------------------------
+
+Color.HSL = function(hue, sat, lum, alpha) {
+  var self = this;
+  if (arguments.length == 1 && typeof arguments[0] == "object") {
+    var color = arguments[0];
+    $.v.each(Color.HSL.properties, function(prop) {
+      self[prop] = color[prop];
+    })
+  } else {
+    self.hue = hue;
+    self.sat = sat;
+    self.lum = lum;
+    if (typeof alpha == "undefined" && (typeof hue != "undefined" || typeof sat != "undefined" || typeof lum != "undefined")) {
+      self.alpha = 1;
+    } else {
+      self.alpha = alpha;
+    }
+  }
+}
+
+$.extend(Color.HSL, {
+  properties: "hue sat lum alpha".split(" ")
+});
+
+$.extend(Color.HSL.prototype, {
+  with: function(props) {
+    var self = this;
+    var clone = self.clone();
+    $.v.each(Color.HSL.properties, function(prop) {
+      if (prop in props) clone[prop] = props[prop];
+    })
+    return clone;
+  },
+
+  toRGB: function() {
+    var self = this;
+    if (self.isClear()) {
+      return new Color.RGB()
+    } else {
+      var rgb = Color.hsl2rgb(self);
+      return new Color.RGB(rgb.red, rgb.green, rgb.blue, self.alpha);
+    }
+  },
+
+  toHSL: function() {
+    return this;
+  },
+
+  isClear: function() {
+    var self = this;
+    return $.v.every(Color.HSL.properties, function(prop) { return typeof self[prop] == "undefined" });
+  },
+
+  clone: function() {
+    var self = this;
+    var clone = new Color.HSL(self);
+    return clone;
+  },
+
+  toString: function() {
+    var self = this;
+    var values = $.v.map(Color.HSL.properties, function(prop) { return self[prop] || 0 });
+    return 'hsla('+ values.join(", ") + ')';
+  },
+
+  eq: function(other) {
+    var self = this;
+    return $.v.every(Color.HSL.properties, function(prop) { return self[prop] == other[prop] });
+  }
+})
+
+//------------------------------------------------------------------------------
+
+/*
+var Color = function(color) {
+  var self = this;
+  $.v.each(self.properties.split(" "), function(prop) {
+    if (color) {
+      self[prop] = color[prop];
+    }
+  })
+  if (typeof self.alpha == "undefined") {
+
+  }
+};
+
+$.extend(Color, {
+  properties: "red green blue hue sat lum alpha".split(" "),
+  componentsByRepresentation: {
+    rgb: ['red', 'green', 'blue'],
+    hsl: ['hue', 'sat', 'lum']
+  },
+  correctHue: true,
+
+  fromRGB: function(red, green, blue) {
+    var color = new Color({red: red, green: green, blue: blue});
+    color.recalculateHSL();
+    return color;
+  },
+
+  fromHSL: function(hue, sat, lum) {
+    var color = new Color({hue: hue, sat: sat, lum: lum});
+    color.recalculateRGB();
+    return color;
+  }
+});
+
 $.extend(Color.prototype, {
   withHSL: function(hsl) {
     var self = this;
@@ -122,52 +280,33 @@ $.extend(Color.prototype, {
     clone.recalculateRGB();
     return clone;
   },
+
   withRGB: function(rgb) {
     var self = this;
     var clone = $.extend(self.clone(), rgb);
     clone.recalculateHSL();
     return clone;
   },
+
   withAlpha: function(alpha) {
     var self = this;
     var clone = self.clone();
     clone.alpha = alpha;
     return clone;
   },
+
   recalculateHSL: function() {
     var self = this;
     $.extend(self, Color.rgb2hsl(self));
   },
+
   recalculateRGB: function() {
     var self = this;
     $.extend(self, Color.hsl2rgb(self));
-  },
-  clone: function() {
-    var self = this;
-    var clone = new Color(self);
-    return clone;
-  },
-  toRGBAString: function() {
-    var self = this;
-    return 'rgba('+ [self.red, self.green, self.blue, self.alpha].join(", ") + ')';
-  },
-  toHSLAString: function() {
-    var self = this;
-    return 'hsla(' + [self.hue, self.saturation, self.lightness, self.alpha].join(", ") + ')';
-  },
-  eq: function(other) {
-    var self = this;
-    return other && (
-      other.red == self.red &&
-      other.green == self.green &&
-      other.blue == self.blue
-    ) && (
-      other.hue == self.hue &&
-      other.saturation == self.saturation &&
-      other.lightness == self.lightness
-    ) && other.alpha == self.alpha;
   }
 })
+*/
+
 $.export('SpriteEditor.Color', Color);
 
 })(window, window.ender);
