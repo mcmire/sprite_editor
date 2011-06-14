@@ -19,10 +19,12 @@ Tools.base = $.extend({}, SpriteEditor.Eventable, {
     self.canvases = canvases;
   },
 
-  trigger: function(name, event) {
+  trigger: function(/*name, args...*/) {
     var self = this;
+    var args = Array.prototype.slice.call(arguments);
+    var name = args.shift();
     if (typeof self[name] != "undefined") {
-      self[name](event);
+      return self[name].apply(self, args);
     }
   }
 })
@@ -61,62 +63,21 @@ Tools.pencil = (function() {
 
   var t = $.extend(true, {}, Tools.base);
 
-  // TODO: These are getting fired multiple times and thus the event group
-  // has like 20,000 events in it when it should only have 6
-  // Need to implement something like the select tool where the cells that are
-  // going into the event are kept in a temp variable until ready
-
-  t.addAction('fillFocusedCells', {
-    "do": function() {
-      var event = {
-        canvases: {}
-      }
-
-      var currentColor = t.app.currentColor[t.app.currentColor.type];
-
-      var changedCells = [];
-      $.v.each(t.canvases.focusedCells, function(cell) {
-        if (!cell.color || !cell.color.eq(currentColor)) {
-          var before = t.canvases.cells[cell.loc.i][cell.loc.j];
-          // This makes a copy of the current color object so that if the current
-          // color changes it doesn't change all cells that have that color
-          var after = before.withColor(currentColor);
-          t.canvases.cells[cell.loc.i][cell.loc.j] = after;
-          changedCells.push({before: before, after: after});
-        }
-      })
-      event.canvases.changedCells = changedCells;
-
-      return event;
-    },
-
-    "undo": function(event) {
-      $.v.each(event.canvases.changedCells, function(cell) {
-        t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before;
-      })
-    },
-
-    "redo": function(event) {
-      $.v.each(event.canvases.changedCells, function(cell) {
-        t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after;
-      })
-    }
+  $.extend(t, {
+    actionableCells: {}
   })
 
-  t.addAction('clearFocusedCells', {
+  t.addAction('updateCells', {
     "do": function() {
       var event = {
         canvases: {}
       }
 
       var changedCells = [];
-      $.v.each(t.canvases.focusedCells, function(cell) {
-        if (cell.color) {
-          var before = t.canvases.cells[cell.loc.i][cell.loc.j];
-          var after = before.asClear();
-          t.canvases.cells[cell.loc.i][cell.loc.j] = after;
-          changedCells.push({before: before, after: after});
-        }
+      $.v.each(t.actionableCells, function(coords, after) {
+        var before = t.canvases.cells[after.loc.i][after.loc.j];
+        t.canvases.cells[after.loc.i][after.loc.j] = after;
+        changedCells.push({before: before, after: after});
       })
       event.canvases.changedCells = changedCells;
 
@@ -138,40 +99,39 @@ Tools.pencil = (function() {
 
   $.extend(t, {
     mousedown: function(event) {
-      this._handle(event);
+      var self = this;
+      self.actionableCells = {};
+      self.mousedrag(event);
     },
 
     mousedrag: function(event) {
-      this._handle(event);
-    },
-
-    draw: function() {
-      // ...
-    },
-
-    _handle: function(event) {
       var self = this;
       // FIXME: If you drag too fast it will skip some cells!
       // Use the current mouse position and the last mouse position and
       //  fill in or erase cells in between.
-      if (event.rightClick || SpriteEditor.Keyboard.pressedKeys[SpriteEditor.Keyboard.CTRL_KEY]) {
-        self._setFocusedCellsToUnfilled();
+      var erase = (event.rightClick || SpriteEditor.Keyboard.pressedKeys[SpriteEditor.Keyboard.CTRL_KEY]);
+      var currentColor = t.app.currentColor[t.app.currentColor.type];
+      $.v.each(t.canvases.focusedCells, function(cell) {
+        if (cell.coords() in self.actionableCells) return;
+        // Copy the cell so that if its color changes, it doesn't cause all
+        // cells with that color to also change
+        var cell = erase ? cell.asClear() : cell.withColor(currentColor);
+        self.actionableCells[cell.coords()] = cell;
+      })
+    },
+
+    mouseup: function(event) {
+      var self = this;
+      self.recordEvent('updateCells');
+      self.actionableCells = {};
+    },
+
+    cellToDraw: function(cell) {
+      var self = this;
+      if (cell.coords() in self.actionableCells) {
+        return self.actionableCells[cell.coords()];
       } else {
-        self._setFocusedCellsToFilled();
-      }
-    },
-
-    _setFocusedCellsToFilled: function() {
-      var self = this;
-      if (self.canvases.focusedCells) {
-        self.recordEvent('fillFocusedCells');
-      }
-    },
-
-    _setFocusedCellsToUnfilled: function() {
-      var self = this;
-      if (self.canvases.focusedCells) {
-        self.recordEvent('clearFocusedCells');
+        return cell;
       }
     }
   })
@@ -293,61 +253,6 @@ Tools.bucket = (function() {
   return t;
 
 })() // end bucket tool
-
-/*
-Thoughts about undo:
-
-Actions for select tool
-- Draw selection box at location
-- Hide selection box
-
-Actions for canvases
-- Fill cells
-- Clear cells
-
-I'm thinking that the main app will have a history array, where each element is
-an event and each event is an array of actions, and each action is just
-object + method + args.
-
-The first time an action is performed, the initiating object (say, the select
-tool) calls recordEvent(), passing a function, in which recordAction() is called
-on either the select tool or another object that implements Eventable. The event
-will then be pushed onto the app's history array.
-
-Undoing/redoing happens on the app level. Typically the history array has a pointer
-that points to the last event in the array. When Ctrl-Z is pressed, this pointer
-is moved to the previous event, and all the actions in this event are looped
-over and performed. For each action method, an "undo" version is assumed to be
-present and so that is what is called. To redo an event, then, the pointer in
-the history array is moved to the next event and all the "redo" versions of
-those actions are performed.
-
-Since the history array will store multiple objects which actions are associated
-with, in each action we have a 'before' and 'after' state in the context of this
-object. For instance, let's say the user has some cells selected, and would
-now like to move them. The event of moving a selection involves two objects:
-the select tool (which stores the bounds of the selection box) and the canvases
-object (which stores the state of all the cells). Hence, in creating the event,
-the select tool needs to store the 'before' and 'after' state of the selection
-box, and the canvases tool needs to store the 'before' and 'after' state of the
-cell grid, and all four of these data need to be bundled in the event that is
-pushed onto the history array.
-
-The fact that there are multiple objects involved causes a problem, though --
-specifically if events are created from the object level and not the app level,
-but undoing/redoing happens on the app level. This is a problem because if you
-only have two versions of a method which creates an event, in the process of
-redoing this event, you end up creating another event. For instance,
-let's say the select tool object has a method, cutSelection(). This method
-creates an event which not only moves the selection box but also defers to
-the Canvases object to clear the selected cells. Undoing this is easy, you just
-call uncutSelection(). But how do we redo this? We can't just call
-cutSelection() again, because performing an action the second time requires
-totally different code than performing an action the first time -- at least for
-the select tool, as the first time we'd be offsetting the selection ranges by
-a calculated value, but the second time we'd just be setting them to a value
-we already have in memory.
-*/
 
 Tools.select = (function() {
 

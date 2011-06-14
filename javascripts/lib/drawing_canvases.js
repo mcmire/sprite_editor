@@ -24,24 +24,6 @@ var DrawingCanvases = (function() {
     cellSize: 30       // pixels
   })
 
-  /*
-  canvases.addAction('updateCells', {
-    "undo": function(before, data) {
-      var self = this;
-      $.v.each(data.changedCells, function(cell) {
-        t.updateCell(cell);
-      })
-    },
-
-    "redo": function(after, data) {
-      var self = this;
-      $.v.each(data.changedCells, function(cell) {
-        t.updateCell(cell);
-      })
-    }
-  })
-  */
-
   $.extend(canvases, {
     init: function(app) {
       var self = this;
@@ -101,16 +83,6 @@ var DrawingCanvases = (function() {
       })
     },
 
-    /*
-    wrapEvent: function(event, data) {
-      var self = this;
-      $.v.each(data.changedCells, function(cell) {
-        var cell = self.cells[cell.i][cell.j];
-        event.me.cells.push(cell);
-      })
-    },
-    */
-
     updateCell: function(cell) {
       var self = this;
       self.cells[cell.i][cell.j] = cell.clone();
@@ -149,13 +121,11 @@ var DrawingCanvases = (function() {
           self.draw();
         },
         "mousedown": function(event) {
-          self.app.history.openEventGroup();
           self.app.currentTool().trigger('mousedown', event);
           event.preventDefault();
         },
         "mouseup": function(event) {
           self.app.currentTool().trigger('mouseup', event);
-          self.app.history.closeEventGroup();
           event.preventDefault();
         },
         "mousemove": function(event) {
@@ -199,14 +169,27 @@ var DrawingCanvases = (function() {
 
     drawCell: function(cell, opts) {
       var self = this;
+      self.drawWorkingCell(cell, opts);
+      self.drawPreviewCell(cell);
+    },
+
+    drawWorkingCell: function(cell, opts) {
+      var self = this;
+      var wc = self.workingCanvas;
       var opts = opts || {};
       var color = opts.color || cell.color;
       var loc   = opts.loc   || cell.loc;
       if (!color) return;
       if (typeof color != "string") color = color.toRGBAString();
-      var ctx = self.workingCanvas.ctx;
-      ctx.fillStyle = color;
-      ctx.fillRect(loc.x+1, loc.y+1, self.cellSize-1, self.cellSize-1);
+      wc.ctx.fillStyle = color;
+      wc.ctx.fillRect(loc.x+1, loc.y+1, self.cellSize-1, self.cellSize-1);
+    },
+
+    drawPreviewCell: function(cell) {
+      var self = this;
+      var pc = self.previewCanvas;
+      if (!cell.color) return;
+      pc.imageData.setPixel(cell.loc.j, cell.loc.i, cell.color.red, cell.color.green, cell.color.blue, 255);
     },
 
     _createGridBgCanvas: function() {
@@ -328,8 +311,8 @@ var DrawingCanvases = (function() {
           // filling it with the current color, since we want to let the user
           // know which color each cell would get replaced with
           $.v.each(self.focusedCells, function(cell) {
-            self.drawCell(cell, {color: '#fff'});
-            self.drawCell(cell, {color: currentColor.withAlpha(0.5)});
+            self.drawWorkingCell(cell, {color: '#fff'});
+            self.drawWorkingCell(cell, {color: currentColor.withAlpha(0.5)});
           })
         ctx.restore();
       }
@@ -341,11 +324,9 @@ var DrawingCanvases = (function() {
           pc = self.previewCanvas;
       wc.ctx.save();
         $.v.each(self.cells, function(row, i) {
-          $.v.each(row, function(cell, j) {
-            if (cell.color) {
-              self.drawCell(cell);
-              pc.imageData.setPixel(cell.loc.j, cell.loc.i, cell.color.red, cell.color.green, cell.color.blue, 255);
-            }
+          $.v.each(row, function(origCell, j) {
+            var customCell = self.app.currentTool().trigger('cellToDraw', origCell);
+            self.drawCell(customCell || origCell);
           })
         })
       wc.ctx.restore();
