@@ -37,7 +37,7 @@ Tools.dropper = (function() {
 
   var t = $.extend(true, {}, Tools.base);
 
-  $.extend({
+  $.extend(t, {
     select: function() {
       var self = this;
       self.canvases.workingCanvas.$element.addClass("dropper");
