@@ -12,6 +12,8 @@ var Tools = {
   }
 };
 
+//------------------------------------------------------------------------------
+
 Tools.base = $.extend({}, SpriteEditor.Eventable, {
   init: function(app, canvases) {
     var self = this;
@@ -28,6 +30,8 @@ Tools.base = $.extend({}, SpriteEditor.Eventable, {
     }
   }
 })
+
+//------------------------------------------------------------------------------
 
 Tools.dropper = (function() {
 
@@ -58,6 +62,8 @@ Tools.dropper = (function() {
   return t;
 
 })(); // end dropper tool
+
+//------------------------------------------------------------------------------
 
 Tools.pencil = (function() {
 
@@ -113,8 +119,8 @@ Tools.pencil = (function() {
       var currentColor = t.app.currentColor[t.app.currentColor.type];
       $.v.each(t.canvases.focusedCells, function(cell) {
         if (cell.coords() in self.actionableCells) return;
-        // Copy the cell so that if its color changes, it doesn't cause all
-        // cells with that color to also change
+        // Copy the cell so that if its color changes in the future, it won't
+        // cause all cells with that color to also change
         var cell = erase ? cell.asClear() : cell.withColor(currentColor);
         self.actionableCells[cell.coords()] = cell;
       })
@@ -139,6 +145,8 @@ Tools.pencil = (function() {
   return t;
 
 })() // end pencil tool
+
+//------------------------------------------------------------------------------
 
 Tools.bucket = (function() {
 
@@ -172,6 +180,8 @@ Tools.bucket = (function() {
         })
       })
       event.canvases.changedCells = changedCells;
+
+      return event;
     },
 
     "undo": function(event) {
@@ -210,6 +220,8 @@ Tools.bucket = (function() {
         })
       })
       event.canvases.changedCells = changedCells;
+
+      return event;
     },
 
     "undo": function(event) {
@@ -253,6 +265,8 @@ Tools.bucket = (function() {
   return t;
 
 })() // end bucket tool
+
+//------------------------------------------------------------------------------
 
 Tools.select = (function() {
 
@@ -317,6 +331,7 @@ Tools.select = (function() {
       t.reset();
     }
   });
+
   t.addAction('moveSelection', {
     "do": function() {
       var event = {
@@ -387,6 +402,7 @@ Tools.select = (function() {
       t.calculateSelectedCells();
     }
   })
+
   t.addAction('resetSelection', {
     "do": function(event) {
       var event = {
@@ -417,14 +433,6 @@ Tools.select = (function() {
   })
 
   $.extend(t, {
-    /*
-    wrapEvent: function(event) {
-      event.me.selectionStart = self.selectionStart;
-      event.me.selectionEnd   = self.selectionEnd;
-      event.me.selectedCells  = $.v.map(self.selectedCells, function(cell) { return cell.clone() });
-    },
-    */
-
     reset: function() {
       var self = this;
       // Clear the selection box and reset other involved variables
@@ -629,7 +637,7 @@ Tools.select = (function() {
         bounds.y2 += offset.y;
       }
       // Snap the bottom-right corner of the selection box to the bottom-right
-      // corner of the bottom-right cell
+      // corner of the bottom-right cell (got it?)
       bounds.x2 += self.canvases.cellSize;
       bounds.y2 += self.canvases.cellSize;
       return bounds;
