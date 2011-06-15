@@ -1,4 +1,6 @@
-$.export "SpriteEditor.App", (App) ->
+$.export "SpriteEditor.App", do ->
+
+  App = {}
 
   SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App")
 
@@ -326,3 +328,5 @@ $.export "SpriteEditor.App", (App) ->
 
     _hideMask: ->
       @$maskDiv.hide()
+
+  return App

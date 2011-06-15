@@ -1,6 +1,6 @@
-$.export "SpriteEditor.Canvas", (Canvas) ->
+$.export "SpriteEditor.Canvas",
 
-  Canvas.create = (width, height, callback) ->
+  create: (width, height, callback) ->
     c = {}
     c.$element = $("<canvas/>")
     c.element = c.$element[0]
@@ -11,7 +11,7 @@ $.export "SpriteEditor.Canvas", (Canvas) ->
     callback(c) if callback
     return c
 
-  Canvas.Context =
+  Context:
     getImageData: (x, y, width, height) ->
       imageData = @_super.call(this, x, y, width, height)
       $.extend(imageData, Canvas.ImageData)
@@ -22,7 +22,7 @@ $.export "SpriteEditor.Canvas", (Canvas) ->
       $.extend(imageData, Canvas.ImageData)
       imageData
 
-  Canvas.ImageData =
+  ImageData:
     getPixel: (x, y) ->
       index = (x + y * @width) * 4
       red: @data[index + 0]
