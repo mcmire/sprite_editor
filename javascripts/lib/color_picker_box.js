@@ -77,7 +77,7 @@ var ColorPickerBox = {
           // y = 0..height -> s = 100..0
           var h = Math.round(x * (360 / c.width));
           var s = Math.round(y * (-100 / c.height) + 100);
-          var rgb = hsl.with({hue: h, sat: s}).toRGB();
+          var rgb = hsl["with"]({hue: h, sat: s}).toRGB();
           imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255);
         }
       }
@@ -121,7 +121,7 @@ var ColorPickerBox = {
     for (var y=0; y<c.height; y++) {
       // y = 0..height -> l = 100..0
       var l = Math.round((-100 / c.height) * y + 100);
-      var rgb = hsl.with({lum: l}).toRGB();
+      var rgb = hsl["with"]({lum: l}).toRGB();
       for (var x=0; x<c.width; x++) {
         imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255);
       }
@@ -247,12 +247,12 @@ var ColorPickerBox = {
 
   _setHueAndSatFromSelectorPosition: function() {
     var self = this;
-    self.currentColor = self.currentColor.with({ hue: self._px2hue(), sat: self._px2sat() });
+    self.currentColor = self.currentColor["with"]({ hue: self._px2hue(), sat: self._px2sat() });
   },
 
   _setLightnessFromSelectorPosition: function() {
     var self = this;
-    self.currentColor = self.currentColor.with({ lum: self._px2lum() });
+    self.currentColor = self.currentColor["with"]({ lum: self._px2lum() });
   },
 
   _setColorSample: function() {

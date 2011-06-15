@@ -308,7 +308,7 @@ var DrawingCanvases = (function() {
           // know which color each cell would get replaced with
           $.v.each(self.focusedCells, function(cell) {
             self.drawWorkingCell(cell, {color: '#fff'});
-            self.drawWorkingCell(cell, {color: currentColor.with({alpha: 0.5})});
+            self.drawWorkingCell(cell, {color: currentColor["with"]({alpha: 0.5})});
           })
         ctx.restore();
       }

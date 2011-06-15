@@ -14,7 +14,7 @@ var EventHistory = {
   recordEvent: function(obj, method) {
     var self = this;
     var action = obj.actions[method];
-    var event = action.do();
+    var event = action["do"]();
     // Limit history to 100 events
     if (self.events.length == 100) {
       self.events.shift();
