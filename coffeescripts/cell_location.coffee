@@ -1,93 +1,66 @@
-((window, document, $, undefined_) ->
-  CellLocation = ->
-    self = this
-    if arguments.length == 1
-      obj = arguments[0]
-      self.app = obj.app
-      self.i = obj.i
-      self.j = obj.j
-      self.x = obj.x
-      self.y = obj.y
-    else
-      self.app = arguments[0]
-      self.i = arguments[1]
-      self.j = arguments[2]
-    self._calculateXandY()  if typeof self.x == "undefined" and typeof self.y == "undefined"
-  
-  $.extend CellLocation, 
-    plus: (l1, l2) ->
-      l1.plus l2
-    
-    add: ->
-      @plus.apply this, arguments
-    
-    minus: (l1, l2) ->
-      l1.minus l2
-    
-    subtract: ->
-      @minus.apply this, arguments
-  
-  $.extend CellLocation::, 
+$.export "SpriteEditor.CellLocation", do ->
+
+  # Represents the location of a cell.
+  #
+  # `i` and `j` are coordinates in the preview canvas (or row-column keys in
+  # the cell array). `x` and `y` are coordinates in the working canvas.
+  #
+  # == Call signatures
+  #
+  #   new CellLocation(app, i, j)
+  #   new CellLocation(obj)
+  #
+  class CellLocation
+    @plus: (l1, l2) -> l1.plus(l2)
+    @add: -> @plus.apply(@, arguments)
+    @minus: (l1, l2) -> l1.minus(l2)
+    @subtract: -> @minus.apply(@, arguments)
+
+    constructor:
+      if arguments.length == 1
+        obj  = arguments[0]
+        [@app, @i, @j, @x, @y] = [obj.app, obj.i, obj.j, obj.x, obj.y]
+      else
+        [@app, @i, @j] = arguments
+      @_calculateXandY() unless @x? or @y?
+
     add: (offset) ->
-      self = this
-      if typeof offset.x == "undefined" and typeof offset.y == "undefined"
-        self.x += offset.x
-        self.y += offset.y
-        self._calculateIandJ()
-      else
-        self.i += offset.i
-        self.j += offset.j
-        self._calculateXandY()
-    
-    plus: (offset) ->
-      self = this
-      clone = self.clone()
-      clone.add offset
-      clone
-    
+      if offset.i? and offset.j?
+        @i += offset.i
+        @j += offset.j
+        @_calculateXandY()
+      else if offset.x? and offset.y?
+        @x += offset.x
+        @y += offset.y
+        @_calculateIandJ()
+      return this
+
+    plus: (offset) -> @.clone().add(offset)
+
     subtract: (offset) ->
-      self = this
-      if typeof offset.x == "undefined" and typeof offset.y == "undefined"
-        self.x -= offset.x
-        self.y -= offset.y
-        self._calculateIandJ()
-      else
-        self.i -= offset.i
-        self.j -= offset.j
-        self._calculateXandY()
-    
-    minus: (offset) ->
-      self = this
-      clone = self.clone()
-      clone.subtract offset
-      clone
-    
-    gt: (other) ->
-      self = this
-      self.i > other.i or self.j > other.j
-    
-    clone: ->
-      self = this
-      loc = new CellLocation(self)
-      loc
-    
-    toJSON: ->
-      self = this
-      JSON.stringify 
-        x: self.x
-        y: self.y
-        i: self.i
-        j: self.j
-    
+      if offset.i? and offset.j?
+        @i -= offset.i
+        @j -= offset.j
+        @_calculateXandY()
+      else if offset.x? and offset.y?
+        @x -= offset.x
+        @y -= offset.y
+        @_calculateIandJ()
+      return this
+
+    minus: (offset) -> @clone().subtract(offset)
+
+    gt: (other) -> (@i > other.i or @j > other.j)
+
+    clone: -> new CellLocation(this)
+
+    # Necessary?
+    toJSON: -> JSON.stringify(x: @x, y: @y, i: @i, j: @j)
+
     _calculateXandY: ->
-      self = this
-      self.x = self.j * self.app.cellSize
-      self.y = self.i * self.app.cellSize
-    
+      @x = @j * @app.cellSize
+      @y = @i * @app.cellSize
+
     _calculateIandJ: ->
-      self = this
-      self.i = self.y / self.app.cellSize
-      self.j = self.x / self.app.cellSize
-  
-  $.export "SpriteEditor.CellLocation", CellLocation
-) window, window.document, window.ender
+      @i = @y / @app.cellSize
+      @j = @x / @app.cellSize

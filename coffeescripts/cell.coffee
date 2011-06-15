@@ -1,8 +1,11 @@
 $.export "SpriteEditor.Cell", do ->
 
+  # == Call signatures
+  #
+  #   new Cell(app, i, j)
+  #   new Cell(cell)
+  #
   class Cell
-    # new Cell(app, i, j)
-    # new Cell(cell)
     constructor: ->
       if arguments.length == 1
         obj = arguments[0]
