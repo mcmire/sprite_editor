@@ -1,287 +1,262 @@
-((window, document, $, undefined_) ->
-  DrawingCanvases = (->
-    canvases = {}
-    SpriteEditor.DOMEventHelpers.mixin canvases, "SpriteEditor_DrawingCanvases"
-    $.extend canvases, SpriteEditor.Eventable
-    $.extend canvases, 
-      timer: null
-      width: null
-      height: null
-      workingCanvas: null
-      gridBgCanvas: null
-      previewCanvas: null
-      cells: []
-      focusedCell: null
-      focusedCells: []
-      startDragAtCell: null
-      clipboard: []
-      tickInterval: 80
-      widthInCells: 16
-      heightInCells: 16
-      cellSize: 30
-    
-    $.extend canvases, 
-      init: (app) ->
-        self = this
-        self.app = app
-        self._initCells()
-        self._createGridBgCanvas()
-        self._createWorkingCanvas()
-        self._createPreviewCanvases()
-        self.autoSaveTimer = setInterval(->
-          self.save()
-        , 30000)
-        self
-      
-      destroy: ->
-        self = this
-        self.removeEvents()
-      
-      start: ->
-        self = this
-        return  if self.timer
-        self.timer = setInterval(->
+$.export "SpriteEditor.DrawingCanvases", do ->
+
+  Keyboard = SpriteEditor.Keyboard
+
+  DrawingCanvases = {}
+  SpriteEditor.DOMEventHelpers.mixin(DrawingCanvases, "SpriteEditor_DrawingCanvases")
+  $.extend(DrawingCanvases, SpriteEditor.Eventable)
+
+  $.extend DrawingCanvases,
+    timer: null
+    width: null
+    height: null
+    workingCanvas: null
+    gridBgCanvas: null
+    previewCanvas: null
+    cells: []
+    focusedCell: null
+    focusedCells: []
+    startDragAtCell: null
+    clipboard: []
+
+    tickInterval: 80    # ms/frame
+    widthInCells: 16    # cells
+    heightInCells: 16   # cells
+    cellSize: 30        # pixels
+
+    init: (app) ->
+      @app = app
+
+      @_initCells()
+      @_createGridBgCanvas()
+      @_createWorkingCanvas()
+      @_createPreviewCanvases()
+      @autoSaveTimer = setInterval((=> @save()), 30000)
+
+      return this
+
+    destroy: ->
+      @removeEvents()
+
+    start: ->
+      self = this
+      return if @timer
+      # We don't use => here because that would be a double function call
+      # and thus (theoretically at least) slow down the draw by 50%
+      @timer = setInterval((-> self.draw()), @tickInterval)
+      return this
+
+    draw: ->
+      @_clearWorkingCanvas()
+      @_clearPreviewCanvas()
+      @_clearTiledPreviewCanvas()
+      @_fillCells()
+      @_highlightFocusedCells()
+      @app.currentTool()?.draw()
+      @_updateTiledPreviewCanvas()
+
+    stop: ->
+      return unless @timer
+      clearInterval(@timer)
+      @timer = null
+      return this
+
+    save: ->
+      localStorage.setItem("pixel_editor.saved", "true")
+      for row in @cells
+        for cell in row
+          cellJSON = JSON.stringify(cell.color)
+          localStorage.setItem("cells."+cell.coords(), cellJSON)
+
+    # TODO: Keep this?
+    updateCell: (cell) ->
+      @cells[cell.i][cell.j] = cell.clone()
+
+    _initCells: ->
+      needsReload = (localStorage.getItem("pixel_editor.saved") == "true")
+      for i in [0...@heightInCells]
+        row = @cells[i] = []
+        for j in [0...@widthInCells]
+          row[j] = new SpriteEditor.Cell(this, i, j)
+          if needsReload
+            color = JSON.parse(localStorage["cells." + j + "," + i])
+            row[j].color = new SpriteEditor.Color.HSL(color)
+
+    addEvents: ->
+      self = this
+      @workingCanvas.$element.mouseTracker
+        mouseout: (event) ->
+          self._unsetFocusedCells()
           self.draw()
-        , self.tickInterval)
-        self
-      
-      draw: ->
-        self = this
-        self._clearWorkingCanvas()
-        self._clearPreviewCanvas()
-        self._clearTiledPreviewCanvas()
-        self._fillCells()
-        self._highlightFocusedCells()
-        tool = self.app.currentTool()
-        tool.draw()  unless typeof tool.draw == "undefined"
-        self._updateTiledPreviewCanvas()
-      
-      stop: ->
-        self = this
-        return  unless self.timer
-        clearInterval self.timer
-        self.timer = null
-        self
-      
-      save: ->
-        self = this
-        localStorage.setItem "pixel_editor.saved", "true"
-        $.v.each self.cells, (row) ->
-          $.v.each row, (cell) ->
-            cellJSON = cell.color
-            localStorage.setItem "cells." + cell.coords(), JSON.stringify(cellJSON)
-      
-      updateCell: (cell) ->
-        self = this
-        self.cells[cell.i][cell.j] = cell.clone()
-      
-      _initCells: ->
-        self = this
-        needsReload = (localStorage.getItem("pixel_editor.saved") == "true")
-        i = 0
-        
-        while i < self.heightInCells
-          row = self.cells[i] = []
-          j = 0
-          
-          while j < self.widthInCells
-            row[j] = new SpriteEditor.Cell(self, i, j)
-            row[j].color = new SpriteEditor.Color.HSL(JSON.parse(localStorage["cells." + j + "," + i]))  if needsReload
-            j++
-          i++
-      
-      addEvents: ->
-        self = this
-        self.workingCanvas.$element.mouseTracker 
-          mouseover: (event) ->
-          
-          mouseout: (event) ->
-            self._unsetFocusedCells()
-            self.draw()
-          
-          mousedown: (event) ->
-            self.app.currentTool().trigger "mousedown", event
-            event.preventDefault()
-          
-          mouseup: (event) ->
-            self.app.currentTool().trigger "mouseup", event
-            event.preventDefault()
-          
-          mousemove: (event) ->
-            mouse = self.workingCanvas.$element.mouseTracker("pos")
-            self._setFocusedCell mouse
-            self._setFocusedCells mouse
-          
-          mousedragstart: (event) ->
-            self.startDragAtCell = self.focusedCell.clone()
-            self.app.currentTool().trigger "mousedragstart", event
-          
-          mousedragstop: (event) ->
-            self.startDragAtCell = null
-            self.app.currentTool().trigger "mousedragstop", event
-          
-          mousedrag: (event) ->
-            self.app.currentTool().trigger "mousedrag", event
-          
-          mouseglide: (event) ->
-            self.app.currentTool().trigger "mouseglide", event
-        
-        self._bindEvents window, 
-          blur: ->
-            self.stop()
-          
-          focus: ->
-            self.start()
-        
-        self.start()
-      
-      removeEvents: ->
-        self = this
-        self.workingCanvas.$element.mouseTracker "destroy"
-        self._unbindEvents window, "blur", "focus"
-        self.stop()
-      
-      drawCell: (cell, opts) ->
-        self = this
-        self.drawWorkingCell cell, opts
-        self.drawPreviewCell cell
-      
-      drawWorkingCell: (cell, opts) ->
-        self = this
-        wc = self.workingCanvas
-        opts = opts or {}
-        color = opts.color or cell.color
-        loc = opts.loc or cell.loc
-        unless typeof color == "string"
-          return  if color.isClear()
-          color = color.toRGB().toString()
-        wc.ctx.fillStyle = color
-        wc.ctx.fillRect loc.x + 1, loc.y + 1, self.cellSize - 1, self.cellSize - 1
-      
-      drawPreviewCell: (cell) ->
-        self = this
-        pc = self.previewCanvas
-        color = cell.color.toRGB()
-        return  if color.isClear()
-        pc.imageData.setPixel cell.loc.j, cell.loc.i, color.red, color.green, color.blue, 255
-      
-      _createGridBgCanvas: ->
-        self = this
-        self.gridBgCanvas = SpriteEditor.Canvas.create(self.cellSize, self.cellSize, (c) ->
-          c.ctx.strokeStyle = "#eee"
-          c.ctx.beginPath()
-          c.ctx.moveTo 0.5, 0
-          c.ctx.lineTo 0.5, self.cellSize
-          c.ctx.moveTo 0, 0.5
-          c.ctx.lineTo self.cellSize, 0.5
-          c.ctx.stroke()
-          c.ctx.closePath()
-        )
-      
-      _createWorkingCanvas: ->
-        self = this
-        self.width = self.widthInCells * self.cellSize
-        self.height = self.heightInCells * self.cellSize
-        self.workingCanvas = SpriteEditor.Canvas.create(self.width, self.height)
-        self.workingCanvas.$element.attr("id", "working_canvas").css "background-image", "url(" + self.gridBgCanvas.element.toDataURL("image/png") + ")"
-      
-      _createPreviewCanvases: ->
-        self = this
-        self.previewCanvas = SpriteEditor.Canvas.create(self.widthInCells, self.heightInCells)
-        self.previewCanvas.element.id = "preview_canvas"
-        self.tiledPreviewCanvas = SpriteEditor.Canvas.create(self.widthInCells * 9, self.heightInCells * 9)
-        self.tiledPreviewCanvas.element.id = "tiled_preview_canvas"
-      
-      _setFocusedCell: (mouse) ->
-        self = this
-        x = mouse.rel.x
-        y = mouse.rel.y
-        j = Math.floor(x / self.cellSize)
-        i = Math.floor(y / self.cellSize)
-        self.focusedCell = self.cells[i][j]
-      
-      _setFocusedCells: (mouse) ->
-        self = this
-        bs = (self.app.currentBrushSize - 1) * self.cellSize
-        x = mouse.rel.x
-        y = mouse.rel.y
-        focusedCells = []
-        x1 = x - (bs / 2)
-        x2 = x + (bs / 2)
-        y1 = y - (bs / 2)
-        y2 = y + (bs / 2)
-        j1 = Math.floor(x1 / self.cellSize)
-        j2 = Math.floor(x2 / self.cellSize)
-        i1 = Math.floor(y1 / self.cellSize)
-        i2 = Math.floor(y2 / self.cellSize)
-        i = i1
-        
-        while i <= i2
-          j = j1
-          
-          while j <= j2
-            row = self.cells[i]
-            focusedCells.push row[j]  if row and row[j]
-            j++
-          i++
-        self.focusedCells = focusedCells
-      
-      _unsetFocusedCells: ->
-        self = this
-        self.focusedCells = null
-      
-      _clearWorkingCanvas: ->
-        self = this
-        wc = self.workingCanvas
-        wc.ctx.clearRect 0, 0, wc.width, wc.height
-      
-      _clearPreviewCanvas: ->
-        self = this
-        pc = self.previewCanvas
-        pc.element.width = pc.width
-        pc.imageData = pc.ctx.createImageData(self.widthInCells, self.heightInCells)
-      
-      _clearTiledPreviewCanvas: ->
-        self = this
-        ptc = self.tiledPreviewCanvas
-        ptc.ctx.clearRect 0, 0, ptc.width, ptc.height
-      
-      _highlightFocusedCells: ->
-        self = this
-        ctx = self.workingCanvas.ctx
-        isDragging = self.workingCanvas.$element.mouseTracker("isDragging")
-        if self.focusedCells and not (isDragging or SpriteEditor.Keyboard.pressedKeys[SpriteEditor.Keyboard.CTRL_KEY]) and self.app.currentToolName == "pencil"
-          currentColor = self.app.currentColor[self.app.currentColor.type]
-          ctx.save()
-          $.v.each self.focusedCells, (cell) ->
-            self.drawWorkingCell cell, color: "#fff"
-            self.drawWorkingCell cell, color: currentColor["with"](alpha: 0.5)
-          
-          ctx.restore()
-      
-      _fillCells: ->
-        self = this
-        wc = self.workingCanvas
-        pc = self.previewCanvas
-        wc.ctx.save()
-        $.v.each self.cells, (row, i) ->
-          $.v.each row, (origCell, j) ->
-            customCell = self.app.currentTool().trigger("cellToDraw", origCell)
-            self.drawCell customCell or origCell
-        
-        wc.ctx.restore()
-        pc.ctx.putImageData pc.imageData, 0, 0
-      
-      _updateTiledPreviewCanvas: ->
-        self = this
-        tpc = self.tiledPreviewCanvas
-        pattern = tpc.ctx.createPattern(self.previewCanvas.element, "repeat")
-        tpc.ctx.save()
-        tpc.ctx.fillStyle = pattern
-        tpc.ctx.fillRect 0, 0, tpc.width, tpc.height
-        tpc.ctx.restore()
-    
-    canvases
-  )()
-  $.export "SpriteEditor.DrawingCanvases", DrawingCanvases
-) window, window.document, window.ender
+        mousedown: (event) ->
+          self.app.currentTool().trigger("mousedown", event)
+          event.preventDefault()
+        mouseup: (event) ->
+          self.app.currentTool().trigger("mouseup", event)
+          event.preventDefault()
+        mousemove: (event) ->
+          mouse = self.workingCanvas.$element.mouseTracker("pos")
+          self._setFocusedCell(mouse)
+          self._setFocusedCells(mouse)
+        mousedragstart: (event) ->
+          self.startDragAtCell = self.focusedCell.clone()
+          self.app.currentTool().trigger("mousedragstart", event)
+        mousedragstop: (event) ->
+          self.startDragAtCell = null
+          self.app.currentTool().trigger("mousedragstop", event)
+        mousedrag: (event) ->
+          self.app.currentTool().trigger("mousedrag", event)
+        mouseglide: (event) ->
+          self.app.currentTool().trigger("mouseglide", event)
+
+      @_bindEvents window,
+        blur: ->
+          self.stop()
+        focus: ->
+          self.start()
+
+      @start()
+
+    removeEvents: ->
+      @workingCanvas.$element.mouseTracker("destroy")
+      @_unbindEvents(window, "blur", "focus")
+      @stop()
+
+    drawCell: (cell, opts) ->
+      @drawWorkingCell(cell, opts)
+      @drawPreviewCell(cell)
+
+    drawWorkingCell: (cell, opts={}) ->
+      wc = @workingCanvas
+      color = opts.color || cell.color
+      loc = opts.loc || cell.loc
+      if typeof color isnt "string"
+        return if color.isClear()
+        color = color.toRGB().toString()
+      wc.ctx.fillStyle = color
+      wc.ctx.fillRect(loc.x + 1, loc.y + 1, @cellSize - 1, @cellSize - 1)
+
+    drawPreviewCell: (cell) ->
+      pc = @previewCanvas
+      color = cell.color.toRGB()
+      return if color.isClear()
+      pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, 255)
+
+    _createGridBgCanvas: ->
+      @gridBgCanvas = SpriteEditor.Canvas.create @cellSize, @cellSize, (c) =>
+        c.ctx.strokeStyle = "#eee"
+        c.ctx.beginPath()
+        # Draw a vertical line on the left
+        # We use 0.5 instead of 0 because this is the midpoint of the path we want to stroke
+        # See: <http://diveintohtml5.org/canvas.html#pixel-madness>
+        c.ctx.moveTo(0.5, 0)
+        c.ctx.lineTo(0.5, @cellSize)
+        # Draw a horizontal line on top
+        c.ctx.moveTo(0, 0.5)
+        c.ctx.lineTo(@cellSize, 0.5)
+        c.ctx.stroke()
+        c.ctx.closePath()
+
+    _createWorkingCanvas: ->
+      @width = @widthInCells * @cellSize
+      @height = @heightInCells * @cellSize
+      @workingCanvas = SpriteEditor.Canvas.create(@width, @height)
+      @workingCanvas.$element
+        .attr("id", "working_canvas")
+        .css("background-image", "url(" + @gridBgCanvas.element.toDataURL("image/png") + ")")
+
+    _createPreviewCanvases: ->
+      @previewCanvas = SpriteEditor.Canvas.create(@widthInCells, @heightInCells)
+      @previewCanvas.element.id = "preview_canvas"
+      @tiledPreviewCanvas = SpriteEditor.Canvas.create(@widthInCells * 9, @heightInCells * 9)
+      @tiledPreviewCanvas.element.id = "tiled_preview_canvas"
+
+    _setFocusedCell: (mouse) ->
+      x = mouse.rel.x
+      y = mouse.rel.y
+
+      j = Math.floor(x / @cellSize)
+      i = Math.floor(y / @cellSize)
+
+      @focusedCell = @cells[i][j]
+
+    _setFocusedCells: (mouse) ->
+      bs = (@app.currentBrushSize - 1) * @cellSize
+      x = mouse.rel.x
+      y = mouse.rel.y
+
+      focusedCells = []
+      # Make a bounding box of pixels within the working canvas based on
+      # the brush size
+      x1 = x - (bs / 2)
+      x2 = x + (bs / 2)
+      y1 = y - (bs / 2)
+      y2 = y + (bs / 2)
+      # Scale each coordinate on the working canvas down to the coordinate
+      # on the preview canvas (which also serves as the cell coordinate
+      # within the cells array-of-arrays)
+      j1 = Math.floor(x1 / @cellSize)
+      j2 = Math.floor(x2 / @cellSize)
+      i1 = Math.floor(y1 / @cellSize)
+      i2 = Math.floor(y2 / @cellSize)
+      # Now that we have a bounding box of cells, enumerate through all
+      # cells in the box and add them to the set of current cells
+      for i in [i1..i2]
+        for j in [j1..j2]
+          row = @cells[i]
+          focusedCells.push(row[j]) if row && row[j]
+      @focusedCells = focusedCells
+
+    _unsetFocusedCells: ->
+      @focusedCells = null
+
+    _clearWorkingCanvas: ->
+      wc = @workingCanvas
+      wc.ctx.clearRect(0, 0, wc.width, wc.height)
+
+    _clearPreviewCanvas: ->
+      pc = @previewCanvas
+      # clearRect() won't clear image data set using createImageData(),
+      # so this is another way to clear the canvas that works
+      pc.element.width = pc.width
+      pc.imageData = pc.ctx.createImageData(@widthInCells, @heightInCells)
+
+    _clearTiledPreviewCanvas: ->
+      ptc = @tiledPreviewCanvas
+      ptc.ctx.clearRect(0, 0, ptc.width, ptc.height)
+
+    _highlightFocusedCells: ->
+      ctx = @workingCanvas.ctx
+      isDragging = @workingCanvas.$element.mouseTracker("isDragging")
+      if @focusedCells and not (isDragging or Keyboard.pressedKeys[Keyboard.CTRL_KEY]) and @app.currentToolName == "pencil"
+        currentColor = @app.currentColor[@app.currentColor.type]
+        ctx.save()
+        for cell in @focusedCells
+          # If a cell is already filled in, fill it in with white before
+          # filling it with the current color, since we want to let the user
+          # know which color each cell would get replaced with
+          # TODO: We really need to "un-draw" the cell first; how?
+          @drawWorkingCell(cell, color: "#fff")
+          @drawWorkingCell(cell, color: currentColor.with(alpha: 0.5))
+        ctx.restore()
+
+    _fillCells: ->
+      wc = @workingCanvas
+      pc = @previewCanvas
+      wc.ctx.save()
+      for row in @cells
+        for origCell in row
+          customCell = @app.currentTool().trigger("cellToDraw", origCell)
+          @drawCell(customCell || origCell)
+      wc.ctx.restore()
+      pc.ctx.putImageData(pc.imageData, 0, 0)
+
+    _updateTiledPreviewCanvas: ->
+      tpc = @tiledPreviewCanvas
+      pattern = tpc.ctx.createPattern(@previewCanvas.element, "repeat")
+      tpc.ctx.save()
+      tpc.ctx.fillStyle = pattern
+      tpc.ctx.fillRect(0, 0, tpc.width, tpc.height)
+      tpc.ctx.restore()
+
+  return DrawingCanvases

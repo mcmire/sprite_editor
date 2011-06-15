@@ -153,8 +153,8 @@ $.export "SpriteEditor.App", do ->
             c = SpriteEditor.Canvas.create(img.width, img.height)
             c.ctx.drawImage(img, 0, 0)
             imageData = c.ctx.getImageData(0, 0, img.width, img.height)
-            for x in [0..img.width]
-              for y in [0..img.height]
+            for x in [0...img.width]
+              for y in [0...img.height]
                 do ->
                   rgba = imageData.getPixel(x, y)
                   color = SpriteEditor.Color.RGB(color.red, color.green, color.blue, color.alpha)
@@ -300,11 +300,11 @@ $.export "SpriteEditor.App", do ->
         # Draw vertical lines
         # We start at 0.5 because this is the midpoint of the path we want to stroke
         # See: <http://diveintohtml5.org/canvas.html#pixel-madness>
-        for x in [0.5..size] by cellSize
+        for x in [0.5...size] by cellSize
           c.ctx.moveTo(x, 0)
           c.ctx.lineTo(x, size)
         # Draw horizontal lines
-        for y in [0.5..size] by cellSize
+        for y in [0.5...size] by cellSize
           c.ctx.moveTo(0, y)
           c.ctx.lineTo(size, y)
         c.ctx.stroke()

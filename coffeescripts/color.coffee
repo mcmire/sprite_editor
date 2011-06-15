@@ -122,7 +122,7 @@ $.export "SpriteEditor.Color", do ->
       new Color.RGB(this)
 
     toString: ->
-      values = (@[prop] or 0 for prop in Color.RGB.properties)
+      values = (@[prop] || 0 for prop in Color.RGB.properties)
       "rgba(" + values.join(", ") + ")"
 
     eq: (other) ->

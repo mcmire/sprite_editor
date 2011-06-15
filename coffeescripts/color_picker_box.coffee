@@ -62,8 +62,8 @@ $.export "SpriteEditor.ColorPickerBox", do ->
         imageData = c.ctx.createImageData(c.width, c.height)
         hsl = @currentColor
         # TODO: Use a gradient for this instead of manually filling in pixels
-        for y in [0..c.height]
-          for x in [0..c.width]
+        for y in [0...c.height]
+          for x in [0...c.width]
             # x = 0..width  -> h = 0..360
             # y = 0..height -> s = 100..0
             h = Math.round(x * (360 / c.width))
@@ -99,11 +99,11 @@ $.export "SpriteEditor.ColorPickerBox", do ->
       imageData = c.ctx.createImageData(c.width, c.height)
       hsl = self.currentColor
       # TODO: Use a gradient for this instead of manually filling in pixels
-      for y in [0..c.height]
+      for y in [0...c.height]
         # y = 0..height -> l = 100..0
         l = Math.round((-100 / c.height) * y + 100)
         rgb = hsl.with(lum: l).toRGB()
-        for x in [0..c.width]
+        for x in [0...c.width]
           imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255)
       c.ctx.putImageData(imageData, 0, 0)
 
@@ -132,27 +132,29 @@ $.export "SpriteEditor.ColorPickerBox", do ->
       @$container.append($p)
 
     _addEvents: ->
+      self = this
+
       @_bindEvents document,
-        keyup: (event) =>
+        keyup: (event) ->
           key = event.keyCode
-          @close() if key == Keyboard.ESC_KEY
+          self.close() if key == Keyboard.ESC_KEY
 
-      @$hueSatDiv.mouseTracker
-        "mousedown mousedrag": =>
-          @_positionHueSatSelectorFromMouse()
-          @_setHueAndSatFromSelectorPosition()
-          @_setColorFields()
-          @_setColorSample()
-          @_drawLightnessCanvas()
-          @options?.change.call(this, @currentColor)
+      @$hueSatDiv.mouseTracker,
+        "mousedown mousedrag": ->
+          self._positionHueSatSelectorFromMouse()
+          self._setHueAndSatFromSelectorPosition()
+          self._setColorFields()
+          self._setColorSample()
+          self._drawLightnessCanvas()
+          self.options?.change.call(self, self.currentColor)
 
-      @$lumDiv.mouseTracker
-        "mousedown mousedrag": =>
-          @_positionLightnessSelectorFromMouse()
-          @_setLightnessFromSelectorPosition()
-          @_setColorFields()
-          @_setColorSample()
-          @options?.change.call(this, @currentColor)
+      @$lumDiv.mouseTracker,
+        "mousedown mousedrag": ->
+          self._positionLightnessSelectorFromMouse()
+          self._setLightnessFromSelectorPosition()
+          self._setColorFields()
+          self._setColorSample()
+          self.options?.change.call(self, self.currentColor)
 
     _removeEvents: ->
       @_unbindEvents(document, "keyup")
