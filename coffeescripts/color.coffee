@@ -113,7 +113,7 @@ $.export "SpriteEditor.Color", do ->
         new Color.HSL()
       else
         hsl = Color.rgb2hsl(this)
-        new Color.HSL(hsl.hue, hsl.sat, hsl.lum, self.alpha)
+        new Color.HSL(hsl.hue, hsl.sat, hsl.lum, @alpha)
 
     isClear: ->
       $.v.some(Color.RGB.properties, (prop) => @[prop]?)
@@ -156,7 +156,7 @@ $.export "SpriteEditor.Color", do ->
         new Color.RGB()
       else
         rgb = Color.hsl2rgb(self)
-        new Color.RGB(rgb.red, rgb.green, rgb.blue, self.alpha)
+        new Color.RGB(rgb.red, rgb.green, rgb.blue, @alpha)
 
     toHSL: -> this
 

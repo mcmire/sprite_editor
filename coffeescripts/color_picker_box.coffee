@@ -95,9 +95,9 @@ $.export "SpriteEditor.ColorPickerBox", do ->
       @$lumDiv.append(@lumCanvas.$element)
 
     _drawLightnessCanvas: ->
-      c = self.lumCanvas
+      c = @lumCanvas
       imageData = c.ctx.createImageData(c.width, c.height)
-      hsl = self.currentColor
+      hsl = @currentColor
       # TODO: Use a gradient for this instead of manually filling in pixels
       for y in [0...c.height]
         # y = 0..height -> l = 100..0

@@ -70,15 +70,15 @@ $.export "SpriteEditor.App", do ->
     _createWrapperDivs: ->
       @$leftPane = $("<div/>")
       @$leftPane.attr("id", "left_pane")
-      @$container.append(self.$leftPane)
+      @$container.append(@$leftPane)
 
       @$rightPane = $("<div/>")
       @$rightPane.attr("id", "right_pane")
-      @$container.append(self.$rightPane)
+      @$container.append(@$rightPane)
 
       @$centerPane = $("<div/>")
       @$centerPane.attr("id", "center_pane")
-      @$container.append(self.$centerPane)
+      @$container.append(@$centerPane)
 
     _createImportExportDiv: ->
       $importExportDiv = $("<div id=\"import_export\" />")
@@ -174,13 +174,13 @@ $.export "SpriteEditor.App", do ->
       # I'm not sure what this means??
       #
       $exportForm = $("<form id=\"export\" action=\"/\" method=\"POST\"><input name=\"data\" type=\"hidden\" /><button type=\"submit\">Export PNG</button></form>")
-      $exportForm.bind "submit", ->
-        data = self.previewCanvas.element.toDataURL("image/png")
+      $exportForm.bind "submit", =>
+        data = @previewCanvas.element.toDataURL("image/png")
         data = data.replace(/^data:image\/png;base64,/, "")
         $exportForm.find("input").val(data)
       $importExportDiv.append($exportForm)
 
-      self.$centerPane.append($importExportDiv)
+      @$centerPane.append($importExportDiv)
 
     _addWorkingCanvas: ->
       @$centerPane.append(@canvases.workingCanvas.$element)
@@ -243,6 +243,8 @@ $.export "SpriteEditor.App", do ->
       $boxDiv.append(@canvases.tiledPreviewCanvas.$element)
 
     _createToolBox: ->
+      self = this
+
       $boxDiv = $("<div/>").attr("id", "tool_box").addClass("box")
       @$leftPane.append($boxDiv)
 
@@ -254,25 +256,31 @@ $.export "SpriteEditor.App", do ->
 
       $imgs = $([])
       for name in @tools.toolNames
-        $li = $("<li/>")
-        $img = $("<img/>")
-        $img.addClass("tool").attr("width", 24).attr("height", 24).attr "src", "images/" + name + ".png"
-        $imgs.push($img[0])
-        $li.append($img)
-        $ul.append($li)
-        $img.bind "click", =>
-          @currentTool()?.unselect() if name isnt @currentToolName
-          @currentToolName = name
-          $imgs.removeClass("selected")
-          $img.addClass("selected")
-          @tools[name]?.select()
-        $img.trigger("click") if @currentToolName == name
+        do (name) ->
+          $li = $("<li/>")
+          $img = $("<img/>")
+          $img.addClass("tool")
+            .attr("width", 24)
+            .attr("height", 24)
+            .attr("src", "images/"+name+".png")
+          $imgs.push($img[0])
+          $li.append($img)
+          $ul.append($li)
+          $img.bind "click", ->
+            self.currentTool()?.unselect() if name isnt self.currentToolName
+            self.currentToolName = name
+            $imgs.removeClass("selected")
+            $img.addClass("selected")
+            self.tools[name]?.select()
+          $img.trigger("click") if self.currentToolName == name
 
     currentTool: -> @tools[@currentToolName]
 
     # TODO: when the paint bucket tool is selected, hide the brush sizes box
     # and set the brush size to 1
     _createBrushSizesBox: ->
+      self = this
+
       $boxDiv = $("<div/>").attr("id", "sizes_box").addClass("box")
       @$leftPane.append($boxDiv)
 
@@ -285,15 +293,15 @@ $.export "SpriteEditor.App", do ->
           grid = self._createGrid(self.canvases.cellSize * brushSize)
           $grids.push(grid.element)
           $boxDiv.append(grid.$element)
-          grid.$element.bind "click", =>
-            @currentBrushSize = brushSize
+          grid.$element.bind "click", ->
+            self.currentBrushSize = brushSize
             $grids.removeClass("selected")
             grid.$element.addClass("selected")
-          grid.$element.trigger("click") if @currentBrushSize == brushSize
+          grid.$element.trigger("click") if self.currentBrushSize == brushSize
 
     _createGrid: (size) ->
-      SpriteEditor.Canvas.create size, size, (c) ->
-        cellSize = self.canvases.cellSize
+      SpriteEditor.Canvas.create size, size, (c) =>
+        cellSize = @canvases.cellSize
 
         c.ctx.strokeStyle = "#eee"
         c.ctx.beginPath()
