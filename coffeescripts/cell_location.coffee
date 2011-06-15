@@ -17,7 +17,7 @@ $.export "SpriteEditor.CellLocation", do ->
     @subtract: -> @minus.apply(@, arguments)
 
     constructor:
-      if arguments.length == 1
+      if arguments.length == 1 and $.v.is.obj(arguments[0])
         obj  = arguments[0]
         [@app, @i, @j, @x, @y] = [obj.app, obj.i, obj.j, obj.x, obj.y]
       else

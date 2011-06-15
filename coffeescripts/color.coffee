@@ -87,7 +87,7 @@ $.export "SpriteEditor.Color", do ->
     @properties: "red green blue alpha".split(" ")
 
     constructor: (red, green, blue, alpha) ->
-      if arguments.length == 1 and typeof arguments[0] == "object"
+      if arguments.length == 1 and $.v.is.obj(arguments[0])
         color = arguments[0]
         for prop in Color.RGB.properties
           @[prop] = color[prop]
@@ -132,7 +132,7 @@ $.export "SpriteEditor.Color", do ->
 
   class Color.HSL
     constructor: (hue, sat, lum, alpha) ->
-      if arguments.length == 1 and typeof arguments[0] == "object"
+      if arguments.length == 1 and $.v.is.obj(arguments[0])
         color = arguments[0]
         for prop in Color.HSL.properties
           @[prop] = color[prop]

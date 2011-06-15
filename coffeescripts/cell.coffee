@@ -7,7 +7,7 @@ $.export "SpriteEditor.Cell", do ->
   #
   class Cell
     constructor: ->
-      if arguments.length == 1
+      if arguments.length == 1 and $.v.is.obj(arguments[0])
         obj = arguments[0]
         @app   = obj.app
         @loc   = obj.loc?.clone()
