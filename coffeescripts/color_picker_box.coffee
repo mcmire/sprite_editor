@@ -1,274 +1,246 @@
-((window, document, $, undefined_) ->
-  ColorPickerBox = 
-    hueSatCanvasSize: 
-      width: 265
-      height: 300
-    
-    lumCanvasSize: 
-      width: 25
-      height: 300
-    
+$.export "SpriteEditor.ColorPickerBox", do ->
+
+  ColorPickerBox = {}
+  SpriteEditor.DOMEventHelpers.mixin(ColorPickerBox, "SpriteEditor_ColorPickerBox")
+
+  $.extend ColorPickerBox,
+    hueSatCanvasSize: {width: 265, height: 300}
+    lumCanvasSize: {width: 25, height: 300}
+    # This is always stored in HSL!
     currentColor: (new SpriteEditor.Color.RGB(255, 0, 0)).toHSL()
+
     $container: null
     hueSatCanvas: null
     lumCanvas: null
     colorFields: {}
+
     init: (options) ->
-      self = this
-      self.options = options
-      self.$container = $("<div class=\"square_color_picker dialog\" />").hide()
-      self._addHueSatDiv()
-      self._addLightnessDiv()
-      self._addColorFields()
-      self._addColorSample()
-      self._addCloseButton()
-      self
-    
+      @options = options
+
+      @$container = $('<div class="square_color_picker dialog" />').hide()
+
+      @_addHueSatDiv()
+      @_addLightnessDiv()
+      @_addColorFields()
+      @_addColorSample()
+      @_addCloseButton()
+
+      return this
+
     open: (color) ->
-      self = this
-      self.options.open.call self  if self.options.open
-      self.$container.show()
-      self.$container.center()
-      self.currentColor = color
-      self._drawLightnessCanvas()
-      self._setColorFields()
-      self._positionHueSatSelectorFromColor()
-      self._positionLightnessSelectorFromColor()
-      self._setColorSample()
-      self._addEvents()
-    
+      @options.open?.call(this)
+
+      @$container.show().center()
+
+      @currentColor = color
+      @_drawLightnessCanvas()
+      @_setColorFields()
+      @_positionHueSatSelectorFromColor()
+      @_positionLightnessSelectorFromColor()
+      @_setColorSample()
+
+      @_addEvents()
+
     close: ->
-      self = this
-      self.$container.hide()
-      self._removeEvents()
-      self.options.close.call self  if self.options.close
-    
+      @$container.hide()
+      @_removeEvents()
+      @options?.close.call(this)
+
     _addHueSatDiv: ->
-      self = this
-      $div = self.$hueSatDiv = $("<div class=\"hue_sat_div\" />")
-      $div.css 
-        width: self.hueSatCanvasSize.width
-        height: self.hueSatCanvasSize.height
-      
-      self.$container.append $div
-      self._addHueSatCanvas()
-      self._addHueSatSelectorDiv()
-    
+      $div = @$hueSatDiv = $('<div class="hue_sat_div" />')
+      $div.css {
+        width: @hueSatCanvasSize.width
+        height: @hueSatCanvasSize.height
+      }
+      @$container.append($div)
+
+      @_addHueSatCanvas()
+      @_addHueSatSelectorDiv()
+
     _addHueSatCanvas: ->
-      self = this
-      self.hueSatCanvas = SpriteEditor.Canvas.create(self.hueSatCanvasSize.width, self.hueSatCanvasSize.height, (c) ->
+      @hueSatCanvas = SpriteEditor.Canvas.create @hueSatCanvasSize.width, @hueSatCanvasSize.height, (c) ->
         imageData = c.ctx.createImageData(c.width, c.height)
-        hsl = self.currentColor
-        y = 0
-        
-        while y < c.height
-          x = 0
-          
-          while x < c.width
+        hsl = @currentColor
+        # TODO: Use a gradient for this instead of manually filling in pixels
+        for y in [0..c.height]
+          for x in [0..c.width]
+            # x = 0..width  -> h = 0..360
+            # y = 0..height -> s = 100..0
             h = Math.round(x * (360 / c.width))
             s = Math.round(y * (-100 / c.height) + 100)
-            rgb = hsl["with"](
-              hue: h
-              sat: s
-            ).toRGB()
-            imageData.setPixel x, y, rgb.red, rgb.green, rgb.blue, 255
-            x++
-          y++
-        c.ctx.putImageData imageData, 0, 0
-      )
-      self.hueSatCanvas.$element.addClass "hue_sat_canvas"
-      self.$hueSatDiv.append self.hueSatCanvas.$element
-    
+            rgb = hsl.with(hue: h, sat: s).toRGB()
+            imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255)
+        c.ctx.putImageData(imageData, 0, 0)
+
+      @hueSatCanvas.$element.addClass("hue_sat_canvas")
+      @$hueSatDiv.append(@hueSatCanvas.$element)
+
     _addHueSatSelectorDiv: ->
-      self = this
-      self.$hueSatSelectorDiv = $("<div class=\"hue_sat_selector\" />")
-      self.$hueSatDiv.append self.$hueSatSelectorDiv
-    
+      @$hueSatSelectorDiv = $('<div class="hue_sat_selector" />')
+      @$hueSatDiv.append(@$hueSatSelectorDiv)
+
     _addLightnessDiv: ->
-      self = this
-      self.$lumDiv = $("<div class=\"lum_div\" />")
-      self.$lumDiv.css 
-        width: self.lumCanvasSize.width + 11
-        height: self.lumCanvasSize.height
-      
-      self.$container.append self.$lumDiv
-      self._addLightnessCanvas()
-    
+      @$lumDiv = $("<div class=\"lum_div\" />")
+      @$lumDiv.css {
+        width: @lumCanvasSize.width + 11
+        height: @lumCanvasSize.height
+      }
+      @$container.append(@$lumDiv)
+
+      @_addLightnessCanvas()
+
     _addLightnessCanvas: ->
-      self = this
-      self.lumCanvas = SpriteEditor.Canvas.create(self.lumCanvasSize.width, self.lumCanvasSize.height)
-      self.lumCanvas.$element.addClass "lum_canvas"
-      self.$lumDiv.append self.lumCanvas.$element
-    
+      @lumCanvas = SpriteEditor.Canvas.create(@lumCanvasSize.width, @lumCanvasSize.height)
+      @lumCanvas.$element.addClass("lum_canvas")
+      @$lumDiv.append(@lumCanvas.$element)
+
     _drawLightnessCanvas: ->
-      self = this
       c = self.lumCanvas
       imageData = c.ctx.createImageData(c.width, c.height)
       hsl = self.currentColor
-      y = 0
-      
-      while y < c.height
+      # TODO: Use a gradient for this instead of manually filling in pixels
+      for y in [0..c.height]
+        # y = 0..height -> l = 100..0
         l = Math.round((-100 / c.height) * y + 100)
-        rgb = hsl["with"](lum: l).toRGB()
-        x = 0
-        
-        while x < c.width
-          imageData.setPixel x, y, rgb.red, rgb.green, rgb.blue, 255
-          x++
-        y++
-      c.ctx.putImageData imageData, 0, 0
-    
+        rgb = hsl.with(lum: l).toRGB()
+        for x in [0..c.width]
+          imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255)
+      c.ctx.putImageData(imageData, 0, 0)
+
     _addColorFields: ->
-      self = this
-      self.$colorFieldsDiv = $("<div class=\"color_fields\" />")
-      $.v.each SpriteEditor.Color.componentsByRepresentation, (repName, rep) ->
-        $repDiv = $("<div class=\"" + repName + "_fields\" />")
-        $.v.each rep, (cpt) ->
-          $colorSpan = $("<span />")
-          $colorField = $("<input type=\"text\" size=\"3\" />")
-          self.colorFields[cpt] = $colorField
-          $colorSpan.html(cpt[0].toUpperCase() + ": ").append $colorField
-          $repDiv.append $colorSpan
-        
-        self.$colorFieldsDiv.append $repDiv
-      
-      self.$container.append self.$colorFieldsDiv
-    
+      @$colorFieldsDiv = $('<div class="color_fields" />')
+      for repName, rep of SpriteEditor.Color.componentsByRepresentation
+        $repDiv = $('<div class="'+repName+'_fields" />')
+        for cpt in rep
+          $colorSpan = $('<span />')
+          $colorField = $('<input type="text" size="3" />')
+          @colorFields[cpt] = $colorField
+          $colorSpan.html(cpt[0].toUpperCase() + ": ").append($colorField)
+          $repDiv.append($colorSpan)
+        @$colorFieldsDiv.append($repDiv)
+      @$container.append(@$colorFieldsDiv)
+
     _addColorSample: ->
-      self = this
-      self.$colorSampleDiv = $("<div class=\"color_sample\" />")
-      self.$container.append self.$colorSampleDiv
-    
+      @$colorSampleDiv = $('<div class="color_sample" />')
+      @$container.append(@$colorSampleDiv)
+
     _addCloseButton: ->
-      self = this
-      $p = $("<p class=\"clear\" style=\"text-align: center; margin-top: 30px\" />")
-      self.$closeButton = $("<a href=\"#\" />").html("Close box")
-      self.$closeButton.bind "click", ->
-        self.close()
-      
-      $p.append self.$closeButton
-      self.$container.append $p
-    
+      $p = $('<p class="clear" style="text-align: center; margin-top: 30px" />');
+      @$closeButton = $('<a href="#" />').html("Close box")
+      @$closeButton.bind("click" => @close())
+      $p.append(@$closeButton)
+      @$container.append($p)
+
     _addEvents: ->
-      self = this
-      $(document).bind "keyup.ColorPickerBox": (event) ->
-        key = event.keyCode
-        self.close()  if key == Keyboard.ESC_KEY
-      
-      self.$hueSatDiv.mouseTracker "mousedown mousedrag": ->
-        self._positionHueSatSelectorFromMouse()
-        self._setHueAndSatFromSelectorPosition()
-        self._setColorFields()
-        self._setColorSample()
-        self._drawLightnessCanvas()
-        self.options.change.call self, self.currentColor  if self.options.change
-      
-      self.$lumDiv.mouseTracker "mousedown mousedrag": ->
-        self._positionLightnessSelectorFromMouse()
-        self._setLightnessFromSelectorPosition()
-        self._setColorFields()
-        self._setColorSample()
-        self.options.change.call self, self.currentColor  if self.options.change
-    
+      @_bindEvents document,
+        keyup: (event) =>
+          key = event.keyCode
+          @close() if key == Keyboard.ESC_KEY
+
+      @$hueSatDiv.mouseTracker
+        "mousedown mousedrag": =>
+          @_positionHueSatSelectorFromMouse()
+          @_setHueAndSatFromSelectorPosition()
+          @_setColorFields()
+          @_setColorSample()
+          @_drawLightnessCanvas()
+          @options?.change.call(this, @currentColor)
+
+      @$lumDiv.mouseTracker
+        "mousedown mousedrag": =>
+          @_positionLightnessSelectorFromMouse()
+          @_setLightnessFromSelectorPosition()
+          @_setColorFields()
+          @_setColorSample()
+          @options?.change.call(this, @currentColor)
+
     _removeEvents: ->
-      self = this
-      $(document).unbind "keyup.ColorPickerBox"
-      self.$hueSatDiv.mouseTracker "destroy"
-      self.$lumDiv.mouseTracker "destroy"
-    
+      @_unbindEvents(document, "keyup")
+      @$hueSatDiv.mouseTracker("destroy")
+      @$lumDiv.mouseTracker("destroy")
+
     _setColorFields: ->
-      self = this
-      hsl = self.currentColor
+      hsl = @currentColor
       rgb = hsl.toRGB()
-      $.v.each SpriteEditor.Color.RGB.properties, (prop) ->
-        self.colorFields[prop].val String(rgb[prop])  if self.colorFields[prop]
-      
-      $.v.each SpriteEditor.Color.HSL.properties, (prop) ->
-        self.colorFields[prop].val String(hsl[prop])  if self.colorFields[prop]
-    
+      for prop in SpriteEditor.Color.RGB.properties
+        @colorFields[prop]?.val String(rgb[prop])
+      for prop in SpriteEditor.Color.HSL.properties
+        @colorFields[prop]?.val String(hsl[prop])
+
     _positionHueSatSelectorFromMouse: ->
-      self = this
-      mouse = self.$hueSatDiv.mouseTracker("pos").rel
+      mouse = @$hueSatDiv.mouseTracker("pos").rel
+      # This 5 here is just a value I found matches up with the center of the selector image
       top = mouse.y - 5
       left = mouse.x - 5
-      self.$hueSatSelectorDiv.css "background-position", left + "px " + top + "px"
-    
+      @$hueSatSelectorDiv.css("background-position", left+"px "+top+"px")
+
     _positionLightnessSelectorFromMouse: ->
-      self = this
-      mouse = self.$lumDiv.mouseTracker("pos").rel
+      mouse = @$lumDiv.mouseTracker("pos").rel
       top = mouse.y - 5
-      self.$lumDiv.css "background-position", "0px " + top + "px"
-    
+      @$lumDiv.css("background-position", "0px "+top+"px")
+
     _positionHueSatSelectorFromColor: ->
-      self = this
-      top = self._sat2px()
-      left = self._hue2px()
-      self.$hueSatSelectorDiv.css "background-position", left + "px " + top + "px"
-    
+      top = @_sat2px()
+      left = @_hue2px()
+      @$hueSatSelectorDiv.css("background-position", left+"px "+top+"px")
+
     _positionLightnessSelectorFromColor: ->
-      self = this
-      top = self._lum2px()
-      self.$lumDiv.css "background-position", "0px " + top + "px"
-    
+      top = @_lum2px()
+      @$lumDiv.css("background-position", "0px "+top+"px")
+
     _setHueAndSatFromSelectorPosition: ->
-      self = this
-      self.currentColor = self.currentColor["with"](
-        hue: self._px2hue()
-        sat: self._px2sat()
-      )
-    
+      @currentColor = @currentColor.with( hue: @_px2hue(), sat: @_px2sat() )
+
     _setLightnessFromSelectorPosition: ->
-      self = this
-      self.currentColor = self.currentColor["with"](lum: self._px2lum())
-    
+      @currentColor = @currentColor.with( lum: @_px2lum() )
+
     _setColorSample: ->
-      self = this
-      self.$colorSampleDiv.css "background-color", self.currentColor.toRGB().toString()
-    
+      @$colorSampleDiv.css("background-color", @currentColor.toRGB().toString())
+
     _sat2px: ->
-      self = this
-      s = self.currentColor.sat
-      h = self.hueSatCanvasSize.height
+      s = @currentColor.sat
+      h = @hueSatCanvasSize.height
+      # s = 100..0 -> y = 0..height
       y = Math.round(-s * (h / 100) + h)
-      y
-    
+      return y
+
     _px2sat: ->
-      self = this
-      pos = self.$hueSatDiv.mouseTracker("pos").rel
+      pos = @$hueSatDiv.mouseTracker("pos").rel
       y = pos.y
-      h = self.hueSatCanvasSize.height
+      h = @hueSatCanvasSize.height
+      # y = 0..height -> s = 100..0
       s = Math.round(-100 * (y - h) / h)
-      s
-    
+      return s
+
     _hue2px: ->
-      self = this
-      h = self.currentColor.hue
-      w = self.hueSatCanvasSize.width
+      h = @currentColor.hue
+      w = @hueSatCanvasSize.width
+      # h = 0..360 -> x = 0..width
       x = Math.round(h * (w / 360))
-      x
-    
+      return x
+
     _px2hue: ->
-      self = this
-      pos = self.$hueSatDiv.mouseTracker("pos").rel
+      pos = @$hueSatDiv.mouseTracker("pos").rel
       x = pos.x
-      w = self.hueSatCanvasSize.width
+      w = @hueSatCanvasSize.width
+      # x = 0..width -> h = 0..360
       h = Math.round((360 * x) / w)
-      h
-    
+      return h
+
     _lum2px: ->
-      self = this
-      l = self.currentColor.lum
-      h = self.lumCanvasSize.height
+      l = @currentColor.lum
+      h = @lumCanvasSize.height
+      # l = 100..0 -> y = 0..height
       y = Math.round(-l * (h / 100) + h)
-      y
-    
+      return y
+
     _px2lum: ->
       self = this
-      pos = self.$lumDiv.mouseTracker("pos").rel
+      pos = @$lumDiv.mouseTracker("pos").rel
       y = pos.y
-      h = self.lumCanvasSize.height
+      h = @lumCanvasSize.height
+      # l = 100..0 -> y = 0..height
       l = Math.round(-100 * (y - h) / h)
-      l
-  
-  $.export "SpriteEditor.ColorPickerBox", ColorPickerBox
-) window, window.document, window.ender
+      return l
+
+  return ColorPickerBox

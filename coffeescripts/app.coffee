@@ -1,7 +1,6 @@
 $.export "SpriteEditor.App", do ->
 
   App = {}
-
   SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App")
 
   $.extend App,
