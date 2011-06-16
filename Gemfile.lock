@@ -73,5 +73,6 @@ DEPENDENCIES
   guard-livereload
   guard-shell
   jasmine
+  json
   rb-fsevent
   sinatra (= 1.1.4)
