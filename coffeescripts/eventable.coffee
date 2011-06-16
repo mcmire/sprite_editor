@@ -1,13 +1,9 @@
-(($, undefined_) ->
-  Eventable = 
-    actions: {}
-    recordEvent: (method) ->
-      self = this
-      self.app.history.recordEvent self, method
-    
-    addAction: (name, routines) ->
-      self = this
-      self.actions[name] = routines
-  
-  $.export "SpriteEditor.Eventable", Eventable
-) window.ender
+$.export "SpriteEditor.Eventable",
+
+  actions: {}
+
+  recordEvent: (method) ->
+    @app.history.recordEvent(this, method)
+
+  addAction: (name, routines) ->
+    @actions[name] = routines
