@@ -1,424 +1,445 @@
-((window, document, $, undefined_) ->
-  Tools = 
+$.export "SpriteEditor.Tools", do ->
+
+  Keyboard = SpriteEditor.Keyboard
+
+  Tools =
     toolNames: [ "pencil", "bucket", "select", "dropper" ]
+
     init: (app, canvases) ->
-      self = this
-      $.v.each self.toolNames, (name) ->
-        self[name].init app, canvases
-      
-      self
-  
-  Tools.base = $.extend({}, SpriteEditor.Eventable, 
+      for name in @toolNames
+        @[name].init(app, canvases)
+      return this
+
+  #-----------------------------------------------------------------------------
+
+  Tools.base = $.extend {}, SpriteEditor.Eventable,
     init: (app, canvases) ->
-      self = this
-      self.app = app
-      self.canvases = canvases
-    
-    trigger: ->
-      self = this
-      args = Array::slice.call(arguments)
-      name = args.shift()
-      self[name].apply self, args  unless typeof self[name] == "undefined"
-  )
-  Tools.dropper = (->
-    t = $.extend(true, {}, Tools.base)
-    $.extend t, 
-      select: ->
-        self = this
-        self.canvases.workingCanvas.$element.addClass "dropper"
-      
-      unselect: ->
-        self = this
-        self.canvases.workingCanvas.$element.removeClass "dropper"
-      
-      mousedown: (event) ->
-        self = this
-        app = self.app
-        color = self.canvases.focusedCell.color
-        app.currentColor[app.currentColor.type] = color.clone()
-        app.colorSampleDivs[app.currentColor.type].trigger "update"
-    
-    t
-  )()
-  Tools.pencil = (->
-    t = $.extend(true, {}, Tools.base)
-    $.extend t, actionableCells: {}
-    t.addAction "updateCells", 
+      @app = app
+      @canvases = canvases
+
+    trigger: (name, args...) ->
+      @[name]?.apply(this, args)
+
+  #-----------------------------------------------------------------------------
+
+  Tools.dropper = $.extend true, {}, Tools.base,
+    select: ->
+      @canvases.workingCanvas.$element.addClass("dropper")
+
+    unselect: ->
+      @canvases.workingCanvas.$element.removeClass("dropper")
+
+    mousedown: (event) ->
+      app = @app
+      color = @canvases.focusedCell.color
+      app.currentColor[app.currentColor.type] = color.clone()
+      app.colorSampleDivs[app.currentColor.type].trigger("update")
+
+  #-----------------------------------------------------------------------------
+
+  Tools.pencil = $.tap $.extend(true, {}, Tools.base), (t) ->
+    t.addAction "updateCells",
       do: ->
         event = canvases: {}
+
         changedCells = []
-        $.v.each t.actionableCells, (coords, after) ->
-          before = t.canvases.cells[after.loc.i][after.loc.j]
-          t.canvases.cells[after.loc.i][after.loc.j] = after
-          changedCells.push 
-            before: before
-            after: after
-        
+        for coords, after of t.actionableCells
+          do (after) ->
+            before = t.canvases.cells[after.loc.i][after.loc.j]
+            t.canvases.cells[after.loc.i][after.loc.j] = after
+            changedCells.push(before: before, after: after)
         event.canvases.changedCells = changedCells
-        event
-      
+
+        return event
+
       undo: (event) ->
-        $.v.each event.canvases.changedCells, (cell) ->
+        for cell in event.canvases.changedCells
           t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
-      
+
       redo: (event) ->
-        $.v.each event.canvases.changedCells, (cell) ->
+        for cell in event.canvases.changedCells
           t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
-    
-    $.extend t, 
+
+    $.extend t,
+      actionableCells: {}
+
       mousedown: (event) ->
-        self = this
-        self.actionableCells = {}
-        self.mousedrag event
-      
+        @actionableCells = {}
+        @mousedrag(event)
+
       mousedrag: (event) ->
         self = this
-        erase = (event.rightClick or SpriteEditor.Keyboard.pressedKeys[SpriteEditor.Keyboard.CTRL_KEY])
+        # FIXME: If you drag too fast it will skip some cells!
+        # Use the current mouse position and the last mouse position and
+        #  fill in or erase cells in between.
+        erase = (event.rightClick or Keyboard.pressedKeys[Keyboard.CTRL_KEY])
         currentColor = t.app.currentColor[t.app.currentColor.type]
-        $.v.each t.canvases.focusedCells, (cell) ->
-          return  if cell.coords() of self.actionableCells
+        for cell in t.canvases.focusedCells
+          return if cell.coords() of @actionableCells
+          # Copy the cell so that if its color changes in the future, it won't
+          # cause all cells with that color to also change
           cell = (if erase then cell.asClear() else cell.withColor(currentColor))
-          self.actionableCells[cell.coords()] = cell
-      
+          @actionableCells[cell.coords()] = cell
+
       mouseup: (event) ->
-        self = this
-        self.recordEvent "updateCells"
-        self.actionableCells = {}
-      
+        @recordEvent("updateCells")
+        @actionableCells = {}
+
       cellToDraw: (cell) ->
-        self = this
-        if cell.coords() of self.actionableCells
-          self.actionableCells[cell.coords()]
+        if cell.coords() of @actionableCells
+          @actionableCells[cell.coords()]
         else
           cell
-    
-    t
-  )()
-  Tools.bucket = (->
-    t = $.extend(true, {}, Tools.base)
-    t.addAction "fillFocusedCells", 
+
+  #-----------------------------------------------------------------------------
+
+  Tools.bucket = $.tap $.extend(true, {}, Tools.base), (t) ->
+    t.addAction "fillFocusedCells",
       do: ->
         event = canvases: {}
+
         currentColor = t.app.currentColor[t.app.currentColor.type]
         focusedColor = t.canvases.focusedCells[0].color.clone()
+
+        # Look for all cells with the color of the current cell (or look for all
+        # empty cells, if the current cell is empty) and mark them as filled
+        # with the current color
         changedCells = []
-        $.v.each t.canvases.cells, (row, i) ->
-          $.v.each row, (cell, j) ->
+        for row in t.canvases.cells
+          for cell in row
             if cell.color.eq(focusedColor)
-              before = cell
-              after = cell.withColor(currentColor)
-              row[j] = after
-              changedCells.push 
-                before: before
-                after: after
-        
+              do (before, after) ->
+                before = cell
+                after = cell.withColor(currentColor)
+                row[j] = after
+                changedCells.push(before: before, after: after)
         event.canvases.changedCells = changedCells
-        event
-      
+
+        return event
+
       undo: (event) ->
-        $.v.each event.canvases.changedCells, (cell) ->
+        for cell in event.canvases.changedCells
           t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
-      
+
       redo: (event) ->
-        $.v.each event.canvases.changedCells, (cell) ->
+        for cell in event.canvases.changedCells
           t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
-    
-    t.addAction "clearFocusedCells", 
+
+    t.addAction "clearFocusedCells",
       do: ->
         event = canvases: {}
+
+        # Copy this as the color of the current cell will change during this loop
         focusedColor = t.canvases.focusedCells[0].color.clone()
+
+        # Look for all cells with the color of the current cell
+        # and mark them as unfilled
         changedCells = []
-        $.v.each t.canvases.cells, (row, i) ->
-          $.v.each row, (cell, j) ->
+        for row in t.canvases.cells
+          for cell in row
             if cell.color.eq(focusedColor)
-              before = cell
-              after = cell.asClear()
-              row[j] = after
-              changedCells.push 
-                before: before
-                after: after
-        
+              do (before, after) ->
+                before = cell
+                after = cell.asClear()
+                row[j] = after
+                changedCells.push(before: before, after: after)
         event.canvases.changedCells = changedCells
-        event
-      
-      undo: (event) ->
-        $.v.each event.canvases.changedCells, (cell) ->
-          t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
-      
-      redo: (event) ->
-        $.v.each event.canvases.changedCells, (cell) ->
-          t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
-    
-    $.extend t, 
+
+        return event
+
+        undo: (event) ->
+          for cell in event.canvases.changedCells
+            t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
+
+        redo: (event) ->
+          for cell in event.canvases.changedCells
+            t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
+
+    $.extend t,
       mousedown: (event) ->
-        self = this
-        if event.rightClick or SpriteEditor.Keyboard.pressedKeys[SpriteEditor.Keyboard.CTRL_KEY]
-          self._setCellsLikeCurrentToUnfilled()
+        if event.rightClick or Keyboard.pressedKeys[Keyboard.CTRL_KEY]
+          @_setCellsLikeCurrentToUnfilled()
         else
-          self._setCellsLikeCurrentToFilled()
-      
+          @_setCellsLikeCurrentToFilled()
+
       draw: ->
-      
+        # ...
+
       _setCellsLikeCurrentToFilled: ->
-        self = this
-        self.recordEvent "fillFocusedCells"
-      
+        @recordEvent("fillFocusedCells")
+
       _setCellsLikeCurrentToUnfilled: ->
-        self = this
-        self.recordEvent "clearFocusedCells"
-    
-    t
-  )()
-  Tools.select = (->
-    t = $.extend(true, {}, Tools.base)
-    $.extend t, 
+        @recordEvent("clearFocusedCells")
+
+  #-----------------------------------------------------------------------------
+
+  Tools.select = $.tap $.extend(true, {}, Tools.base), (f) ->
+    t.addAction "cutSelection",
+      do: (event) ->
+        event =
+          me: {selectionStart: {}, selectionEnd: {}}
+          canvases: {}
+
+        # Put the selected cells on the clipboard
+        t.canvases.clipboard = $.v.map(t.selectedCells, (cell) ->
+          cell.clone()
+        )
+        # Clear the cells
+        changedCells = []
+        for cell in t.selectedCells
+          before = t.canvases.cells[cell.loc.i][cell.loc.j]
+          after = before.asClear()
+          t.canvases.cells[cell.loc.i][cell.loc.j] = after
+          changedCells.push(before: before, after: after)
+        event.canvases.changedCells = changedCells
+
+        # Hide the selection box
+        event.me.selectionStart.before = t.selectionStart
+        event.me.selectionEnd.before = t.selectionEnd
+
+        t.reset()
+
+        return event
+
+      undo: (event) ->
+        # Restore the cleared cells
+        for cell in event.canvases.changedCells
+          t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
+        # Restore the selection box
+        t.selectionStart = event.before.me.selectionStart
+        t.selectionEnd = event.before.me.selectionEnd
+        t.calculateSelectedCells()
+
+      redo: (after) ->
+        # Re-clear the cleared cells
+        for cell in event.canvases.changedCells
+          t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
+        # Re-hide the selection box
+        t.reset()
+
+    t.addAction "moveSelection",
+      do: ->
+        event =
+          me: {selectionStart: {}, selectionEnd: {}}
+          canvases: {}
+
+        # Move the cells that the currently selected cells point to
+        changedCells = []
+        for srcBefore in t.selectedCells
+          # Use the dragOffset to find the target cell, and replace it with a
+          # copy of the source cell
+          tgtLoc = srcBefore.loc.plus(t.dragOffset)
+          tgtBefore = t.canvases.cells[tgtLoc.i][tgtLoc.j]
+          tgtAfter = tgtBefore.withColor(srcBefore.color)
+          t.canvases.cells[tgtLoc.i][tgtLoc.j] = tgtAfter
+          changedCells.push(before: tgtBefore, after: tgtAfter)
+
+          # Clear the source cell
+          srcAfter = srcBefore.asClear()
+          t.canvases.cells[srcBefore.loc.i][srcBefore.loc.j] = srcAfter
+          changedCells.push(before: srcBefore, after: srcAfter)
+        event.canvases.changedCells = changedCells
+
+        # Move the selection box
+        # We don't offset the selectedCells themselves since we can recalculate them
+        event.me.selectionStart.before = t.selectionStart
+        event.me.selectionStart.after = t.selectionStart = t.selectionStart.plus(t.dragOffset)
+        event.me.selectionEnd.before = t.selectionEnd
+        event.me.selectionEnd.after = t.selectionEnd = t.selectionEnd.plus(t.dragOffset)
+        t.calculateSelectedCells()
+
+        # XXX: Does this belong here?
+        t.dragOffset = null
+
+        return event
+
+      undo: (event) ->
+        # Move the cells themselves back
+        for cell in event.canvases.changedCells
+          t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
+        # Move the selection box back
+        t.selectionStart = event.me.selectionStart.before
+        t.selectionEnd = event.me.selectionEnd.before
+        t.calculateSelectedCells()
+
+      redo: (event) ->
+        # Move the cells themselves back
+        for cell in event.canvases.changedCells
+          t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
+        # Move the selection box back
+        t.selectionStart = event.me.selectionStart.after
+        t.selectionEnd = event.me.selectionEnd.after
+        t.calculateSelectedCells()
+
+    t.addAction "resetSelection",
+      do: (event) ->
+        event =
+          me: {selectionStart: {}, selectionEnd: {}}
+
+        # Hide the selection box
+        event.me.selectionStart.before = t.selectionStart
+        event.me.selectionEnd.before = t.selectionEnd
+        t.reset()
+
+        return event
+
+      undo: (event) ->
+        # Restore the selection box
+        t.selectionStart = event.me.selectionStart.before
+        t.selectionEnd = event.me.selectionEnd.before
+
+      redo: (event) ->
+        # Re-hide the selection box
+        t.reset()
+
+    $.extend t,
       selectionStart: null
       selectionEnd: null
       selectedCells: []
       makingSelection: false
       animOffset: 0
       animateSelectionBox: false
-    
-    t.addAction "cutSelection", 
-      do: (event) ->
-        event = 
-          me: 
-            selectionStart: {}
-            selectionEnd: {}
-          
-          canvases: {}
-        
-        t.canvases.clipboard = $.v.map(t.selectedCells, (cell) ->
-          cell.clone()
-        )
-        changedCells = []
-        $.v.each t.selectedCells, (cell) ->
-          before = t.canvases.cells[cell.loc.i][cell.loc.j]
-          after = before.asClear()
-          t.canvases.cells[cell.loc.i][cell.loc.j] = after
-          changedCells.push 
-            before: before
-            after: after
-        
-        event.canvases.changedCells = changedCells
-        event.me.selectionStart.before = t.selectionStart
-        event.me.selectionEnd.before = t.selectionEnd
-        t.reset()
-        event
-      
-      undo: (event) ->
-        $.v.each event.canvases.changedCells, (cell) ->
-          t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
-        
-        t.selectionStart = event.before.me.selectionStart
-        t.selectionEnd = event.before.me.selectionEnd
-        t.calculateSelectedCells()
-      
-      redo: (after) ->
-        $.v.each event.canvases.changedCells, (cell) ->
-          t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
-        
-        t.reset()
-    
-    t.addAction "moveSelection", 
-      do: ->
-        event = 
-          me: 
-            selectionStart: {}
-            selectionEnd: {}
-          
-          canvases: {}
-        
-        changedCells = []
-        $.v.each t.selectedCells, (srcBefore) ->
-          tgtLoc = srcBefore.loc.plus(t.dragOffset)
-          tgtBefore = t.canvases.cells[tgtLoc.i][tgtLoc.j]
-          tgtAfter = tgtBefore.withColor(srcBefore.color)
-          t.canvases.cells[tgtLoc.i][tgtLoc.j] = tgtAfter
-          changedCells.push 
-            before: tgtBefore
-            after: tgtAfter
-          
-          srcAfter = srcBefore.asClear()
-          t.canvases.cells[srcBefore.loc.i][srcBefore.loc.j] = srcAfter
-          changedCells.push 
-            before: srcBefore
-            after: srcAfter
-        
-        event.canvases.changedCells = changedCells
-        event.me.selectionStart.before = t.selectionStart
-        event.me.selectionStart.after = t.selectionStart = t.selectionStart.plus(t.dragOffset)
-        event.me.selectionEnd.before = t.selectionEnd
-        event.me.selectionEnd.after = t.selectionEnd = t.selectionEnd.plus(t.dragOffset)
-        t.calculateSelectedCells()
-        t.dragOffset = null
-        event
-      
-      undo: (event) ->
-        $.v.each event.canvases.changedCells, (cell) ->
-          t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
-        
-        t.selectionStart = event.me.selectionStart.before
-        t.selectionEnd = event.me.selectionEnd.before
-        t.calculateSelectedCells()
-      
-      redo: (event) ->
-        $.v.each event.canvases.changedCells, (cell) ->
-          t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
-        
-        t.selectionStart = event.me.selectionStart.after
-        t.selectionEnd = event.me.selectionEnd.after
-        t.calculateSelectedCells()
-    
-    t.addAction "resetSelection", 
-      do: (event) ->
-        event = me: 
-          selectionStart: {}
-          selectionEnd: {}
-        
-        event.me.selectionStart.before = t.selectionStart
-        event.me.selectionEnd.before = t.selectionEnd
-        t.reset()
-        event
-      
-      undo: (event) ->
-        t.selectionStart = event.me.selectionStart.before
-        t.selectionEnd = event.me.selectionEnd.before
-      
-      redo: (event) ->
-        t.reset()
-    
-    $.extend t, 
+
       reset: ->
-        self = this
-        self.selectionStart = null
-        self.selectionEnd = null
-        self.selectedCells = []
-        self.makingSelection = false
-      
+        # Clear the selection box and reset other involved variables
+        @selectionStart = null
+        @selectionEnd = null
+        @selectedCells = []
+        @makingSelection = false
+
       calculateSelectedCells: ->
-        self = this
         selectedCells = []
-        i = self.selectionStart.i
-        
-        while i <= self.selectionEnd.i
-          j = self.selectionStart.j
-          
-          while j <= self.selectionEnd.j
-            selectedCells.push self.canvases.cells[i][j].clone()
-            j++
-          i++
-        self.selectedCells = selectedCells
-      
+        for i in [@selectionStart.i...@selectionEnd.i]
+          for j in [@selectionStart.j...@selectionEnd.j]
+            selectedCells.push(@canvases.cells[i][j].clone())
+        @selectedCells = selectedCells
+
       select: ->
-        self = this
-        self.canvases.workingCanvas.$element.addClass "crosshair"
-      
+        @canvases.workingCanvas.$element.addClass("crosshair")
+
       unselect: ->
-        self = this
-        self.canvases.workingCanvas.$element.removeClass "crosshair"
-        self._exitSelection()
-      
+        @canvases.workingCanvas.$element.removeClass("crosshair")
+        @_exitSelection()
+
       keydown: (event) ->
-        self = this
         key = event.keyCode
-        self._cutSelection()  if key == SpriteEditor.Keyboard.X_KEY and (event.metaKey or event.ctrlKey)
-      
+        if key == Keyboard.X_KEY and (event.metaKey or event.ctrlKey)
+          # Ctrl-X: Cut selection
+          @_cutSelection()
+
       mouseglide: (event) ->
-        self = this
-        if self._focusIsInsideOfSelection()
-          self.canvases.workingCanvas.$element.addClass "move"
+        if @_focusIsInsideOfSelection()
+          @canvases.workingCanvas.$element.addClass("move")
         else
-          self.canvases.workingCanvas.$element.removeClass "move"
-      
+          @canvases.workingCanvas.$element.removeClass("move")
+
       mousedragstart: (event) ->
-        self = this
-        if self.selectionStart and self._focusIsInsideOfSelection()
-          $.v.each self.selectedCells, (cell) ->
-            self.canvases.cells[cell.loc.i][cell.loc.j].clear()
+        # If something is selected and drag started from within the selection,
+        # then detach the selected cells from the canvas and put them in a
+        # separate selection layer
+        #---
+        # FIXME: This actually removes the corresponding pixels from the preview
+        # canvas. Our cells array should have a concept of layers -- and so then
+        # to render the preview canvas we just flatten the layers
+        if @selectionStart and @_focusIsInsideOfSelection()
+          for cell in @selectedCells
+            @canvases.cells[cell.loc.i][cell.loc.j].clear()
+        # Otherwise, the user is making a new selection
         else
-          self._exitSelection()
-          self.makingSelection = true
-          c = self.canvases.focusedCell
-          self.selectionStart = c.loc.clone()
-        self.animateSelectionBox = false
-      
+          @_exitSelection()
+          @makingSelection = true
+          c = @canvases.focusedCell
+          @selectionStart = c.loc.clone()
+        @animateSelectionBox = false
+
       mousedrag: (event) ->
-        self = this
-        if self.makingSelection
-          self.selectionEnd = self.canvases.focusedCell.loc.clone()
+        if @makingSelection
+          # Expand or contract the selection box based on the location of the cell that has focus
+          @selectionEnd = @canvases.focusedCell.loc.clone()
         else
-          self.dragOffset = SpriteEditor.CellLocation.subtract(self.canvases.focusedCell.loc, self.canvases.startDragAtCell.loc)
-      
+          # Record the amount the selection box has been dragged.
+          # While the box is being dragged, the selected cells have virtual
+          # positions, and so the drag offset affects where the cells are drawn
+          # until the drag stops, at which point the virtual positions become
+          # real positions.
+          @dragOffset = SpriteEditor.CellLocation.subtract(
+            @canvases.focusedCell.loc,
+            @canvases.startDragAtCell.loc
+          )
+
       mousedragstop: (event) ->
-        self = this
-        if self.makingSelection
-          self.calculateSelectedCells()
+        if @makingSelection
+          @calculateSelectedCells()
         else
-          self._moveSelection()
-          self.dragOffset = null
-        self.makingSelection = false
-        self.animateSelectionBox = true
-      
+          @_moveSelection()
+          @dragOffset = null
+        @makingSelection = false
+        @animateSelectionBox = true
+
       mouseup: (event) ->
-        self = this
-        isDragging = self.canvases.workingCanvas.$element.mouseTracker("isDragging")
-        self._exitSelection()  if not isDragging and self.selectionStart and self._focusIsOutsideOfSelection()
-      
+        # If mouse is clicked out of the selection, merge the selection layer
+        # into the canvas and then clear the selection
+        isDragging = @canvases.workingCanvas.$element.mouseTracker("isDragging")
+        if not isDragging and @selectionStart and @_focusIsOutsideOfSelection()
+          @_exitSelection()
+
       draw: ->
-        self = this
-        return  if not self.selectionStart or not self.selectionEnd
-        ctx = self.canvases.workingCanvas.ctx
+        return if !@selectionStart or !@selectionEnd
+        ctx = @canvases.workingCanvas.ctx
         ctx.save()
-        if self.dragOffset
-          $.v.each self.selectedCells, (cell) ->
-            loc = SpriteEditor.CellLocation.add(cell.loc, self.dragOffset)
-            self.canvases.drawCell cell, loc: loc
+        # Draw the selected cells, which is actually a separate layer, since
+        # they may have been dragged to a different place than the actual
+        # cells they originally point to
+        if @dragOffset
+          for cell in @selectedCells
+            loc = SpriteEditor.CellLocation.add(cell.loc, @dragOffset)
+            @canvases.drawCell(cell, loc: loc)
         else
-          $.v.each self.selectedCells, (cell) ->
-            self.canvases.drawCell cell
-        bounds = self._selectionBounds(self.dragOffset)
+          for cell in @selectedCells
+            @canvases.drawCell(cell)
+
+        bounds = @_selectionBounds(@dragOffset)
+
+        # Draw a rectangle that represents the selection area, with an animated
+        # "marching ants" dotted border
         ctx.strokeStyle = "#000"
         ctx.beginPath()
-        x = bounds.x1 + self.animOffset
-        
-        while x < bounds.x2
+        # top
+        for x in [ bounds.x1 + @animOffset .. bounds.x2 ] by 4
           y1 = bounds.y1
-          ctx.moveTo x, y1 + 0.5
-          ctx.lineTo x + 2, y1 + 0.5
-          x += 4
-        y = bounds.y1 + self.animOffset
-        
-        while y < bounds.y2
+          ctx.moveTo(x, y1 + 0.5)
+          ctx.lineTo(x + 2, y1 + 0.5)
+        # right
+        for y in [ bounds.y1 + @animOffset .. bounds.x2 ] by 4
           x2 = bounds.x2
-          ctx.moveTo x2 + 0.5, y
-          ctx.lineTo x2 + 0.5, y + 2
-          y += 4
-        x = bounds.x2 - self.animOffset
-        
-        while x > bounds.x1 + 2
+          ctx.moveTo(x2 + 0.5, y)
+          ctx.lineTo(x2 + 0.5, y + 2)
+        # bottom
+        for x in [ bounds.x2 - @animOffset .. bounds.x1 + 2 ] by -4
           y2 = bounds.y2
-          ctx.moveTo x, y2 + 0.5
-          ctx.lineTo x - 2, y2 + 0.5
-          x -= 4
-        y = bounds.y2 - self.animOffset
-        
-        while y > bounds.y1 + 2
+          ctx.moveTo(x, y2 + 0.5)
+          ctx.lineTo(x - 2, y2 + 0.5)
+        # left
+        for y in [ bounds.y2 - @animOffset .. bounds.y1 + 2 ] by -4
           x1 = bounds.x1
-          ctx.moveTo x1 + 0.5, y
-          ctx.lineTo x1 + 0.5, y - 2
-          y -= 4
+          ctx.moveTo(x1 + 0.5, y)
+          ctx.lineTo(x1 + 0.5, y - 2)
         ctx.stroke()
         ctx.restore()
-        if self.animateSelectionBox
-          self.animOffset++
-          self.animOffset %= 4
-      
+
+        if @animateSelectionBox
+          # Animate the "marching ants"
+          @animOffset++
+          @animOffset %= 4
+
       _selectionBounds: (offset) ->
-        self = this
-        ss = self.selectionStart
-        se = self.selectionEnd
+        ss, se = @selectionStart, @selectionEnd
         bounds = {}
+        # Ensure that x2 > x1 and y2 > y1, as the following could happen if the
+        # selection box is created by the following motions:
+        # - dragging from top-right to bottom-left: x1 > x2
+        # - dragging from bottom-left to top-right: y1 > y2
+        # - dragging from bottom-right to top-left: both x1 > x2 and y1 > y2
         if ss.i > se.i
           bounds.y1 = se.y
           bounds.y2 = ss.y
@@ -436,37 +457,40 @@
           bounds.x2 += offset.x
           bounds.y1 += offset.y
           bounds.y2 += offset.y
-        bounds.x2 += self.canvases.cellSize
-        bounds.y2 += self.canvases.cellSize
+        # Snap the bottom-right corner of the selection box to the bottom-right
+        # corner of the bottom-right cell (got it?)
+        bounds.x2 += @canvases.cellSize
+        bounds.y2 += @canvases.cellSize
         bounds
-      
+
       _focusIsInsideOfSelection: ->
-        self = this
-        c = self.canvases.focusedCell
-        sa = self.selectionStart
-        sb = self.selectionEnd
-        sa and sb and c.loc.i >= sa.i and c.loc.i <= sb.i and c.loc.j >= sa.j and c.loc.j <= sb.j
-      
+        c = @canvases.focusedCell
+        sa = @selectionStart
+        sb = @selectionEnd
+        return (
+          sa && sb &&
+          c.loc.i >= sa.i && c.loc.i <= sb.i &&
+          c.loc.j >= sa.j && c.loc.j <= sb.j
+        )
+
       _focusIsOutsideOfSelection: ->
-        self = this
-        c = self.canvases.focusedCell
-        sa = self.selectionStart
-        sb = self.selectionEnd
-        c.loc.i < sa.i or c.loc.i > sb.i or c.loc.j < sa.j or c.loc.j > sb.j
-      
+        c = @canvases.focusedCell
+        sa = @selectionStart
+        sb = @selectionEnd
+        return (
+          c.loc.i < sa.i || c.loc.i > sb.i ||
+          c.loc.j < sa.j || c.loc.j > sb.j
+        )
+
       _cutSelection: ->
-        self = this
-        self.recordEvent "cutSelection"
-      
+        @recordEvent("cutSelection")
+
       _moveSelection: (dragOffset) ->
-        self = this
-        self.recordEvent "moveSelection"
-      
+        @recordEvent("moveSelection")
+
       _exitSelection: ->
-        self = this
-        self.recordEvent "resetSelection"  if self.selectionStart
-    
-    t
-  )()
-  $.export "SpriteEditor.Tools", Tools
-) window, window.document, window.ender
+        @recordEvent("resetSelection") if @selectionStart
+
+  #-----------------------------------------------------------------------------
+
+  return Tools
