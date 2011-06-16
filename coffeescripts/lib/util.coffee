@@ -1,5 +1,5 @@
 # Add class methods to the global ender object
-$.ender,
+$.ender
 {
   # $.extend(deep, target, objects...)
   # $.extend(target, objects...)
@@ -80,7 +80,7 @@ $.ender,
 #-------------------------------------------------------------------------------
 
 # Add methods to each ender element
-$.ender, {
+$.ender {
   center: ->
     vp = $.viewport()
     self = $([ this[0] ])

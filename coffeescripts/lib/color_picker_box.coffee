@@ -127,7 +127,7 @@ $.export "SpriteEditor.ColorPickerBox", do ->
     _addCloseButton: ->
       $p = $('<p class="clear" style="text-align: center; margin-top: 30px" />');
       @$closeButton = $('<a href="#" />').html("Close box")
-      @$closeButton.bind("click" => @close())
+      @$closeButton.bind("click", => @close())
       $p.append(@$closeButton)
       @$container.append($p)
 
@@ -139,7 +139,7 @@ $.export "SpriteEditor.ColorPickerBox", do ->
           key = event.keyCode
           self.close() if key == Keyboard.ESC_KEY
 
-      @$hueSatDiv.mouseTracker,
+      @$hueSatDiv.mouseTracker
         "mousedown mousedrag": ->
           self._positionHueSatSelectorFromMouse()
           self._setHueAndSatFromSelectorPosition()
@@ -148,7 +148,7 @@ $.export "SpriteEditor.ColorPickerBox", do ->
           self._drawLightnessCanvas()
           self.options?.change.call(self, self.currentColor)
 
-      @$lumDiv.mouseTracker,
+      @$lumDiv.mouseTracker
         "mousedown mousedrag": ->
           self._positionLightnessSelectorFromMouse()
           self._setLightnessFromSelectorPosition()

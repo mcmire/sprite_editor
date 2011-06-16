@@ -7,8 +7,8 @@ $.export "SpriteEditor.DOMEventHelpers", do ->
         namespacedEvents[name + "." + @eventNamespace] = fn
       $(elem).bind(namespacedEvents)
 
-    _unbindEvents: -> (elem, args...)
-      namespacedEventNames = (name + "." + @eventNamespace for args)
+    _unbindEvents: (elem, args...) ->
+      namespacedEventNames = (name + "." + @eventNamespace for name in args)
       $(elem).unbind(namespacedEventNames.join(" "))
 
   DOMEventHelpers =

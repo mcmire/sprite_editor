@@ -220,7 +220,7 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
 
     _addEvents: ->
       self = this
-      @_bindEvents, @$element,
+      @_bindEvents @$element,
         mouseover: (event) ->
           self.triggerHandler("mouseover", event)
 

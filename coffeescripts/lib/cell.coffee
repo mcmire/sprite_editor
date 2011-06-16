@@ -29,7 +29,7 @@ $.export "SpriteEditor.Cell", do ->
       clone.color = color.clone()
       clone
 
-    coords: -> loc.j, @loc.i ].join(",")
+    coords: -> [ loc.j, @loc.i ].join(",")
 
     clone: -> new Cell(this)
 

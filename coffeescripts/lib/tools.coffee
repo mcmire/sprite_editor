@@ -433,7 +433,7 @@ $.export "SpriteEditor.Tools", do ->
           @animOffset %= 4
 
       _selectionBounds: (offset) ->
-        ss, se = @selectionStart, @selectionEnd
+        [ss, se] = [@selectionStart, @selectionEnd]
         bounds = {}
         # Ensure that x2 > x1 and y2 > y1, as the following could happen if the
         # selection box is created by the following motions:
