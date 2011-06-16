@@ -89,6 +89,11 @@ $.ender({
     tail = chain.pop();
     chain = this.ns(chain);
     chain[tail] = obj;
+  },
+
+  tap: function(obj, fn) {
+    fn(obj)
+    return obj;
   }
 })
 

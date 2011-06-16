@@ -46,6 +46,10 @@
       tail = chain.pop()
       chain = @ns(chain)
       chain[tail] = obj
+    
+    tap: (obj, fn) ->
+      fn obj
+      obj
   
   $.ender 
     center: ->
