@@ -8,6 +8,8 @@ group :development do
   gem 'guard-shell'
   gem 'guard-livereload'
   gem 'guard-coffeescript'
+  gem 'growl'
   gem 'json'
+
   gem 'jasmine'
 end
