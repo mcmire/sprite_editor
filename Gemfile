@@ -7,5 +7,6 @@ group :development do
   gem 'rb-fsevent'
   gem 'guard-shell'
   gem 'guard-livereload'
+  gem 'guard-coffeescript'
   gem 'jasmine'
 end
