@@ -1,5 +1,9 @@
-((window, document, $, undefined_) ->
-  Keyboard = 
+$.export "SpriteEditor.Keyboard", do ->
+
+  Keyboard = {}
+  SpriteEditor.DOMEventHelpers.mixin(Keyboard, "SpriteEditor_Keyboard")
+
+  $.extend Keyboard,
     TAB_KEY: 9
     ESC_KEY: 27
     SHIFT_KEY: 16
@@ -8,27 +12,33 @@
     META_KEY: 91
     X_KEY: 88
     Z_KEY: 90
+
     pressedKeys: {}
+
     init: ->
       self = this
-      $(document).bind 
-        "keydown.Keyboard": (event) ->
+
+      @_bindEvents document,
+        keydown: (event) ->
           self.pressedKeys[event.keyCode] = true
-        
-        "keyup.Keyboard": (event) ->
+        keyup: (event) ->
           delete self.pressedKeys[event.keyCode]
-      
-      $(window).bind "blur.Keyboard": (event) ->
-        self.pressedKeys = {}
-    
+
+      @_bindEvents window,
+        blur: (event) ->
+          self.pressedKeys = {}
+
     destroy: ->
-      self = this
-      $(document).unbind "keydown.Keyboard", "keyup.Keyboard"
-      $(window).unbind "blur.Keyboard"
-    
+      @_unbindEvents document, "keydown", "keyup"
+      @_unbindEvents window, "blur"
+
     modifierKeyPressed: (event) ->
       event.shiftKey or event.ctrlKey or event.altKey or event.metaKey
-  
-  Keyboard.modifierKeys = [ Keyboard.SHIFT_KEY, Keyboard.CTRL_KEY, Keyboard.ALT_KEY, Keyboard.META_KEY ]
-  $.export "SpriteEditor.Keyboard", Keyboard
-) window, window.document, window.ender
+
+  Keyboard.modifierKeys =
+    Keyboard.SHIFT_KEY
+    Keyboard.CTRL_KEY
+    Keyboard.ALT_KEY
+    Keyboard.META_KEY
+
+  return Keyboard
