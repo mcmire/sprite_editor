@@ -126,31 +126,27 @@
     Tools.bucket = $.tap($.extend(true, {}, Tools.base), function(t) {
       t.addAction("fillFocusedCells", {
         "do": function() {
-          var cell, changedCells, currentColor, event, focusedColor, row, _i, _j, _len, _len2, _ref;
+          var changedCells, currentColor, event, focusedColor;
           event = {
             canvases: {}
           };
           currentColor = t.app.currentColor[t.app.currentColor.type];
           focusedColor = t.canvases.focusedCells[0].color.clone();
           changedCells = [];
-          _ref = t.canvases.cells;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            row = _ref[_i];
-            for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
-              cell = row[_j];
+          $.v.each(t.canvases.cells, function(row) {
+            return $.v.each(row, function(cell, j) {
+              var after, before;
               if (cell.color.eq(focusedColor)) {
-                (function(before, after) {
-                  before = cell;
-                  after = cell.withColor(currentColor);
-                  row[j] = after;
-                  return changedCells.push({
-                    before: before,
-                    after: after
-                  });
-                })(before, after);
+                before = cell;
+                after = cell.withColor(currentColor);
+                row[j] = after;
+                return changedCells.push({
+                  before: before,
+                  after: after
+                });
               }
-            }
-          }
+            });
+          });
           event.canvases.changedCells = changedCells;
           return event;
         },
@@ -177,49 +173,45 @@
       });
       t.addAction("clearFocusedCells", {
         "do": function() {
-          var cell, changedCells, event, focusedColor, row, _i, _j, _len, _len2, _ref;
+          var changedCells, event, focusedColor;
           event = {
             canvases: {}
           };
           focusedColor = t.canvases.focusedCells[0].color.clone();
           changedCells = [];
-          _ref = t.canvases.cells;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            row = _ref[_i];
-            for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
-              cell = row[_j];
+          $.v.each(t.canvases.cells, function(row) {
+            return $.v.each(row, function(cell, j) {
+              var after, before;
               if (cell.color.eq(focusedColor)) {
-                (function(before, after) {
-                  before = cell;
-                  after = cell.asClear();
-                  row[j] = after;
-                  return changedCells.push({
-                    before: before,
-                    after: after
-                  });
-                })(before, after);
+                before = cell;
+                after = cell.asClear();
+                row[j] = after;
+                return changedCells.push({
+                  before: before,
+                  after: after
+                });
               }
-            }
-          }
+            });
+          });
           event.canvases.changedCells = changedCells;
           return event;
           return {
             undo: function(event) {
-              var cell, _k, _len3, _ref2, _results;
-              _ref2 = event.canvases.changedCells;
+              var cell, _i, _len, _ref, _results;
+              _ref = event.canvases.changedCells;
               _results = [];
-              for (_k = 0, _len3 = _ref2.length; _k < _len3; _k++) {
-                cell = _ref2[_k];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                cell = _ref[_i];
                 _results.push(t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before);
               }
               return _results;
             },
             redo: function(event) {
-              var cell, _k, _len3, _ref2, _results;
-              _ref2 = event.canvases.changedCells;
+              var cell, _i, _len, _ref, _results;
+              _ref = event.canvases.changedCells;
               _results = [];
-              for (_k = 0, _len3 = _ref2.length; _k < _len3; _k++) {
-                cell = _ref2[_k];
+              for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                cell = _ref[_i];
                 _results.push(t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after);
               }
               return _results;

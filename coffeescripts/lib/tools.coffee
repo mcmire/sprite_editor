@@ -69,7 +69,6 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
 
       mousedrag: (event) ->
         self = this
-        console.log "drag"
         # FIXME: If you drag too fast it will skip some cells!
         # Use the current mouse position and the last mouse position and
         #  fill in or erase cells in between.
@@ -106,14 +105,13 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         # empty cells, if the current cell is empty) and mark them as filled
         # with the current color
         changedCells = []
-        for row in t.canvases.cells
-          for cell in row
+        $.v.each t.canvases.cells, (row) ->
+          $.v.each row, (cell, j) ->
             if cell.color.eq(focusedColor)
-              do (before, after) ->
-                before = cell
-                after = cell.withColor(currentColor)
-                row[j] = after
-                changedCells.push(before: before, after: after)
+              before = cell
+              after = cell.withColor(currentColor)
+              row[j] = after
+              changedCells.push(before: before, after: after)
         event.canvases.changedCells = changedCells
 
         return event
@@ -136,14 +134,13 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         # Look for all cells with the color of the current cell
         # and mark them as unfilled
         changedCells = []
-        for row in t.canvases.cells
-          for cell in row
+        $.v.each t.canvases.cells, (row) ->
+          $.v.each row, (cell, j) ->
             if cell.color.eq(focusedColor)
-              do (before, after) ->
-                before = cell
-                after = cell.asClear()
-                row[j] = after
-                changedCells.push(before: before, after: after)
+              before = cell
+              after = cell.asClear()
+              row[j] = after
+              changedCells.push(before: before, after: after)
         event.canvases.changedCells = changedCells
 
         return event
