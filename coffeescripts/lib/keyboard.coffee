@@ -1,4 +1,4 @@
-$.export "SpriteEditor.Keyboard", do ->
+$.export "SpriteEditor.Keyboard", (SpriteEditor) ->
 
   Keyboard = {}
   SpriteEditor.DOMEventHelpers.mixin(Keyboard, "SpriteEditor_Keyboard")

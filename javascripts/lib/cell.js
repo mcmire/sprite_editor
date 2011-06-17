@@ -1,5 +1,5 @@
 (function() {
-  $["export"]("SpriteEditor.Cell", (function() {
+  $["export"]("SpriteEditor.Cell", function(SpriteEditor) {
     var Cell;
     Cell = (function() {
       function Cell() {
@@ -20,7 +20,7 @@
         return this;
       };
       Cell.prototype.asClear = function() {
-        return this.clone.clear();
+        return this.clone().clear();
       };
       Cell.prototype.withColor = function(color) {
         var clone;
@@ -29,7 +29,7 @@
         return clone;
       };
       Cell.prototype.coords = function() {
-        return [loc.j, this.loc.i].join(",");
+        return [this.loc.j, this.loc.i].join(",");
       };
       Cell.prototype.clone = function() {
         return new Cell(this);
@@ -37,5 +37,5 @@
       return Cell;
     })();
     return Cell;
-  })());
+  });
 }).call(this);

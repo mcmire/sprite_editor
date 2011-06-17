@@ -1,6 +1,6 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  $["export"]("SpriteEditor.DrawingCanvases", (function() {
+  $["export"]("SpriteEditor.DrawingCanvases", function(SpriteEditor) {
     var DrawingCanvases, Keyboard;
     Keyboard = SpriteEditor.Keyboard;
     DrawingCanvases = {};
@@ -28,9 +28,6 @@
         this._createGridBgCanvas();
         this._createWorkingCanvas();
         this._createPreviewCanvases();
-        this.autoSaveTimer = setInterval((__bind(function() {
-          return this.save();
-        }, this)), 30000);
         return this;
       },
       destroy: function() {
@@ -48,14 +45,14 @@
         return this;
       },
       draw: function() {
-        var _ref;
+        var _base;
         this._clearWorkingCanvas();
         this._clearPreviewCanvas();
         this._clearTiledPreviewCanvas();
         this._fillCells();
         this._highlightFocusedCells();
-        if ((_ref = this.app.currentTool()) != null) {
-          _ref.draw();
+        if (typeof (_base = this.app.currentTool()).draw === "function") {
+          _base.draw();
         }
         return this._updateTiledPreviewCanvas();
       },
@@ -315,5 +312,5 @@
       }
     });
     return DrawingCanvases;
-  })());
+  });
 }).call(this);

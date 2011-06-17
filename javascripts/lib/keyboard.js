@@ -1,5 +1,5 @@
 (function() {
-  $["export"]("SpriteEditor.Keyboard", (function() {
+  $["export"]("SpriteEditor.Keyboard", function(SpriteEditor) {
     var Keyboard;
     Keyboard = {};
     SpriteEditor.DOMEventHelpers.mixin(Keyboard, "SpriteEditor_Keyboard");
@@ -43,5 +43,5 @@
     Keyboard.ALT_KEY;
     Keyboard.META_KEY;
     return Keyboard;
-  })());
+  });
 }).call(this);

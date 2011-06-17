@@ -1,7 +1,8 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  $["export"]("SpriteEditor.ColorPickerBox", (function() {
-    var ColorPickerBox;
+  $["export"]("SpriteEditor.ColorPickerBox", function(SpriteEditor) {
+    var ColorPickerBox, Keyboard;
+    Keyboard = SpriteEditor.Keyboard;
     ColorPickerBox = {};
     SpriteEditor.DOMEventHelpers.mixin(ColorPickerBox, "SpriteEditor_ColorPickerBox");
     $.extend(ColorPickerBox, {
@@ -60,7 +61,7 @@
         return this._addHueSatSelectorDiv();
       },
       _addHueSatCanvas: function() {
-        this.hueSatCanvas = SpriteEditor.Canvas.create(this.hueSatCanvasSize.width, this.hueSatCanvasSize.height, function(c) {
+        this.hueSatCanvas = SpriteEditor.Canvas.create(this.hueSatCanvasSize.width, this.hueSatCanvasSize.height, __bind(function(c) {
           var h, hsl, imageData, rgb, s, x, y, _ref, _ref2;
           imageData = c.ctx.createImageData(c.width, c.height);
           hsl = this.currentColor;
@@ -76,7 +77,7 @@
             }
           }
           return c.ctx.putImageData(imageData, 0, 0);
-        });
+        }, this));
         this.hueSatCanvas.$element.addClass("hue_sat_canvas");
         return this.$hueSatDiv.append(this.hueSatCanvas.$element);
       },
@@ -167,7 +168,7 @@
             self._setColorFields();
             self._setColorSample();
             self._drawLightnessCanvas();
-            return (_ref = self.options) != null ? _ref.change.call(self, self.currentColor) : void 0;
+            return (_ref = self.options.change) != null ? _ref.call(self, self.currentColor) : void 0;
           }
         });
         return this.$lumDiv.mouseTracker({
@@ -177,7 +178,7 @@
             self._setLightnessFromSelectorPosition();
             self._setColorFields();
             self._setColorSample();
-            return (_ref = self.options) != null ? _ref.change.call(self, self.currentColor) : void 0;
+            return (_ref = self.options.change) != null ? _ref.call(self, self.currentColor) : void 0;
           }
         });
       },
@@ -291,5 +292,5 @@
       }
     });
     return ColorPickerBox;
-  })());
+  });
 }).call(this);

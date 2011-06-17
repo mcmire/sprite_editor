@@ -1,6 +1,5 @@
 # Add class methods to the global ender object
-$.ender
-{
+$.ender {
   # $.extend(deep, target, objects...)
   # $.extend(target, objects...)
   #
@@ -52,25 +51,45 @@ $.ender
   #
   proxy: (obj, fn) -> obj[fn].apply(obj, arguments)
 
-  # Given a chain of named objects, ensures that all objects in the chain
-  # exist. For instance, given "Foo.Bar.Baz", `Foo` would be created if it
-  # doesn't exist, then `Foo.Bar`, then `Foo.Bar.Baz`.
+  # Given a string which represents a chain of objects (separated by "."),
+  # ensures that all objects in the chain exist (by creating them if they don't),
+  # and then returns the final object. For instance, given "Foo.Bar.Baz",
+  # `Foo` would be created if it doesn't exist, then `Foo.Bar`, then
+  # `Foo.Bar.Baz`; and then Foo.Bar.Baz would be returned.
   #
-  ns: (chain) ->
+  ns: (chainStrs) ->
     context = window
-    chain = chain.split(".") if typeof chain == "string"
-    for id in chain
-      context[id] ?= {}
-      context[id]
+    chainStrs = chainStrs.split(".") if typeof chainStrs == "string"
+    for idStr in chainStrs
+      context[idStr] ?= {}
+      context = context[idStr]
     context
 
-  # Given a chain of named objects and an object, ensures that all objects in
-  # the chain exist, then adds the given object to the end of the chain.
-  export: (chain, obj) ->
-    chain = chain.split(".") if typeof chain == "string"
-    tail = chain.pop()
-    chain = @ns(chain)
-    chain[tail] = obj
+  # Given a string which represents a chain of objects (separated by "."),
+  # returns the objects in the chain (assuming they exist).
+  # For instance, given "Foo.Bar.Baz", returns [Foo, Foo.Bar, Foo.Bar.Baz].
+  #
+  chain: (chainStrs) ->
+    obj = window
+    chainStrs = chainStrs.split(".") if typeof chainStrs == "string"
+    chain = []
+    for idStr in chainStrs
+      obj = obj[idStr]
+      chain.push(obj)
+    chain
+
+  # Given a string which represents a chain of objects (separated by "."),
+  # ensures that all objects in the chain exist (by creating them if they don't),
+  # then adds the given object (which may also be a function that returns an
+  # object) to the end of the chain.
+  #
+  export: (chainStrs, newObj) ->
+    chainStrs = chainStrs.split(".") if typeof chainStrs is "string"
+    newIdStr = chainStrs.pop()
+    tail = @ns(chainStrs)
+    chain = @chain(chainStrs)
+    newObj = newObj.apply(newObj, chain) if typeof newObj is "function"
+    tail[newIdStr] = newObj
 
   tap: (obj, fn) ->
     fn(obj)
@@ -90,7 +109,7 @@ $.ender {
     return this
 
   absoluteOffset: ->
-    return null unless @length == 0
+    return null if @length == 0
 
     node = this[0]
     top = 0

@@ -1,14 +1,12 @@
-$.export "SpriteEditor.CellLocation", do ->
+$.export "SpriteEditor.CellLocation", (SpriteEditor) ->
 
+  # new CellLocation(app, i, j)
+  # new CellLocation(obj)
+  #
   # Represents the location of a cell.
   #
   # `i` and `j` are coordinates in the preview canvas (or row-column keys in
   # the cell array). `x` and `y` are coordinates in the working canvas.
-  #
-  # == Call signatures
-  #
-  #   new CellLocation(app, i, j)
-  #   new CellLocation(obj)
   #
   class CellLocation
     @plus: (l1, l2) -> l1.plus(l2)

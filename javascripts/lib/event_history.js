@@ -4,7 +4,8 @@
     currentEvent: null,
     currentIndex: -1,
     init: function(app) {
-      return this.app = app;
+      this.app = app;
+      return this;
     },
     recordEvent: function(obj, method) {
       var action, event, nextIndex;

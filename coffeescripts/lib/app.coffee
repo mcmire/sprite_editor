@@ -1,4 +1,4 @@
-$.export "SpriteEditor.App", do ->
+$.export "SpriteEditor.App", (SpriteEditor) ->
 
   App = {}
   SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App")
@@ -193,7 +193,7 @@ $.export "SpriteEditor.App", do ->
       $boxDiv.append($header)
 
       @colorSampleDivs = {}
-      for colorType in ["foreground", "background"]
+      $.v.each ["foreground", "background"], (colorType) =>
         $div = $("<div class=\"color_sample\" />")
         $div.bind
           click: =>
@@ -267,11 +267,11 @@ $.export "SpriteEditor.App", do ->
           $li.append($img)
           $ul.append($li)
           $img.bind "click", ->
-            self.currentTool()?.unselect() if name isnt self.currentToolName
+            self.currentTool().unselect?() if name isnt self.currentToolName
             self.currentToolName = name
             $imgs.removeClass("selected")
             $img.addClass("selected")
-            self.tools[name]?.select()
+            self.tools[name].select?()
           $img.trigger("click") if self.currentToolName == name
 
     currentTool: -> @tools[@currentToolName]

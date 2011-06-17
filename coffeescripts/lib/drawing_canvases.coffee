@@ -1,4 +1,4 @@
-$.export "SpriteEditor.DrawingCanvases", do ->
+$.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
 
   Keyboard = SpriteEditor.Keyboard
 
@@ -31,7 +31,7 @@ $.export "SpriteEditor.DrawingCanvases", do ->
       @_createGridBgCanvas()
       @_createWorkingCanvas()
       @_createPreviewCanvases()
-      @autoSaveTimer = setInterval((=> @save()), 30000)
+      #@autoSaveTimer = setInterval((=> @save()), 30000)
 
       return this
 
@@ -52,7 +52,7 @@ $.export "SpriteEditor.DrawingCanvases", do ->
       @_clearTiledPreviewCanvas()
       @_fillCells()
       @_highlightFocusedCells()
-      @app.currentTool()?.draw()
+      @app.currentTool().draw?()
       @_updateTiledPreviewCanvas()
 
     stop: ->

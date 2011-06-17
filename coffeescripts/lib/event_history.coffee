@@ -6,6 +6,7 @@ $.export "SpriteEditor.EventHistory",
 
   init: (app) ->
     @app = app
+    return this
 
   recordEvent: (obj, method) ->
     action = obj.actions[method]

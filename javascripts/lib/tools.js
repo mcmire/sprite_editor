@@ -1,6 +1,6 @@
 (function() {
   var __slice = Array.prototype.slice;
-  $["export"]("SpriteEditor.Tools", (function() {
+  $["export"]("SpriteEditor.Tools", function(SpriteEditor) {
     var Keyboard, Tools;
     Keyboard = SpriteEditor.Keyboard;
     Tools = {
@@ -103,7 +103,7 @@
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             cell = _ref[_i];
             if (cell.coords() in this.actionableCells) {
-              return;
+              continue;
             }
             cell = (erase ? cell.asClear() : cell.withColor(currentColor));
             _results.push(this.actionableCells[cell.coords()] = cell);
@@ -244,7 +244,7 @@
         }
       });
     });
-    Tools.select = $.tap($.extend(true, {}, Tools.base), function(f) {
+    Tools.select = $.tap($.extend(true, {}, Tools.base), function(t) {
       t.addAction("cutSelection", {
         "do": function(event) {
           var after, before, cell, changedCells, _i, _len, _ref;
@@ -572,5 +572,5 @@
       });
     });
     return Tools;
-  })());
+  });
 }).call(this);

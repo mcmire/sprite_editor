@@ -1,7 +1,6 @@
 (function() {
   var __hasProp = Object.prototype.hasOwnProperty, __slice = Array.prototype.slice;
-  $.ender;
-  ({
+  $.ender({
     extend: function() {
       var args, deep, obj, objects, prop, target, _i, _len;
       args = Array.prototype.slice.call(arguments);
@@ -41,31 +40,49 @@
     proxy: function(obj, fn) {
       return obj[fn].apply(obj, arguments);
     },
-    ns: function(chain) {
-      var context, id, _i, _len, _ref;
+    ns: function(chainStrs) {
+      var context, idStr, _i, _len, _ref;
       context = window;
-      if (typeof chain === "string") {
-        chain = chain.split(".");
+      if (typeof chainStrs === "string") {
+        chainStrs = chainStrs.split(".");
       }
-      for (_i = 0, _len = chain.length; _i < _len; _i++) {
-        id = chain[_i];
-                if ((_ref = context[id]) != null) {
+      for (_i = 0, _len = chainStrs.length; _i < _len; _i++) {
+        idStr = chainStrs[_i];
+                if ((_ref = context[idStr]) != null) {
           _ref;
         } else {
-          context[id] = {};
+          context[idStr] = {};
         };
-        context[id];
+        context = context[idStr];
       }
       return context;
     },
-    "export": function(chain, obj) {
-      var tail;
-      if (typeof chain === "string") {
-        chain = chain.split(".");
+    chain: function(chainStrs) {
+      var chain, idStr, obj, _i, _len;
+      obj = window;
+      if (typeof chainStrs === "string") {
+        chainStrs = chainStrs.split(".");
       }
-      tail = chain.pop();
-      chain = this.ns(chain);
-      return chain[tail] = obj;
+      chain = [];
+      for (_i = 0, _len = chainStrs.length; _i < _len; _i++) {
+        idStr = chainStrs[_i];
+        obj = obj[idStr];
+        chain.push(obj);
+      }
+      return chain;
+    },
+    "export": function(chainStrs, newObj) {
+      var chain, newIdStr, tail;
+      if (typeof chainStrs === "string") {
+        chainStrs = chainStrs.split(".");
+      }
+      newIdStr = chainStrs.pop();
+      tail = this.ns(chainStrs);
+      chain = this.chain(chainStrs);
+      if (typeof newObj === "function") {
+        newObj = newObj.apply(newObj, chain);
+      }
+      return tail[newIdStr] = newObj;
     },
     tap: function(obj, fn) {
       fn(obj);
@@ -84,7 +101,7 @@
     },
     absoluteOffset: function() {
       var left, node, top;
-      if (this.length !== 0) {
+      if (this.length === 0) {
         return null;
       }
       node = this[0];

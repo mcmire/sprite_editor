@@ -1,9 +1,7 @@
-$.export "SpriteEditor.Cell", do ->
+$.export "SpriteEditor.Cell", (SpriteEditor) ->
 
-  # == Call signatures
-  #
-  #   new Cell(app, i, j)
-  #   new Cell(cell)
+  # new Cell(app, i, j)
+  # new Cell(cell)
   #
   class Cell
     constructor: ->
@@ -19,17 +17,17 @@ $.export "SpriteEditor.Cell", do ->
 
     clear: ->
       @color = new SpriteEditor.Color.HSL()
-      this
+      return this
 
     asClear: ->
-      @clone.clear()
+      @clone().clear()
 
     withColor: (color) ->
       clone = @clone()
       clone.color = color.clone()
       clone
 
-    coords: -> [ loc.j, @loc.i ].join(",")
+    coords: -> [ @loc.j, @loc.i ].join(",")
 
     clone: -> new Cell(this)
 

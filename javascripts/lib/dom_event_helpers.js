@@ -1,6 +1,6 @@
 (function() {
   var __slice = Array.prototype.slice;
-  $["export"]("SpriteEditor.DOMEventHelpers", (function() {
+  $["export"]("SpriteEditor.DOMEventHelpers", function(SpriteEditor) {
     var DOMEventHelpers, mixin;
     mixin = {
       _bindEvents: function(elem, events) {
@@ -34,5 +34,5 @@
       }
     };
     return DOMEventHelpers;
-  })());
+  });
 }).call(this);

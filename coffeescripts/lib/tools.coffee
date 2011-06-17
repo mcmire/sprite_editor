@@ -1,4 +1,4 @@
-$.export "SpriteEditor.Tools", do ->
+$.export "SpriteEditor.Tools", (SpriteEditor) ->
 
   Keyboard = SpriteEditor.Keyboard
 
@@ -69,13 +69,14 @@ $.export "SpriteEditor.Tools", do ->
 
       mousedrag: (event) ->
         self = this
+        console.log "drag"
         # FIXME: If you drag too fast it will skip some cells!
         # Use the current mouse position and the last mouse position and
         #  fill in or erase cells in between.
         erase = (event.rightClick or Keyboard.pressedKeys[Keyboard.CTRL_KEY])
         currentColor = t.app.currentColor[t.app.currentColor.type]
         for cell in t.canvases.focusedCells
-          return if cell.coords() of @actionableCells
+          continue if cell.coords() of @actionableCells
           # Copy the cell so that if its color changes in the future, it won't
           # cause all cells with that color to also change
           cell = (if erase then cell.asClear() else cell.withColor(currentColor))
@@ -173,7 +174,7 @@ $.export "SpriteEditor.Tools", do ->
 
   #-----------------------------------------------------------------------------
 
-  Tools.select = $.tap $.extend(true, {}, Tools.base), (f) ->
+  Tools.select = $.tap $.extend(true, {}, Tools.base), (t) ->
     t.addAction "cutSelection",
       do: (event) ->
         event =

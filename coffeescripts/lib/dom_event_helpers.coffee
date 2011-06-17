@@ -1,4 +1,4 @@
-$.export "SpriteEditor.DOMEventHelpers", do ->
+$.export "SpriteEditor.DOMEventHelpers", (SpriteEditor) ->
 
   mixin =
     _bindEvents: (elem, events) ->

@@ -1,12 +1,13 @@
-$.export "SpriteEditor.ElementMouseTracker", do ->
+$.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
 
   ElementMouseTracker = {}
   SpriteEditor.DOMEventHelpers.mixin(ElementMouseTracker, "SpriteEditor_ElementMouseTracker")
 
+  $.extend ElementMouseTracker,
     instances: []
     activeInstance:
       mouseWithin: null
-      mouseHeldWithin: null
+      mouseDownWithin: null
 
     init: ->
       self = this
@@ -21,15 +22,14 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
       #
       @_bindEvents document,
         mouseup: (event) ->
-          inst = self.activeInstance.mouseHeldWithin
-          inst.triggerHandler "mousedragstop" if inst && inst.isDragging
-          for inst in self.activeInstances()
-            inst.triggerHandler("mouseup", event)
+          if inst = self.activeInstance.mouseDownWithin
+            inst.triggerHandler("mousedragstop") if inst.isDragging
+            inst.triggerHandler("mouseup", event)  # clear mouseDownWithin
           #event.stopPropagation();
           event.preventDefault()
         mousemove: (event) ->
           self.pos = {x: event.pageX, y: event.pageY}
-          for inst in self.activeInstances()
+          if inst = self.activeInstance.mouseWithin
             inst.triggerHandler("mousemove", event)
           event.preventDefault()
 
@@ -99,8 +99,8 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
 
       if @activeInstance.mouseWithin == instance
         delete @activeInstance.mouseWithin
-      if @activeInstance.mouseHeldWithin == instance
-        delete @activeInstance.mouseHeldWithin
+      if @activeInstance.mouseDownWithin == instance
+        delete @activeInstance.mouseDownWithin
 
       @destroy() if @instances.length == 0
 
@@ -117,10 +117,6 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
           height: "50px"
         )
       .appendTo(document.body)
-
-    activeInstances: ->
-      instances = [ @activeInstance.mouseHeldWithin, @activeInstance.mouseWithin ]
-      $.v(instances).chain().compact().uniq().value()
 
   #-----------------------------------------------------------------------------
 
@@ -168,10 +164,10 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
         # Invoke the callback which was given in the options
         @customEvents[eventName]?.call(this, event)
         # Invoke the callback which is a method on this instance
-        self[eventName]?.call(this, event)
+        @[eventName]?.call(this, event)
       else
         # Invoke the callback which is a method on this instance
-        self[eventName]?.call(this, event)
+        @[eventName]?.call(this, event)
         # Invoke the callback which was given in the options
         @customEvents[eventName]?.call(this, event)
 
@@ -180,7 +176,7 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
 
       # If dragging isn't set yet, set it until the mouse is lifted off
       if @isDown
-        if @isDragging
+        if !@isDragging
           dist = @_distance(@downAt.abs, @pos.abs)
           @isDragging = (dist >= @options.draggingDistance)
           @triggerHandler("mousedragstart", event)
@@ -200,7 +196,7 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
 
     mouseup: (event) ->
       @isDown = false
-      delete ElementMouseTracker.activeInstance.mouseHeldWithin
+      delete ElementMouseTracker.activeInstance.mouseDownWithin
 
       ElementMouseTracker.debugDiv().hide() if @options.debug
 
@@ -217,6 +213,8 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
         @pos.rel.y = 0
       else if @pos.rel.y > @elementSize.height
         @pos.rel.y = @elementSize.height
+      #console.log "abs: #{@pos.abs.x}, #{@pos.abs.y}"
+      #console.log "rel: #{@pos.rel.x}, #{@pos.rel.y}"
 
     _addEvents: ->
       self = this
@@ -236,7 +234,7 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
           self.triggerHandler("mouseleave", event)
 
         mousedown: (event) ->
-          ElementMouseTracker.activeInstance.mouseHeldWithin = self
+          ElementMouseTracker.activeInstance.mouseDownWithin = self
           self.isDown = true
           self._setMousePosition()
           self.downAt =
@@ -270,43 +268,43 @@ $.export "SpriteEditor.ElementMouseTracker", do ->
     _distance: (v1, v2) ->
       Math.floor Math.sqrt(Math.pow((v2.y - v1.y), 2) + Math.pow((v2.x - v1.x), 2))
 
-  return ElementMouseTracker
+  #-----------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
+  $.ender({
 
-$.ender({
+    # $elem.mouseTracker()
+    # $elem.mouseTracker("destroy")
+    # $elem.mouseTracker("__instance__")
+    # $elem.mouseTracker("method", args...)
+    # $elem.mouseTracker("property")
+    #
+    mouseTracker: ->
+      if @data("mouseTracker")
+        mouseTracker = @data("mouseTracker")
+      else if $.v.is.obj(arguments[0])
+        mouseTracker = ElementMouseTracker.add(this, arguments[0])
+        @data("mouseTracker", mouseTracker)
 
-  # == Call signatures:
-  #
-  #   $elem.mouseTracker()
-  #   $elem.mouseTracker("destroy")
-  #   $elem.mouseTracker("__instance__")
-  #   $elem.mouseTracker("method", args...)
-  #   $elem.mouseTracker("property")
-  #
-  mouseTracker: ->
-    if @data("mouseTracker")
-      mouseTracker = @data("mouseTracker")
-    else if $.v.is.obj(arguments[0])
-      mouseTracker = ElementMouseTracker.add(this, arguments[0])
-      @data("mouseTracker", mouseTracker)
-
-    if typeof arguments[0] == "string"
-      if arguments[0] == "destroy"
-        ElementMouseTracker.remove(mouseTracker)
-        @data("mouseTracker", null)
-      else if arguments[0] == "__instance__"
-        # HACK!!
-        return mouseTracker
-      else
-        value = mouseTracker[arguments[0]]
-        if typeof value == "function"
-          return value.apply(mouseTracker, Array::slice.call(arguments, 1))
-        else if typeof value != "undefined"
-          return value
+      if typeof arguments[0] == "string"
+        if arguments[0] == "destroy"
+          ElementMouseTracker.remove(mouseTracker)
+          @data("mouseTracker", null)
+        else if arguments[0] == "__instance__"
+          # HACK!!
+          return mouseTracker
         else
-          throw "'#{arguments[0]}' is not a property of ElementMouseTracker!"
+          value = mouseTracker[arguments[0]]
+          if typeof value == "function"
+            return value.apply(mouseTracker, Array::slice.call(arguments, 1))
+          else if typeof value != "undefined"
+            return value
+          else
+            throw "'#{arguments[0]}' is not a property of ElementMouseTracker!"
 
-    return this
+      return this
 
-}, true)
+  }, true)
+
+  #-----------------------------------------------------------------------------
+
+  return ElementMouseTracker

@@ -1,6 +1,6 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  $["export"]("SpriteEditor.Color", (function() {
+  $["export"]("SpriteEditor.Color", function(SpriteEditor) {
     var Color;
     Color = (function() {
       function Color() {}
@@ -44,14 +44,14 @@
         } else {
           s = diff / (2 - sum);
         }
-        if (h !== null) {
+        if (h != null) {
           hsl.hue = Math.round(h);
         }
         hsl.sat = Math.round(s * 100);
         hsl.lum = Math.round(l * 100);
         return hsl;
       };
-      Color.prototype.hsl2rgb = function(hsl) {
+      Color.hsl2rgb = function(hsl) {
         var h, l, p, q, rgb, s, tb, tg, tr;
         rgb = {};
         h = (hsl.hue || 0) / 360;
@@ -71,8 +71,12 @@
         rgb.blue = Math.round(this._hue2rgb(p, q, tb) * 255);
         return rgb;
       };
-      Color.prototype._hue2rgb = function(p, q, h) {
-        h += (h < 0 ? 1 : -1);
+      Color._hue2rgb = function(p, q, h) {
+        if (h < 0) {
+          h += 1;
+        } else if (h > 1) {
+          h -= 1;
+        }
         if ((h * 6) < 1) {
           return p + (q - p) * h * 6;
         }
@@ -133,9 +137,11 @@
         }
       };
       RGB.prototype.isClear = function() {
-        return $.v.some(Color.RGB.properties, __bind(function(prop) {
-          return this[prop] != null;
-        }, this));
+        var self;
+        self = this;
+        return $.v.every(Color.RGB.properties, function(prop) {
+          return typeof self[prop] === "undefined";
+        });
       };
       RGB.prototype.clone = function() {
         return new Color.RGB(this);
@@ -161,7 +167,8 @@
       };
       return RGB;
     })();
-    return Color.HSL = (function() {
+    Color.HSL = (function() {
+      HSL.properties = "hue sat lum alpha".split(" ");
       function HSL(hue, sat, lum, alpha) {
         var color, prop, _i, _len, _ref;
         if (arguments.length === 1 && $.v.is.obj(arguments[0])) {
@@ -199,7 +206,7 @@
         if (this.isClear()) {
           return new Color.RGB();
         } else {
-          rgb = Color.hsl2rgb(self);
+          rgb = Color.hsl2rgb(this);
           return new Color.RGB(rgb.red, rgb.green, rgb.blue, this.alpha);
         }
       };
@@ -207,9 +214,11 @@
         return this;
       };
       HSL.prototype.isClear = function() {
-        return $.v.some(Color.HSL.properties, __bind(function(prop) {
-          return this[prop] != null;
-        }, this));
+        var self;
+        self = this;
+        return $.v.every(Color.HSL.properties, function(prop) {
+          return typeof self[prop] === "undefined";
+        });
       };
       HSL.prototype.clone = function() {
         return new Color.HSL(this);
@@ -235,5 +244,6 @@
       };
       return HSL;
     })();
-  })());
+    return Color;
+  });
 }).call(this);

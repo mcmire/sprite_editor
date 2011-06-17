@@ -1,5 +1,5 @@
 (function() {
-  $["export"]("SpriteEditor.CellLocation", (function() {
+  $["export"]("SpriteEditor.CellLocation", function(SpriteEditor) {
     var CellLocation;
     return CellLocation = (function() {
       CellLocation.plus = function(l1, l2) {
@@ -80,5 +80,5 @@
       };
       return CellLocation;
     })();
-  })());
+  });
 }).call(this);

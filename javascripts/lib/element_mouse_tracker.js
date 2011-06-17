@@ -1,39 +1,35 @@
 (function() {
-  $["export"]("SpriteEditor.ElementMouseTracker", (function() {
+  $["export"]("SpriteEditor.ElementMouseTracker", function(SpriteEditor) {
     var ElementMouseTracker;
     ElementMouseTracker = {};
-    SpriteEditor.DOMEventHelpers.mixin(ElementMouseTracker, "SpriteEditor_ElementMouseTracker")({
+    SpriteEditor.DOMEventHelpers.mixin(ElementMouseTracker, "SpriteEditor_ElementMouseTracker");
+    $.extend(ElementMouseTracker, {
       instances: [],
       activeInstance: {
         mouseWithin: null,
-        mouseHeldWithin: null
+        mouseDownWithin: null
       },
       init: function() {
         var self;
         self = this;
         return this._bindEvents(document, {
           mouseup: function(event) {
-            var inst, _i, _len, _ref;
-            inst = self.activeInstance.mouseHeldWithin;
-            if (inst && inst.isDragging) {
-              inst.triggerHandler("mousedragstop");
-            }
-            _ref = self.activeInstances();
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              inst = _ref[_i];
+            var inst;
+            if (inst = self.activeInstance.mouseDownWithin) {
+              if (inst.isDragging) {
+                inst.triggerHandler("mousedragstop");
+              }
               inst.triggerHandler("mouseup", event);
             }
             return event.preventDefault();
           },
           mousemove: function(event) {
-            var inst, _i, _len, _ref;
+            var inst;
             self.pos = {
               x: event.pageX,
               y: event.pageY
             };
-            _ref = self.activeInstances();
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              inst = _ref[_i];
+            if (inst = self.activeInstance.mouseWithin) {
               inst.triggerHandler("mousemove", event);
             }
             return event.preventDefault();
@@ -61,8 +57,8 @@
         if (this.activeInstance.mouseWithin === instance) {
           delete this.activeInstance.mouseWithin;
         }
-        if (this.activeInstance.mouseHeldWithin === instance) {
-          delete this.activeInstance.mouseHeldWithin;
+        if (this.activeInstance.mouseDownWithin === instance) {
+          delete this.activeInstance.mouseDownWithin;
         }
         if (this.instances.length === 0) {
           return this.destroy();
@@ -78,11 +74,6 @@
           width: "200px",
           height: "50px"
         }).appendTo(document.body));
-      },
-      activeInstances: function() {
-        var instances;
-        instances = [this.activeInstance.mouseHeldWithin, this.activeInstance.mouseWithin];
-        return $.v(instances).chain().compact().uniq().value();
       }
     });
     ElementMouseTracker.instance = (function() {
@@ -148,9 +139,9 @@
           if ((_ref = this.customEvents[eventName]) != null) {
             _ref.call(this, event);
           }
-          return (_ref2 = self[eventName]) != null ? _ref2.call(this, event) : void 0;
+          return (_ref2 = this[eventName]) != null ? _ref2.call(this, event) : void 0;
         } else {
-          if ((_ref3 = self[eventName]) != null) {
+          if ((_ref3 = this[eventName]) != null) {
             _ref3.call(this, event);
           }
           return (_ref4 = this.customEvents[eventName]) != null ? _ref4.call(this, event) : void 0;
@@ -160,7 +151,7 @@
         var dist;
         this._setMousePosition();
         if (this.isDown) {
-          if (this.isDragging) {
+          if (!this.isDragging) {
             dist = this._distance(this.downAt.abs, this.pos.abs);
             this.isDragging = dist >= this.options.draggingDistance;
             this.triggerHandler("mousedragstart", event);
@@ -181,7 +172,7 @@
       };
       instance.prototype.mouseup = function(event) {
         this.isDown = false;
-        delete ElementMouseTracker.activeInstance.mouseHeldWithin;
+        delete ElementMouseTracker.activeInstance.mouseDownWithin;
         if (this.options.debug) {
           return ElementMouseTracker.debugDiv().hide();
         }
@@ -224,7 +215,7 @@
             return self.triggerHandler("mouseleave", event);
           },
           mousedown: function(event) {
-            ElementMouseTracker.activeInstance.mouseHeldWithin = self;
+            ElementMouseTracker.activeInstance.mouseDownWithin = self;
             self.isDown = true;
             self._setMousePosition();
             self.downAt = {
@@ -261,35 +252,35 @@
       };
       return instance;
     })();
-    return ElementMouseTracker;
-  })());
-  $.ender({
-    mouseTracker: function() {
-      var mouseTracker, value;
-      if (this.data("mouseTracker")) {
-        mouseTracker = this.data("mouseTracker");
-      } else if ($.v.is.obj(arguments[0])) {
-        mouseTracker = ElementMouseTracker.add(this, arguments[0]);
-        this.data("mouseTracker", mouseTracker);
-      }
-      if (typeof arguments[0] === "string") {
-        if (arguments[0] === "destroy") {
-          ElementMouseTracker.remove(mouseTracker);
-          this.data("mouseTracker", null);
-        } else if (arguments[0] === "__instance__") {
-          return mouseTracker;
-        } else {
-          value = mouseTracker[arguments[0]];
-          if (typeof value === "function") {
-            return value.apply(mouseTracker, Array.prototype.slice.call(arguments, 1));
-          } else if (typeof value !== "undefined") {
-            return value;
+    $.ender({
+      mouseTracker: function() {
+        var mouseTracker, value;
+        if (this.data("mouseTracker")) {
+          mouseTracker = this.data("mouseTracker");
+        } else if ($.v.is.obj(arguments[0])) {
+          mouseTracker = ElementMouseTracker.add(this, arguments[0]);
+          this.data("mouseTracker", mouseTracker);
+        }
+        if (typeof arguments[0] === "string") {
+          if (arguments[0] === "destroy") {
+            ElementMouseTracker.remove(mouseTracker);
+            this.data("mouseTracker", null);
+          } else if (arguments[0] === "__instance__") {
+            return mouseTracker;
           } else {
-            throw "'" + arguments[0] + "' is not a property of ElementMouseTracker!";
+            value = mouseTracker[arguments[0]];
+            if (typeof value === "function") {
+              return value.apply(mouseTracker, Array.prototype.slice.call(arguments, 1));
+            } else if (typeof value !== "undefined") {
+              return value;
+            } else {
+              throw "'" + arguments[0] + "' is not a property of ElementMouseTracker!";
+            }
           }
         }
+        return this;
       }
-      return this;
-    }
-  }, true);
+    }, true);
+    return ElementMouseTracker;
+  });
 }).call(this);

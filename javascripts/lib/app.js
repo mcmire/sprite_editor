@@ -1,6 +1,6 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  $["export"]("SpriteEditor.App", (function() {
+  $["export"]("SpriteEditor.App", function(SpriteEditor) {
     var App;
     App = {};
     SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App");
@@ -155,15 +155,14 @@
         return this.$centerPane.append(this.canvases.workingCanvas.$element);
       },
       _createColorPickerBox: function() {
-        var $boxDiv, $div, $header, colorType, _i, _len, _ref;
+        var $boxDiv, $header;
         $boxDiv = $("<div/>").attr("id", "color_box").addClass("box");
         this.$rightPane.append($boxDiv);
         $header = $("<h3/>").html("Color");
         $boxDiv.append($header);
         this.colorSampleDivs = {};
-        _ref = ["foreground", "background"];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          colorType = _ref[_i];
+        $.v.each(["foreground", "background"], __bind(function(colorType) {
+          var $div;
           $div = $("<div class=\"color_sample\" />");
           $div.bind({
             click: __bind(function() {
@@ -176,8 +175,8 @@
           });
           $div.trigger("update");
           $boxDiv.append($div);
-          this.colorSampleDivs[colorType] = $div;
-        }
+          return this.colorSampleDivs[colorType] = $div;
+        }, this));
         this.selectColorType(this.currentColor.type);
         this.colorPickerBox = SpriteEditor.ColorPickerBox.init({
           open: __bind(function() {
@@ -240,16 +239,16 @@
             $li.append($img);
             $ul.append($li);
             $img.bind("click", function() {
-              var _ref2, _ref3;
+              var _base, _base2;
               if (name !== self.currentToolName) {
-                if ((_ref2 = self.currentTool()) != null) {
-                  _ref2.unselect();
+                if (typeof (_base = self.currentTool()).unselect === "function") {
+                  _base.unselect();
                 }
               }
               self.currentToolName = name;
               $imgs.removeClass("selected");
               $img.addClass("selected");
-              return (_ref3 = self.tools[name]) != null ? _ref3.select() : void 0;
+              return typeof (_base2 = self.tools[name]).select === "function" ? _base2.select() : void 0;
             });
             if (self.currentToolName === name) {
               return $img.trigger("click");
@@ -323,5 +322,5 @@
       }
     });
     return App;
-  })());
+  });
 }).call(this);

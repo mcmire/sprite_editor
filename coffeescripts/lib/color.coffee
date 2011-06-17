@@ -1,4 +1,4 @@
-$.export "SpriteEditor.Color", do ->
+$.export "SpriteEditor.Color", (SpriteEditor) ->
 
   class Color
     @componentsByRepresentation:
@@ -45,16 +45,16 @@ $.export "SpriteEditor.Color", do ->
       else
         s = diff / (2 - sum)
 
-      hsl.hue = Math.round(h) unless h is null
+      hsl.hue = Math.round(h) if h?
       hsl.sat = Math.round(s * 100)
       hsl.lum = Math.round(l * 100)
 
       return hsl
 
-    hsl2rgb: (hsl) ->
+    @hsl2rgb: (hsl) ->
       rgb = {}
 
-      h = (hsl.hue or 0) / 360
+      h = (hsl.hue || 0) / 360
       s = hsl.sat / 100
       l = hsl.lum / 100
 
@@ -74,11 +74,16 @@ $.export "SpriteEditor.Color", do ->
 
       return rgb
 
-    _hue2rgb: (p, q, h) ->
-      h += (if h < 0 then 1 else -1)
+    @_hue2rgb: (p, q, h) ->
+      if h < 0
+        h += 1
+      else if (h > 1)
+        h -= 1
+
       if (h * 6) < 1 then return p + (q - p) * h * 6
       if (h * 2) < 1 then return q
       if (h * 3) < 2 then return p + (q - p) * ((2 / 3) - h) * 6
+
       return p
 
   #-----------------------------------------------------------------------------
@@ -116,7 +121,8 @@ $.export "SpriteEditor.Color", do ->
         new Color.HSL(hsl.hue, hsl.sat, hsl.lum, @alpha)
 
     isClear: ->
-      $.v.some(Color.RGB.properties, (prop) => @[prop]?)
+      self = this
+      $.v.every(Color.RGB.properties, (prop) -> (typeof self[prop] is "undefined"))
 
     clone: ->
       new Color.RGB(this)
@@ -131,6 +137,8 @@ $.export "SpriteEditor.Color", do ->
   #-----------------------------------------------------------------------------
 
   class Color.HSL
+    @properties: "hue sat lum alpha".split(" ")
+
     constructor: (hue, sat, lum, alpha) ->
       if arguments.length == 1 and $.v.is.obj(arguments[0])
         color = arguments[0]
@@ -155,13 +163,14 @@ $.export "SpriteEditor.Color", do ->
       if @isClear()
         new Color.RGB()
       else
-        rgb = Color.hsl2rgb(self)
+        rgb = Color.hsl2rgb(this)
         new Color.RGB(rgb.red, rgb.green, rgb.blue, @alpha)
 
     toHSL: -> this
 
     isClear: ->
-      $.v.some(Color.HSL.properties, (prop) => @[prop]?)
+      self = this
+      $.v.every(Color.HSL.properties, (prop) -> typeof self[prop] is "undefined")
 
     clone: ->
       new Color.HSL(this)
@@ -172,3 +181,5 @@ $.export "SpriteEditor.Color", do ->
 
     eq: (other) ->
       $.v.every(Color.HSL.properties, (prop) => @[prop] == other[prop])
+
+  return Color

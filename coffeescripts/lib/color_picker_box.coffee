@@ -1,4 +1,6 @@
-$.export "SpriteEditor.ColorPickerBox", do ->
+$.export "SpriteEditor.ColorPickerBox", (SpriteEditor) ->
+
+  Keyboard = SpriteEditor.Keyboard
 
   ColorPickerBox = {}
   SpriteEditor.DOMEventHelpers.mixin(ColorPickerBox, "SpriteEditor_ColorPickerBox")
@@ -58,7 +60,7 @@ $.export "SpriteEditor.ColorPickerBox", do ->
       @_addHueSatSelectorDiv()
 
     _addHueSatCanvas: ->
-      @hueSatCanvas = SpriteEditor.Canvas.create @hueSatCanvasSize.width, @hueSatCanvasSize.height, (c) ->
+      @hueSatCanvas = SpriteEditor.Canvas.create @hueSatCanvasSize.width, @hueSatCanvasSize.height, (c) =>
         imageData = c.ctx.createImageData(c.width, c.height)
         hsl = @currentColor
         # TODO: Use a gradient for this instead of manually filling in pixels
@@ -146,7 +148,7 @@ $.export "SpriteEditor.ColorPickerBox", do ->
           self._setColorFields()
           self._setColorSample()
           self._drawLightnessCanvas()
-          self.options?.change.call(self, self.currentColor)
+          self.options.change?.call(self, self.currentColor)
 
       @$lumDiv.mouseTracker
         "mousedown mousedrag": ->
@@ -154,7 +156,7 @@ $.export "SpriteEditor.ColorPickerBox", do ->
           self._setLightnessFromSelectorPosition()
           self._setColorFields()
           self._setColorSample()
-          self.options?.change.call(self, self.currentColor)
+          self.options.change?.call(self, self.currentColor)
 
     _removeEvents: ->
       @_unbindEvents(document, "keyup")
