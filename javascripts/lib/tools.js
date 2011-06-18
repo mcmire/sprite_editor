@@ -419,6 +419,7 @@
         },
         unselect: function() {
           this.canvases.workingCanvas.$element.removeClass("crosshair");
+          this.canvases.workingCanvas.$element.removeClass("move");
           return this._exitSelection();
         },
         keydown: function(event) {

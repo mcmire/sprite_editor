@@ -349,6 +349,7 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
 
       unselect: ->
         @canvases.workingCanvas.$element.removeClass("crosshair")
+        @canvases.workingCanvas.$element.removeClass("move")
         @_exitSelection()
 
       keydown: (event) ->
