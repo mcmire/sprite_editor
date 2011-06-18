@@ -23,12 +23,13 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
     widthInCells: 16    # cells
     heightInCells: 16   # cells
     cellSize: 30        # pixels
+    showGrid: false ##true
 
     init: (app) ->
       @app = app
 
       @_initCells()
-      @_createGridBgCanvas()
+      @_createGridBgCanvas() if @showGrid
       @_createWorkingCanvas()
       @_createPreviewCanvases()
       #@autoSaveTimer = setInterval((=> @save()), 30000)
@@ -134,7 +135,10 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
         return if color.isClear()
         color = color.toRGB().toString()
       wc.ctx.fillStyle = color
-      wc.ctx.fillRect(loc.x + 1, loc.y + 1, @cellSize - 1, @cellSize - 1)
+      if @showGrid
+        wc.ctx.fillRect(loc.x + 1, loc.y + 1, @cellSize - 1, @cellSize - 1)
+      else
+        wc.ctx.fillRect(loc.x, loc.y, @cellSize, @cellSize)
 
     drawPreviewCell: (cell) ->
       pc = @previewCanvas
@@ -161,9 +165,9 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @width = @widthInCells * @cellSize
       @height = @heightInCells * @cellSize
       @workingCanvas = SpriteEditor.Canvas.create(@width, @height)
-      @workingCanvas.$element
-        .attr("id", "working_canvas")
-        .css("background-image", "url(" + @gridBgCanvas.element.toDataURL("image/png") + ")")
+      @workingCanvas.$element.attr("id", "working_canvas")
+      if @showGrid
+        @workingCanvas.$element.css("background-image", "url(" + @gridBgCanvas.element.toDataURL("image/png") + ")")
 
     _createPreviewCanvases: ->
       @previewCanvas = SpriteEditor.Canvas.create(@widthInCells, @heightInCells)
