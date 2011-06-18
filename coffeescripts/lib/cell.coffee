@@ -24,7 +24,7 @@ $.export "SpriteEditor.Cell", (SpriteEditor) ->
 
     withColor: (color) ->
       clone = @clone()
-      clone.color = color.clone()
+      clone.color = color.clone() unless color.isClear()
       clone
 
     coords: -> [ @loc.j, @loc.i ].join(",")
