@@ -31,4 +31,6 @@ $.export "SpriteEditor.Cell", (SpriteEditor) ->
 
     clone: -> new Cell(this)
 
+    inspect: -> "{loc: #{@loc.inspect()}, color: #{@color.inspect()}}"
+
   return Cell

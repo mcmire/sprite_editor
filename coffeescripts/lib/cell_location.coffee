@@ -55,6 +55,8 @@ $.export "SpriteEditor.CellLocation", (SpriteEditor) ->
     # Necessary?
     toJSON: -> JSON.stringify(x: @x, y: @y, i: @i, j: @j)
 
+    inspect: -> "(#{@i}, #{@j})"
+
     _calculateXandY: ->
       @x = @j * @app.cellSize
       @y = @i * @app.cellSize

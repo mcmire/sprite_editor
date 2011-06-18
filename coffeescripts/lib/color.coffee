@@ -127,8 +127,10 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
       new Color.RGB(this)
 
     toString: ->
-      values = (@[prop] || 0 for prop in Color.RGB.properties)
+      values = (@[prop] ? "null" for prop in Color.RGB.properties)
       "rgba(" + values.join(", ") + ")"
+
+    inspect: -> @toString()
 
     eq: (other) ->
       $.v.every(Color.RGB.properties, (prop) => @[prop] == other[prop])
@@ -174,8 +176,10 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
       new Color.HSL(this)
 
     toString: ->
-      values = (@[prop] || 0 for prop in Color.HSL.properties)
+      values = (@[prop] ? "null" for prop in Color.HSL.properties)
       "hsla(" + values.join(", ") + ")"
+
+    inspect: -> @toString()
 
     eq: (other) ->
       $.v.every(Color.HSL.properties, (prop) => @[prop] == other[prop])
