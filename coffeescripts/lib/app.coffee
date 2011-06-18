@@ -19,7 +19,6 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       # These are always stored in HSL!
       foreground: (new SpriteEditor.Color.RGB(172, 85, 255)).toHSL()
       background: (new SpriteEditor.Color.RGB(255, 38, 192)).toHSL()
-    currentBrushSize: 1
 
     init: ->
       Keyboard.init()
@@ -46,7 +45,8 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
     addEvents: ->
       @canvases.addEvents()
-      @tools.addEvents()
+      @boxes.tools.addEvents()
+      @boxes.sizes.addEvents()
 
       @_bindEvents document,
         keydown: (event) =>
@@ -70,6 +70,8 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
     removeEvents: ->
       @canvases.removeEvents()
+      @boxes.tools.addEvents()
+      @boxes.sizes.addEvents()
       @_unbindEvents(document, "keydown", "keyup")
 
     _createWrapperDivs: ->
@@ -256,52 +258,8 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
     # TODO: when the paint bucket tool is selected, hide the brush sizes box
     # and set the brush size to 1
     _createBrushSizesBox: ->
-      self = this
-
-      $boxDiv = $("<div/>").attr("id", "sizes_box").addClass("box")
-      @$leftPane.append($boxDiv)
-
-      $header = $("<h3/>").html("Sizes")
-      $boxDiv.append($header)
-
-      $grids = $([])
-      for brushSize in [1..4]
-        do (brushSize) ->
-          grid = self._createGrid(self.canvases.cellSize * brushSize)
-          $grids.push(grid.element)
-          $boxDiv.append(grid.$element)
-          grid.$element.bind "click", ->
-            self.currentBrushSize = brushSize
-            $grids.removeClass("selected")
-            grid.$element.addClass("selected")
-          grid.$element.trigger("click") if self.currentBrushSize == brushSize
-
-    _createGrid: (size) ->
-      SpriteEditor.Canvas.create size, size, (c) =>
-        cellSize = @canvases.cellSize
-
-        c.ctx.strokeStyle = "#eee"
-        c.ctx.beginPath()
-        # Draw vertical lines
-        # We start at 0.5 because this is the midpoint of the path we want to stroke
-        # See: <http://diveintohtml5.org/canvas.html#pixel-madness>
-        for x in [0.5...size] by cellSize
-          c.ctx.moveTo(x, 0)
-          c.ctx.lineTo(x, size)
-        # Draw horizontal lines
-        for y in [0.5...size] by cellSize
-          c.ctx.moveTo(0, y)
-          c.ctx.lineTo(size, y)
-        c.ctx.stroke()
-        c.ctx.closePath()
-
-        fontSize = 11
-        c.ctx.font = "#{fontSize} px Helvetica"
-        text = (size / cellSize) + "px"
-        # Place the text that indicates the brush size in the center of the canvas
-        # I don't know why I have to put "/4" here, but I do...
-        metrics = c.ctx.measureText(text)
-        c.ctx.fillText(text, size/2 - metrics.width/2, size/2 + fontSize/4)
+      @boxes.sizes = box = SpriteEditor.Box.Sizes.init(this)
+      @$leftPane.append(box.$element)
 
     _createMask: ->
       @$maskDiv = $('<div id="mask" />').hide()

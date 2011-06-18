@@ -1,13 +1,16 @@
 (function() {
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $["export"]("SpriteEditor.Box.Tools", function(SpriteEditor) {
-    var Tools;
-    return Tools = {
+    var Keyboard, Tools;
+    Keyboard = SpriteEditor.Keyboard;
+    Tools = {};
+    SpriteEditor.DOMEventHelpers.mixin(Tools, "SpriteEditor_Tools");
+    $.extend(Tools, {
       name: "Tools",
       header: "Toolbox",
       currentToolName: null,
       init: function(app) {
-        var $ul, name, self, _fn, _i, _len, _ref;
-        self = this;
+        var $ul, name, _fn, _i, _len, _ref;
         SpriteEditor.Box.init.call(this, app);
         $ul = $("<ul/>");
         this.$element.append($ul);
@@ -18,7 +21,7 @@
           $li = $("<li/>");
           $img = $("<img/>");
           $img.addClass("tool").attr("width", 24).attr("height", 24).attr("src", "images/" + name + ".png");
-          this.toolImages[name] = $img;
+          self.toolImages[name] = $img;
           $li.append($img);
           $ul.append($li);
           return $img.bind("click", function() {
@@ -27,10 +30,31 @@
         };
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           name = _ref[_i];
-          _fn(self, name);
+          _fn(this, name);
         }
         this.select(this.app.tools.toolNames[0]);
         return this;
+      },
+      addEvents: function() {
+        return this._bindEvents(document, {
+          keydown: __bind(function(event) {
+            var key;
+            key = event.keyCode;
+            switch (key) {
+              case Keyboard.E_KEY:
+                return this.select("pencil");
+              case Keyboard.G_KEY:
+                return this.select("bucket");
+              case Keyboard.S_KEY:
+                return this.select("select");
+              case Keyboard.Q_KEY:
+                return this.select("dropper");
+            }
+          }, this)
+        });
+      },
+      removeEvents: function() {
+        return this._unbindEvents(document, "keydown");
       },
       currentTool: function() {
         return this.app.tools[this.currentToolName];
@@ -50,6 +74,7 @@
         this.toolImages[name].addClass("selected");
         return typeof (_base2 = this.app.tools[name]).select === "function" ? _base2.select() : void 0;
       }
-    };
+    });
+    return Tools;
   });
 }).call(this);

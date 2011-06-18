@@ -232,7 +232,7 @@
       },
       _setFocusedCells: function(mouse) {
         var bs, cell, focusedCells, i, i1, i2, j, j1, j2, row, x, x1, x2, y, y1, y2;
-        bs = (this.app.currentBrushSize - 1) * this.cellSize;
+        bs = (this.app.boxes.sizes.currentSize - 1) * this.cellSize;
         x = mouse.rel.x;
         y = mouse.rel.y;
         x1 = x - (bs / 2);

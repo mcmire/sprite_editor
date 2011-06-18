@@ -51,15 +51,15 @@ input[type="submit"], input[type="button"], select { cursor: pointer; }
 #se-box-tools .tool:hover, #se-box-tools .tool.selected { opacity: 1; }
 #se-box-tools .tool.selected { border-bottom: 2px solid gray; }
 
-#sizes_box { width: 130px; /*margin-left: 20px;*/ margin-bottom: 20px; }
-#sizes_box canvas { border: 1px solid red; opacity: 0.5; /*
+#se-box-sizes { width: 130px; /*margin-left: 20px;*/ margin-bottom: 20px; }
+#se-box-sizes canvas { border: 1px solid red; opacity: 0.5; /*
 margin-right: 20px;
 display: inline-block;
 vertical-align: middle;
 */ margin: 0 auto 20px auto; cursor: pointer; }
-#sizes_box canvas:last-child { margin-bottom: 0; }
-#sizes_box canvas:hover, #sizes_box canvas.selected { opacity: 1; }
-#sizes_box canvas.selected { border-width: 2px; }
+#se-box-sizes canvas:last-child { margin-bottom: 0; }
+#se-box-sizes canvas:hover, #se-box-sizes canvas.selected { opacity: 1; }
+#se-box-sizes canvas.selected { border-width: 2px; }
 
 #color_box { clear: left; margin-bottom: 20px; text-align: center; }
 #color_box .color_sample { width: 60px; height: 60px; border: 1px solid black; margin: 0 auto; display: inline-block; margin-right: 30px; cursor: pointer; }

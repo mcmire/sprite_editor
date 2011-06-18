@@ -20,7 +20,6 @@
         foreground: (new SpriteEditor.Color.RGB(172, 85, 255)).toHSL(),
         background: (new SpriteEditor.Color.RGB(255, 38, 192)).toHSL()
       },
-      currentBrushSize: 1,
       init: function() {
         Keyboard.init();
         this.canvases = SpriteEditor.DrawingCanvases.init(this);
@@ -41,7 +40,8 @@
       },
       addEvents: function() {
         this.canvases.addEvents();
-        this.tools.addEvents();
+        this.boxes.tools.addEvents();
+        this.boxes.sizes.addEvents();
         return this._bindEvents(document, {
           keydown: __bind(function(event) {
             var key;
@@ -71,6 +71,8 @@
       },
       removeEvents: function() {
         this.canvases.removeEvents();
+        this.boxes.tools.addEvents();
+        this.boxes.sizes.addEvents();
         return this._unbindEvents(document, "keydown", "keyup");
       },
       _createWrapperDivs: function() {
@@ -225,54 +227,9 @@
         return this.$leftPane.append(box.$element);
       },
       _createBrushSizesBox: function() {
-        var $boxDiv, $grids, $header, brushSize, self, _results;
-        self = this;
-        $boxDiv = $("<div/>").attr("id", "sizes_box").addClass("box");
-        this.$leftPane.append($boxDiv);
-        $header = $("<h3/>").html("Sizes");
-        $boxDiv.append($header);
-        $grids = $([]);
-        _results = [];
-        for (brushSize = 1; brushSize <= 4; brushSize++) {
-          _results.push((function(brushSize) {
-            var grid;
-            grid = self._createGrid(self.canvases.cellSize * brushSize);
-            $grids.push(grid.element);
-            $boxDiv.append(grid.$element);
-            grid.$element.bind("click", function() {
-              self.currentBrushSize = brushSize;
-              $grids.removeClass("selected");
-              return grid.$element.addClass("selected");
-            });
-            if (self.currentBrushSize === brushSize) {
-              return grid.$element.trigger("click");
-            }
-          })(brushSize));
-        }
-        return _results;
-      },
-      _createGrid: function(size) {
-        return SpriteEditor.Canvas.create(size, size, __bind(function(c) {
-          var cellSize, fontSize, metrics, text, x, y, _step, _step2;
-          cellSize = this.canvases.cellSize;
-          c.ctx.strokeStyle = "#eee";
-          c.ctx.beginPath();
-          for (x = 0.5, _step = cellSize; 0.5 <= size ? x < size : x > size; x += _step) {
-            c.ctx.moveTo(x, 0);
-            c.ctx.lineTo(x, size);
-          }
-          for (y = 0.5, _step2 = cellSize; 0.5 <= size ? y < size : y > size; y += _step2) {
-            c.ctx.moveTo(0, y);
-            c.ctx.lineTo(size, y);
-          }
-          c.ctx.stroke();
-          c.ctx.closePath();
-          fontSize = 11;
-          c.ctx.font = "" + fontSize + " px Helvetica";
-          text = (size / cellSize) + "px";
-          metrics = c.ctx.measureText(text);
-          return c.ctx.fillText(text, size / 2 - metrics.width / 2, size / 2 + fontSize / 4);
-        }, this));
+        var box;
+        this.boxes.sizes = box = SpriteEditor.Box.Sizes.init(this);
+        return this.$leftPane.append(box.$element);
       },
       _createMask: function() {
         this.$maskDiv = $('<div id="mask" />').hide();

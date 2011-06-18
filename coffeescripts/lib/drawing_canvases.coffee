@@ -182,7 +182,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @focusedCell = @cells[i][j]
 
     _setFocusedCells: (mouse) ->
-      bs = (@app.currentBrushSize - 1) * @cellSize
+      bs = (@app.boxes.sizes.currentSize - 1) * @cellSize
       x = mouse.rel.x
       y = mouse.rel.y
 
