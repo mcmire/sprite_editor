@@ -191,13 +191,6 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       x2 = x + (bs / 2)
       y1 = y - (bs / 2)
       y2 = y + (bs / 2)
-      # (Ensure that x and y are inside the canvas, though)
-      if x1 < 0
-        x1 = 0
-        x2 += -x1
-      if y1 < 0
-        y1 = 0
-        y2 += -y1
 
       # Scale each coordinate on the working canvas down to the coordinate
       # on the preview canvas (which also serves as the cell coordinate
@@ -211,10 +204,10 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       # cells in the box and add them to the set of current cells
       focusedCells = {}
       for i in [i1..i2]
-        row = @cells[i]
         for j in [j1..j2]
-          cell = row[j]
-          focusedCells[cell.coords()] = cell
+          row = @cells[i]
+          cell = row[j] if row
+          focusedCells[cell.coords()] = cell if cell
       @focusedCells = focusedCells
 
     _unsetFocusedCells: ->

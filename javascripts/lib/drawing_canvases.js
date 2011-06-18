@@ -238,24 +238,20 @@
         x2 = x + (bs / 2);
         y1 = y - (bs / 2);
         y2 = y + (bs / 2);
-        if (x1 < 0) {
-          x1 = 0;
-          x2 += -x1;
-        }
-        if (y1 < 0) {
-          y1 = 0;
-          y2 += -y1;
-        }
         j1 = Math.floor(x1 / this.cellSize);
         j2 = Math.floor(x2 / this.cellSize);
         i1 = Math.floor(y1 / this.cellSize);
         i2 = Math.floor(y2 / this.cellSize);
         focusedCells = {};
         for (i = i1; i1 <= i2 ? i <= i2 : i >= i2; i1 <= i2 ? i++ : i--) {
-          row = this.cells[i];
           for (j = j1; j1 <= j2 ? j <= j2 : j >= j2; j1 <= j2 ? j++ : j--) {
-            cell = row[j];
-            focusedCells[cell.coords()] = cell;
+            row = this.cells[i];
+            if (row) {
+              cell = row[j];
+            }
+            if (cell) {
+              focusedCells[cell.coords()] = cell;
+            }
           }
         }
         return this.focusedCells = focusedCells;
