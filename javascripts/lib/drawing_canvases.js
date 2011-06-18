@@ -143,7 +143,8 @@
           },
           mouseglide: function(event) {
             return self.app.currentTool().trigger("mouseglide", event);
-          }
+          },
+          draggingDistance: 3
         });
         this._bindEvents(window, {
           blur: function() {

@@ -105,6 +105,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
           self.app.currentTool().trigger("mousedrag", event)
         mouseglide: (event) ->
           self.app.currentTool().trigger("mouseglide", event)
+        draggingDistance: 3
 
       @_bindEvents window,
         blur: ->
