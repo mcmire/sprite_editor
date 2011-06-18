@@ -13,10 +13,10 @@ $.export "SpriteEditor.Cell", (SpriteEditor) ->
       else
         @app = arguments[0]
         @loc = new SpriteEditor.CellLocation(arguments[0], arguments[1], arguments[2])
-        @color = new SpriteEditor.Color.HSL()
+        @color = new SpriteEditor.Color()
 
     clear: ->
-      @color = new SpriteEditor.Color.HSL()
+      @color = new SpriteEditor.Color()
       return this
 
     asClear: ->

@@ -1,20 +1,24 @@
 $.export "SpriteEditor.Color", (SpriteEditor) ->
 
+  # Much of the code here was borrowed from a few choice sources:
+  # hslpicker.com [1], the Color class in the Sass source [2],
+  # and algorithms on Wikipedia [3] and the CSS3 spec [4].
+  #
+  # [1]: https://github.com/imathis/hsl-color-picker/blob/master/javascripts/slider.js>
+  # [2]: https://github.com/nex3/sass/blob/master/lib/sass/script/color.rb
+  # [3]: http://en.wikipedia.org/wiki/HSL_and_HSV
+  # [4]: http://www.w3.org/TR/css3-color/#hsl-color
+  #
   class Color
-    @componentsByRepresentation:
-      rgb: [ "red", "green", "blue" ]
-      hsl: [ "hue", "sat", "lum" ]
-    @correctHue: true
+    @componentsByType:
+      rgb: "red green blue".split(" ")
+      hsl: "hue sat lum".split(" ")
+    @allComponents: @componentsByType.rgb.concat(@componentsByType.hsl)
 
-    # Much of the code in the next three methods was stolen from
-    # hslpicker.com [1], which in turn was adapted from the Sass source [2],
-    # which in turn was adapted from algorithms on Wikipedia [3] and the CSS3
-    # spec [4].
-    #
-    # [1]: https://github.com/imathis/hsl-color-picker/blob/master/javascripts/slider.js>
-    # [2]: https://github.com/nex3/sass/blob/master/lib/sass/script/color.rb
-    # [3]: http://en.wikipedia.org/wiki/HSL_and_HSV
-    # [4]: http://www.w3.org/TR/css3-color/#hsl-color
+    @propertiesByType:
+      rgb: @componentsByType.rgb.concat(["alpha"])
+      hsl: @componentsByType.hsl.concat(["alpha"])
+    @allProperties: @allComponents.concat(["alpha"])
 
     @rgb2hsl: (rgb) ->
       hsl = {}
@@ -32,7 +36,7 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
         when min
           # According to the spec, hue is undefined when min == max,
           # but for display purposes this isn't very convenient, so let's correct this by default
-          h = 0 if @correctHue
+          h = 0 if rgb.correctHue
         when r
           h = ((60 * (g - b) / diff) + 360) % 360
         when g
@@ -92,102 +96,76 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
 
       return p
 
-  #-----------------------------------------------------------------------------
+    constructor: (args) ->
+      @set(args) if args?
+      @alpha = 1 if !@alpha? and @isFilled()
+      @correctHue = true
 
-  class Color.RGB
-    @properties: "red green blue alpha".split(" ")
-
-    constructor: (red, green, blue, alpha) ->
-      if arguments.length == 1 and $.v.is.obj(arguments[0])
-        color = arguments[0]
-        for prop in Color.RGB.properties
-          @[prop] = color[prop]
+    set: (args) ->
+      if args instanceof Color
+        @[prop] = args[prop] for prop of args
       else
-        @red = red
-        @green = green
-        @blue = blue
-        if !alpha? and (red? or green? or blue?)
-          @alpha = 1
-        else
-          @alpha = alpha
+        if type = @_detectType(args)
+          for prop in Color.componentsByType[type]
+            @[prop] = args[prop] if args[prop]?
+          if type == "rgb"
+            @_recalculateHSL()
+          else
+            @_recalculateRGB()
+        @alpha = args.alpha if args.alpha?
 
-    with: (props) ->
+    with: (args) ->
       clone = @clone()
-      for prop in Color.RGB.properties
-        clone[prop] = props[prop] if prop of props
+      clone.set(args)
       clone
 
-    toRGB: -> this
-
-    toHSL: ->
-      if @isClear()
-        new Color.HSL()
-      else
-        hsl = Color.rgb2hsl(this)
-        new Color.HSL(hsl.hue, hsl.sat, hsl.lum, @alpha)
+    isFilled: ->
+      self = this
+      $.v.some(Color.allComponents, (prop) -> self[prop]?)
 
     isClear: ->
-      !(@red? or @green? or @blue?)
+      !@isFilled()
 
     clone: ->
-      new Color.RGB(this)
+      new Color(this)
 
-    toString: ->
-      values = (@[prop] ? "null" for prop in Color.RGB.properties)
+    toJSON: ->
+      JSON.stringify(hue: @hue, sat: @sat, lum: @lum, alpha: @alpha)
+
+    _recalculateRGB: ->
+      $.extend this, Color.hsl2rgb(this)
+
+    _recalculateHSL: ->
+      $.extend this, Color.rgb2hsl(this)
+
+    toRGBAString: ->
+      values = (@[prop] ? "null" for prop in Color.propertiesByType.rgb)
       "rgba(" + values.join(", ") + ")"
 
-    inspect: -> @toString()
-
-    eq: (other) ->
-      $.v.every(Color.RGB.properties, (prop) => @[prop] == other[prop])
-
-  #-----------------------------------------------------------------------------
-
-  class Color.HSL
-    @properties: "hue sat lum alpha".split(" ")
-
-    constructor: (hue, sat, lum, alpha) ->
-      if arguments.length == 1 and $.v.is.obj(arguments[0])
-        color = arguments[0]
-        for prop in Color.HSL.properties
-          @[prop] = color[prop]
-      else
-        @hue = hue
-        @sat = sat
-        @lum = lum
-        if !alpha? and (red? or green? or blue?)
-          @alpha = 1
-        else
-          @alpha = alpha
-
-    with: (props) ->
-      clone = @clone()
-      for prop in Color.HSL.properties
-        clone[prop] = props[prop] if prop of props
-      clone
-
-    toRGB: ->
-      if @isClear()
-        new Color.RGB()
-      else
-        rgb = Color.hsl2rgb(this)
-        new Color.RGB(rgb.red, rgb.green, rgb.blue, @alpha)
-
-    toHSL: -> this
-
-    isClear: ->
-      !(@hue? or @sat? or @lum?)
-
-    clone: ->
-      new Color.HSL(this)
-
-    toString: ->
-      values = (@[prop] ? "null" for prop in Color.HSL.properties)
+    toHSLAString: ->
+      values = (@[prop] ? "null" for prop in Color.propertiesByType.hsl)
       "hsla(" + values.join(", ") + ")"
 
-    inspect: -> @toString()
+    inspect: ->
+      "{rgba: #{@toRGBAString()}, hsla: #{@toHSLAString()}}"
 
     eq: (other) ->
-      $.v.every(Color.HSL.properties, (prop) => @[prop] == other[prop])
+      self = this
+      $.v.every(Color.allProperties, (prop) => self[prop] == other[prop])
 
-  return Color
+    _detectType: (args, sig) ->
+      # Either red, green, and blue can passed, or hue, sat, and lum,
+      # but not a mixture (alpha is always optional).
+      # Blank properties will be ignored.
+      count = 0
+      count ^= 1 if $.v.some(Color.componentsByType.rgb, (prop) -> args[prop]?)
+      count ^= 2 if $.v.some(Color.componentsByType.hsl, (prop) -> args[prop]?)
+      switch count
+        when 3
+          throw "To set a Color, you must pass either RGB properties or HSL properties, but not both!"
+        when 2
+          return "hsl"
+        when 1
+          return "rgb"
+        else
+          return null

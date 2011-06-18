@@ -13,8 +13,7 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
 
     hueSatCanvasSize: {width: 265, height: 300}
     lumCanvasSize: {width: 25, height: 300}
-    # This is always stored in HSL!
-    currentColor: (new SpriteEditor.Color.RGB(255, 0, 0)).toHSL()
+    currentColor: new SpriteEditor.Color(red: 255, blue: 0, green: 0)
     currentColorType: null
 
     init: (@app, @options) ->
@@ -106,7 +105,7 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
             # y = 0..height -> s = 100..0
             h = Math.round(x * (360 / c.width))
             s = Math.round(y * (-100 / c.height) + 100)
-            rgb = hsl.with(hue: h, sat: s).toRGB()
+            rgb = hsl.with(hue: h, sat: s)
             imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255)
         c.ctx.putImageData(imageData, 0, 0)
 
@@ -140,22 +139,22 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
       for y in [0...c.height]
         # y = 0..height -> l = 100..0
         l = Math.round((-100 / c.height) * y + 100)
-        rgb = hsl.with(lum: l).toRGB()
+        rgb = hsl.with(lum: l)
         for x in [0...c.width]
           imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255)
       c.ctx.putImageData(imageData, 0, 0)
 
     _addColorFields: ->
       @$colorFieldsDiv = $('<div class="color_fields" />')
-      for repName, rep of SpriteEditor.Color.componentsByRepresentation
-        $repDiv = $('<div class="'+repName+'_fields" />')
-        for cpt in rep
+      for type, props of SpriteEditor.Color.componentsByType
+        $colorTypeFieldsDiv = $('<div class="'+type+'_fields" />')
+        for prop in props
           $colorSpan = $('<span />')
           $colorField = $('<input type="text" size="3" />')
-          @colorFields[cpt] = $colorField
-          $colorSpan.html(cpt[0].toUpperCase() + ": ").append($colorField)
-          $repDiv.append($colorSpan)
-        @$colorFieldsDiv.append($repDiv)
+          @colorFields[prop] = $colorField
+          $colorSpan.html(prop[0].toUpperCase() + ": ").append($colorField)
+          $colorTypeFieldsDiv.append($colorSpan)
+        @$colorFieldsDiv.append($colorTypeFieldsDiv)
       @$container.append(@$colorFieldsDiv)
 
     _addColorSample: ->
@@ -170,12 +169,11 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
       @$container.append($p)
 
     _setColorFields: ->
-      hsl = @currentColor
-      rgb = hsl.toRGB()
-      for prop in SpriteEditor.Color.RGB.properties
-        @colorFields[prop]?.val String(rgb[prop])
-      for prop in SpriteEditor.Color.HSL.properties
-        @colorFields[prop]?.val String(hsl[prop])
+      color = @currentColor
+      for prop in SpriteEditor.Color.componentsByType.rgb
+        @colorFields[prop]?.val String(color[prop])
+      for prop in SpriteEditor.Color.componentsByType.hsl
+        @colorFields[prop]?.val String(color[prop])
 
     _positionHueSatSelectorFromMouse: ->
       mouse = @$hueSatDiv.mouseTracker("pos").rel
@@ -206,7 +204,7 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
       @currentColor = @currentColor.with( lum: @_px2lum() )
 
     _setColorSample: ->
-      @$colorSampleDiv.css("background-color", @currentColor.toRGB().toString())
+      @$colorSampleDiv.css("background-color", @currentColor.toRGBAString())
 
     _sat2px: ->
       s = @currentColor.sat

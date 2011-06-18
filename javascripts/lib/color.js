@@ -2,13 +2,17 @@
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $["export"]("SpriteEditor.Color", function(SpriteEditor) {
     var Color;
-    Color = (function() {
-      function Color() {}
-      Color.componentsByRepresentation = {
-        rgb: ["red", "green", "blue"],
-        hsl: ["hue", "sat", "lum"]
+    return Color = (function() {
+      Color.componentsByType = {
+        rgb: "red green blue".split(" "),
+        hsl: "hue sat lum".split(" ")
       };
-      Color.correctHue = true;
+      Color.allComponents = Color.componentsByType.rgb.concat(Color.componentsByType.hsl);
+      Color.propertiesByType = {
+        rgb: Color.componentsByType.rgb.concat(["alpha"]),
+        hsl: Color.componentsByType.hsl.concat(["alpha"])
+      };
+      Color.allProperties = Color.allComponents.concat(["alpha"]);
       Color.rgb2hsl = function(rgb) {
         var b, diff, g, h, hsl, l, max, min, r, s, sum;
         hsl = {};
@@ -21,7 +25,7 @@
         sum = min + max;
         switch (max) {
           case min:
-            if (this.correctHue) {
+            if (rgb.correctHue) {
               h = 0;
             }
             break;
@@ -88,65 +92,81 @@
         }
         return p;
       };
-      return Color;
-    })();
-    Color.RGB = (function() {
-      RGB.properties = "red green blue alpha".split(" ");
-      function RGB(red, green, blue, alpha) {
-        var color, prop, _i, _len, _ref;
-        if (arguments.length === 1 && $.v.is.obj(arguments[0])) {
-          color = arguments[0];
-          _ref = Color.RGB.properties;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            prop = _ref[_i];
-            this[prop] = color[prop];
-          }
-        } else {
-          this.red = red;
-          this.green = green;
-          this.blue = blue;
-          if (!(alpha != null) && ((red != null) || (green != null) || (blue != null))) {
-            this.alpha = 1;
-          } else {
-            this.alpha = alpha;
-          }
+      function Color(args) {
+        if (args != null) {
+          this.set(args);
         }
+        if (!(this.alpha != null) && this.isFilled()) {
+          this.alpha = 1;
+        }
+        this.correctHue = true;
       }
-      RGB.prototype["with"] = function(props) {
-        var clone, prop, _i, _len, _ref;
-        clone = this.clone();
-        _ref = Color.RGB.properties;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          prop = _ref[_i];
-          if (prop in props) {
-            clone[prop] = props[prop];
+      Color.prototype.set = function(args) {
+        var prop, type, _i, _len, _ref, _results;
+        if (args instanceof Color) {
+          _results = [];
+          for (prop in args) {
+            _results.push(this[prop] = args[prop]);
+          }
+          return _results;
+        } else {
+          if (type = this._detectType(args)) {
+            _ref = Color.componentsByType[type];
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              prop = _ref[_i];
+              if (args[prop] != null) {
+                this[prop] = args[prop];
+              }
+            }
+            if (type === "rgb") {
+              this._recalculateHSL();
+            } else {
+              this._recalculateRGB();
+            }
+          }
+          if (args.alpha != null) {
+            return this.alpha = args.alpha;
           }
         }
+      };
+      Color.prototype["with"] = function(args) {
+        var clone;
+        clone = this.clone();
+        clone.set(args);
         return clone;
       };
-      RGB.prototype.toRGB = function() {
-        return this;
+      Color.prototype.isFilled = function() {
+        var self;
+        self = this;
+        return $.v.some(Color.allComponents, function(prop) {
+          return self[prop] != null;
+        });
       };
-      RGB.prototype.toHSL = function() {
-        var hsl;
-        if (this.isClear()) {
-          return new Color.HSL();
-        } else {
-          hsl = Color.rgb2hsl(this);
-          return new Color.HSL(hsl.hue, hsl.sat, hsl.lum, this.alpha);
-        }
+      Color.prototype.isClear = function() {
+        return !this.isFilled();
       };
-      RGB.prototype.isClear = function() {
-        return !((this.red != null) || (this.green != null) || (this.blue != null));
+      Color.prototype.clone = function() {
+        return new Color(this);
       };
-      RGB.prototype.clone = function() {
-        return new Color.RGB(this);
+      Color.prototype.toJSON = function() {
+        return JSON.stringify({
+          hue: this.hue,
+          sat: this.sat,
+          lum: this.lum,
+          alpha: this.alpha
+        });
       };
-      RGB.prototype.toString = function() {
+      Color.prototype._recalculateRGB = function() {
+        return $.extend(this, Color.hsl2rgb(this));
+      };
+      Color.prototype._recalculateHSL = function() {
+        return $.extend(this, Color.rgb2hsl(this));
+      };
+      Color.prototype.toRGBAString = function() {
         var prop, values;
         values = (function() {
           var _i, _len, _ref, _ref2, _results;
-          _ref = Color.RGB.properties;
+          _ref = Color.propertiesByType.rgb;
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             prop = _ref[_i];
@@ -156,73 +176,11 @@
         }).call(this);
         return "rgba(" + values.join(", ") + ")";
       };
-      RGB.prototype.inspect = function() {
-        return this.toString();
-      };
-      RGB.prototype.eq = function(other) {
-        return $.v.every(Color.RGB.properties, __bind(function(prop) {
-          return this[prop] === other[prop];
-        }, this));
-      };
-      return RGB;
-    })();
-    Color.HSL = (function() {
-      HSL.properties = "hue sat lum alpha".split(" ");
-      function HSL(hue, sat, lum, alpha) {
-        var color, prop, _i, _len, _ref;
-        if (arguments.length === 1 && $.v.is.obj(arguments[0])) {
-          color = arguments[0];
-          _ref = Color.HSL.properties;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            prop = _ref[_i];
-            this[prop] = color[prop];
-          }
-        } else {
-          this.hue = hue;
-          this.sat = sat;
-          this.lum = lum;
-          if (!(alpha != null) && ((typeof red !== "undefined" && red !== null) || (typeof green !== "undefined" && green !== null) || (typeof blue !== "undefined" && blue !== null))) {
-            this.alpha = 1;
-          } else {
-            this.alpha = alpha;
-          }
-        }
-      }
-      HSL.prototype["with"] = function(props) {
-        var clone, prop, _i, _len, _ref;
-        clone = this.clone();
-        _ref = Color.HSL.properties;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          prop = _ref[_i];
-          if (prop in props) {
-            clone[prop] = props[prop];
-          }
-        }
-        return clone;
-      };
-      HSL.prototype.toRGB = function() {
-        var rgb;
-        if (this.isClear()) {
-          return new Color.RGB();
-        } else {
-          rgb = Color.hsl2rgb(this);
-          return new Color.RGB(rgb.red, rgb.green, rgb.blue, this.alpha);
-        }
-      };
-      HSL.prototype.toHSL = function() {
-        return this;
-      };
-      HSL.prototype.isClear = function() {
-        return !((this.hue != null) || (this.sat != null) || (this.lum != null));
-      };
-      HSL.prototype.clone = function() {
-        return new Color.HSL(this);
-      };
-      HSL.prototype.toString = function() {
+      Color.prototype.toHSLAString = function() {
         var prop, values;
         values = (function() {
           var _i, _len, _ref, _ref2, _results;
-          _ref = Color.HSL.properties;
+          _ref = Color.propertiesByType.hsl;
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             prop = _ref[_i];
@@ -232,16 +190,42 @@
         }).call(this);
         return "hsla(" + values.join(", ") + ")";
       };
-      HSL.prototype.inspect = function() {
-        return this.toString();
+      Color.prototype.inspect = function() {
+        return "{rgba: " + (this.toRGBAString()) + ", hsla: " + (this.toHSLAString()) + "}";
       };
-      HSL.prototype.eq = function(other) {
-        return $.v.every(Color.HSL.properties, __bind(function(prop) {
-          return this[prop] === other[prop];
+      Color.prototype.eq = function(other) {
+        var self;
+        self = this;
+        return $.v.every(Color.allProperties, __bind(function(prop) {
+          return self[prop] === other[prop];
         }, this));
       };
-      return HSL;
+      Color.prototype._detectType = function(args, sig) {
+        var count;
+        count = 0;
+        if ($.v.some(Color.componentsByType.rgb, function(prop) {
+          return args[prop] != null;
+        })) {
+          count ^= 1;
+        }
+        if ($.v.some(Color.componentsByType.hsl, function(prop) {
+          return args[prop] != null;
+        })) {
+          count ^= 2;
+        }
+        switch (count) {
+          case 3:
+            throw "To set a Color, you must pass either RGB properties or HSL properties, but not both!";
+            break;
+          case 2:
+            return "hsl";
+          case 1:
+            return "rgb";
+          default:
+            return null;
+        }
+      };
+      return Color;
     })();
-    return Color;
   });
 }).call(this);

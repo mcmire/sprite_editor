@@ -15,9 +15,8 @@ $.export "SpriteEditor.Box.Colors", (SpriteEditor) ->
       background: null
     currentColorType: "foreground"
     currentColors:
-      # These are always stored in HSL!
-      foreground: (new SpriteEditor.Color.RGB(172, 85, 255)).toHSL()
-      background: (new SpriteEditor.Color.RGB(255, 38, 192)).toHSL()
+      foreground: new SpriteEditor.Color(red: 172, green: 85, blue: 255)
+      background: new SpriteEditor.Color(red: 255, green: 38, blue: 192)
 
     init: (app) ->
       SpriteEditor.Box.init.call(this, app)
@@ -30,7 +29,7 @@ $.export "SpriteEditor.Box.Colors", (SpriteEditor) ->
             click: ->
               self.app.colorPicker.open(self.currentColors[type], type)
             render: ->
-              $div.css "background-color", self.currentColors[type].toRGB().toString()
+              $div.css "background-color", self.currentColors[type].toRGBAString()
           $div.trigger("render")
           self.$element.append($div)
           self.colorSampleDivs[type] = $div

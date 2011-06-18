@@ -18,7 +18,11 @@
         width: 25,
         height: 300
       },
-      currentColor: (new SpriteEditor.Color.RGB(255, 0, 0)).toHSL(),
+      currentColor: new SpriteEditor.Color({
+        red: 255,
+        blue: 0,
+        green: 0
+      }),
       currentColorType: null,
       init: function(app, options) {
         this.app = app;
@@ -115,7 +119,7 @@
               rgb = hsl["with"]({
                 hue: h,
                 sat: s
-              }).toRGB();
+              });
               imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255);
             }
           }
@@ -151,7 +155,7 @@
           l = Math.round((-100 / c.height) * y + 100);
           rgb = hsl["with"]({
             lum: l
-          }).toRGB();
+          });
           for (x = 0, _ref2 = c.width; 0 <= _ref2 ? x < _ref2 : x > _ref2; 0 <= _ref2 ? x++ : x--) {
             imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255);
           }
@@ -159,21 +163,21 @@
         return c.ctx.putImageData(imageData, 0, 0);
       },
       _addColorFields: function() {
-        var $colorField, $colorSpan, $repDiv, cpt, rep, repName, _i, _len, _ref;
+        var $colorField, $colorSpan, $colorTypeFieldsDiv, prop, props, type, _i, _len, _ref;
         this.$colorFieldsDiv = $('<div class="color_fields" />');
-        _ref = SpriteEditor.Color.componentsByRepresentation;
-        for (repName in _ref) {
-          rep = _ref[repName];
-          $repDiv = $('<div class="' + repName + '_fields" />');
-          for (_i = 0, _len = rep.length; _i < _len; _i++) {
-            cpt = rep[_i];
+        _ref = SpriteEditor.Color.componentsByType;
+        for (type in _ref) {
+          props = _ref[type];
+          $colorTypeFieldsDiv = $('<div class="' + type + '_fields" />');
+          for (_i = 0, _len = props.length; _i < _len; _i++) {
+            prop = props[_i];
             $colorSpan = $('<span />');
             $colorField = $('<input type="text" size="3" />');
-            this.colorFields[cpt] = $colorField;
-            $colorSpan.html(cpt[0].toUpperCase() + ": ").append($colorField);
-            $repDiv.append($colorSpan);
+            this.colorFields[prop] = $colorField;
+            $colorSpan.html(prop[0].toUpperCase() + ": ").append($colorField);
+            $colorTypeFieldsDiv.append($colorSpan);
           }
-          this.$colorFieldsDiv.append($repDiv);
+          this.$colorFieldsDiv.append($colorTypeFieldsDiv);
         }
         return this.$container.append(this.$colorFieldsDiv);
       },
@@ -192,21 +196,20 @@
         return this.$container.append($p);
       },
       _setColorFields: function() {
-        var hsl, prop, rgb, _i, _j, _len, _len2, _ref, _ref2, _ref3, _ref4, _results;
-        hsl = this.currentColor;
-        rgb = hsl.toRGB();
-        _ref = SpriteEditor.Color.RGB.properties;
+        var color, prop, _i, _j, _len, _len2, _ref, _ref2, _ref3, _ref4, _results;
+        color = this.currentColor;
+        _ref = SpriteEditor.Color.componentsByType.rgb;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           prop = _ref[_i];
           if ((_ref2 = this.colorFields[prop]) != null) {
-            _ref2.val(String(rgb[prop]));
+            _ref2.val(String(color[prop]));
           }
         }
-        _ref3 = SpriteEditor.Color.HSL.properties;
+        _ref3 = SpriteEditor.Color.componentsByType.hsl;
         _results = [];
         for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
           prop = _ref3[_j];
-          _results.push((_ref4 = this.colorFields[prop]) != null ? _ref4.val(String(hsl[prop])) : void 0);
+          _results.push((_ref4 = this.colorFields[prop]) != null ? _ref4.val(String(color[prop])) : void 0);
         }
         return _results;
       },
@@ -246,7 +249,7 @@
         });
       },
       _setColorSample: function() {
-        return this.$colorSampleDiv.css("background-color", this.currentColor.toRGB().toString());
+        return this.$colorSampleDiv.css("background-color", this.currentColor.toRGBAString());
       },
       _sat2px: function() {
         var h, s, y;

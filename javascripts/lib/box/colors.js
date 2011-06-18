@@ -15,8 +15,16 @@
       },
       currentColorType: "foreground",
       currentColors: {
-        foreground: (new SpriteEditor.Color.RGB(172, 85, 255)).toHSL(),
-        background: (new SpriteEditor.Color.RGB(255, 38, 192)).toHSL()
+        foreground: new SpriteEditor.Color({
+          red: 172,
+          green: 85,
+          blue: 255
+        }),
+        background: new SpriteEditor.Color({
+          red: 255,
+          green: 38,
+          blue: 192
+        })
       },
       init: function(app) {
         var type, _fn, _i, _len, _ref;
@@ -31,7 +39,7 @@
               return self.app.colorPicker.open(self.currentColors[type], type);
             },
             render: function() {
-              return $div.css("background-color", self.currentColors[type].toRGB().toString());
+              return $div.css("background-color", self.currentColors[type].toRGBAString());
             }
           });
           $div.trigger("render");

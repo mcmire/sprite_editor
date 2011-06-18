@@ -115,7 +115,7 @@
                 _fn = function() {
                   var color, rgba;
                   rgba = imageData.getPixel(x, y);
-                  color = SpriteEditor.Color.RGB(color.red, color.green, color.blue, color.alpha);
+                  color = new SpriteEditor.Color(color);
                   if (!color.isClear()) {
                     return this.cells[y][x].color = color;
                   }

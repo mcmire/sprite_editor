@@ -12,11 +12,11 @@
         } else {
           this.app = arguments[0];
           this.loc = new SpriteEditor.CellLocation(arguments[0], arguments[1], arguments[2]);
-          this.color = new SpriteEditor.Color.HSL();
+          this.color = new SpriteEditor.Color();
         }
       }
       Cell.prototype.clear = function() {
-        this.color = new SpriteEditor.Color.HSL();
+        this.color = new SpriteEditor.Color();
         return this;
       };
       Cell.prototype.asClear = function() {

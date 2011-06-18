@@ -66,8 +66,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       localStorage.setItem("pixel_editor.saved", "true")
       for row in @cells
         for cell in row
-          cellJSON = JSON.stringify(cell.color)
-          localStorage.setItem("cells."+cell.coords(), cellJSON)
+          localStorage.setItem("cells."+cell.coords(), cell.color.toJSON())
 
     _initCells: ->
       needsReload = (localStorage.getItem("pixel_editor.saved") == "true")
@@ -77,7 +76,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
           row[j] = new SpriteEditor.Cell(this, i, j)
           if needsReload
             color = JSON.parse(localStorage["cells." + j + "," + i])
-            row[j].color = new SpriteEditor.Color.HSL(color)
+            row[j].color = new SpriteEditor.Color(color)
 
     addEvents: ->
       self = this
@@ -130,7 +129,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       loc = opts.loc || cell.loc
       if typeof color isnt "string"
         return if color.isClear()
-        color = color.toRGB().toString()
+        color = color.toRGBAString()
       wc.ctx.fillStyle = color
       if @showGrid
         wc.ctx.fillRect(loc.x + 1, loc.y + 1, @cellSize - 1, @cellSize - 1)
@@ -139,7 +138,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
 
     drawPreviewCell: (cell) ->
       pc = @previewCanvas
-      color = cell.color.toRGB()
+      color = cell.color
       return if color.isClear()
       pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, 255)
 

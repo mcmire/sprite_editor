@@ -70,7 +70,7 @@
         return this;
       },
       save: function() {
-        var cell, cellJSON, row, _i, _len, _ref, _results;
+        var cell, row, _i, _len, _ref, _results;
         console.log("Saving...");
         localStorage.setItem("pixel_editor.saved", "true");
         _ref = this.cells;
@@ -82,8 +82,7 @@
             _results2 = [];
             for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
               cell = row[_j];
-              cellJSON = JSON.stringify(cell.color);
-              _results2.push(localStorage.setItem("cells." + cell.coords(), cellJSON));
+              _results2.push(localStorage.setItem("cells." + cell.coords(), cell.color.toJSON()));
             }
             return _results2;
           })());
@@ -101,7 +100,7 @@
             _results2 = [];
             for (j = 0, _ref2 = this.widthInCells; 0 <= _ref2 ? j < _ref2 : j > _ref2; 0 <= _ref2 ? j++ : j--) {
               row[j] = new SpriteEditor.Cell(this, i, j);
-              _results2.push(needsReload ? (color = JSON.parse(localStorage["cells." + j + "," + i]), row[j].color = new SpriteEditor.Color.HSL(color)) : void 0);
+              _results2.push(needsReload ? (color = JSON.parse(localStorage["cells." + j + "," + i]), row[j].color = new SpriteEditor.Color(color)) : void 0);
             }
             return _results2;
           }).call(this));
@@ -177,7 +176,7 @@
           if (color.isClear()) {
             return;
           }
-          color = color.toRGB().toString();
+          color = color.toRGBAString();
         }
         wc.ctx.fillStyle = color;
         if (this.showGrid) {
@@ -189,7 +188,7 @@
       drawPreviewCell: function(cell) {
         var color, pc;
         pc = this.previewCanvas;
-        color = cell.color.toRGB();
+        color = cell.color;
         if (color.isClear()) {
           return;
         }
