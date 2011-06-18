@@ -1,7 +1,6 @@
 GEM
   remote: http://rubygems.org/
   specs:
-    addressable (2.2.5)
     childprocess (0.1.8)
       ffi (~> 1.0.6)
     chunky_png (0.12.0)
@@ -13,10 +12,6 @@ GEM
       chunky_png (~> 0.12.0)
       sass (>= 3.1.0.alpha.218)
     diff-lcs (1.1.2)
-    em-websocket (0.2.1)
-      addressable (>= 2.1.1)
-      eventmachine (>= 0.12.9)
-    eventmachine (0.12.10)
     execjs (1.1.3)
       multi_json (~> 1.0)
     ffi (1.0.7)
@@ -27,10 +22,6 @@ GEM
     guard-coffeescript (0.2.4)
       coffee-script (~> 2.2.0)
       guard (~> 0.3.0)
-    guard-livereload (0.1.11)
-      em-websocket (~> 0.2.0)
-      guard (>= 0.2.2)
-      json (~> 1.5.1)
     guard-shell (0.1.1)
       guard (>= 0.2.0)
     jasmine (1.0.2.0)
@@ -72,7 +63,6 @@ DEPENDENCIES
   compass (= 0.11.beta.2)
   growl
   guard-coffeescript
-  guard-livereload
   guard-shell
   jasmine
   json
