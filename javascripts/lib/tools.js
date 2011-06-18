@@ -44,13 +44,12 @@
     Tools.pencil = $.tap($.extend(true, {}, Tools.base), function(t) {
       t.addAction("updateCells", {
         "do": function() {
-          var after, changedCells, coords, event, _fn, _ref;
+          var changedCells, event;
           event = {
             canvases: {}
           };
           changedCells = [];
-          _ref = t.actionableCells;
-          _fn = function(after) {
+          $.v.each(t.upcomingCells, function(coords, after) {
             var before;
             before = t.canvases.cells[after.loc.i][after.loc.j];
             t.canvases.cells[after.loc.i][after.loc.j] = after;
@@ -58,11 +57,7 @@
               before: before,
               after: after
             });
-          };
-          for (coords in _ref) {
-            after = _ref[coords];
-            _fn(after);
-          }
+          });
           event.canvases.changedCells = changedCells;
           return event;
         },
@@ -88,38 +83,55 @@
         }
       });
       return $.extend(t, {
-        actionableCells: {},
+        upcomingCells: {},
+        reset: function() {
+          return this.upcomingCells = {};
+        },
         mousedown: function(event) {
-          this.actionableCells = {};
+          this.reset();
           return this.mousedrag(event);
         },
         mousedrag: function(event) {
-          var cell, currentColor, erase, self, _i, _len, _ref, _results;
+          var cell, currentColor, erase, self, _, _ref, _results;
           self = this;
           erase = event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY];
-          currentColor = t.app.currentColor[t.app.currentColor.type];
-          _ref = t.canvases.focusedCells;
+          currentColor = this.app.currentColor[this.app.currentColor.type];
+          _ref = this.canvases.focusedCells;
           _results = [];
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            cell = _ref[_i];
-            if (cell.coords() in this.actionableCells) {
+          for (_ in _ref) {
+            cell = _ref[_];
+            if (cell.coords() in this.upcomingCells) {
               continue;
             }
             cell = (erase ? cell.asClear() : cell.withColor(currentColor));
-            _results.push(this.actionableCells[cell.coords()] = cell);
+            _results.push(this.upcomingCells[cell.coords()] = cell);
           }
           return _results;
         },
         mouseup: function(event) {
           this.recordEvent("updateCells");
-          return this.actionableCells = {};
+          return this.reset();
         },
-        cellToDraw: function(cell) {
-          if (cell.coords() in this.actionableCells) {
-            return this.actionableCells[cell.coords()];
-          } else {
-            return cell;
+        cellOptions: function(cell) {
+          var currentColor, focusedCell, opts, upcomingCell;
+          opts = {};
+          currentColor = this.app.currentColor[this.app.currentColor.type];
+          upcomingCell = this.upcomingCells[cell.coords()];
+          focusedCell = this.canvases.focusedCells && this.canvases.focusedCells[cell.coords()];
+          if (upcomingCell) {
+            opts.color = upcomingCell.color;
+          } else if (focusedCell) {
+            if (Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
+              opts.color = cell.color["with"]({
+                alpha: 0.2
+              });
+            } else {
+              opts.color = currentColor["with"]({
+                alpha: 0.5
+              });
+            }
           }
+          return opts;
         }
       });
     });

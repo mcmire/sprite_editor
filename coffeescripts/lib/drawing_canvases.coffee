@@ -15,7 +15,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
     previewCanvas: null
     cells: []
     focusedCell: null
-    focusedCells: []
+    focusedCells: null
     startDragAtCell: null
     clipboard: []
 
@@ -52,7 +52,6 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @_clearPreviewCanvas()
       @_clearTiledPreviewCanvas()
       @_fillCells()
-      @_highlightFocusedCells()
       @app.currentTool().draw?()
       @_updateTiledPreviewCanvas()
 
@@ -186,7 +185,6 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       x = mouse.rel.x
       y = mouse.rel.y
 
-      focusedCells = []
       # Make a bounding box of pixels within the working canvas based on
       # the brush size
       x1 = x - (bs / 2)
@@ -208,12 +206,15 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       j2 = Math.floor(x2 / @cellSize)
       i1 = Math.floor(y1 / @cellSize)
       i2 = Math.floor(y2 / @cellSize)
+
       # Now that we have a bounding box of cells, enumerate through all
       # cells in the box and add them to the set of current cells
+      focusedCells = {}
       for i in [i1..i2]
+        row = @cells[i]
         for j in [j1..j2]
-          row = @cells[i]
-          focusedCells.push(row[j]) if row && row[j]
+          cell = row[j]
+          focusedCells[cell.coords()] = cell
       @focusedCells = focusedCells
 
     _unsetFocusedCells: ->
@@ -234,29 +235,14 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       ptc = @tiledPreviewCanvas
       ptc.ctx.clearRect(0, 0, ptc.width, ptc.height)
 
-    _highlightFocusedCells: ->
-      ctx = @workingCanvas.ctx
-      isDragging = @workingCanvas.$element.mouseTracker("isDragging")
-      if @focusedCells and not (isDragging or Keyboard.pressedKeys[Keyboard.CTRL_KEY]) and @app.currentToolName == "pencil"
-        currentColor = @app.currentColor[@app.currentColor.type]
-        ctx.save()
-        for cell in @focusedCells
-          # If a cell is already filled in, fill it in with white before
-          # filling it with the current color, since we want to let the user
-          # know which color each cell would get replaced with
-          # TODO: We really need to "un-draw" the cell first; how?
-          @drawWorkingCell(cell, color: "#fff")
-          @drawWorkingCell(cell, color: currentColor.with(alpha: 0.5))
-        ctx.restore()
-
     _fillCells: ->
-      wc = @workingCanvas
-      pc = @previewCanvas
+      [wc, pc] = [@workingCanvas, @previewCanvas]
       wc.ctx.save()
       for row in @cells
-        for origCell in row
-          customCell = @app.currentTool().trigger("cellToDraw", origCell)
-          @drawCell(customCell || origCell)
+        for cell in row
+          # Allow custom cell options -- this is used by the pencil tool
+          opts = @app.currentTool().trigger("cellOptions", cell) || {}
+          @drawCell(cell, opts)
       wc.ctx.restore()
       pc.ctx.putImageData(pc.imageData, 0, 0)
 

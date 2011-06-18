@@ -15,7 +15,7 @@
       previewCanvas: null,
       cells: [],
       focusedCell: null,
-      focusedCells: [],
+      focusedCells: null,
       startDragAtCell: null,
       clipboard: [],
       tickInterval: 80,
@@ -56,7 +56,6 @@
         this._clearPreviewCanvas();
         this._clearTiledPreviewCanvas();
         this._fillCells();
-        this._highlightFocusedCells();
         if (typeof (_base = this.app.currentTool()).draw === "function") {
           _base.draw();
         }
@@ -231,25 +230,32 @@
         return this.focusedCell = this.cells[i][j];
       },
       _setFocusedCells: function(mouse) {
-        var bs, focusedCells, i, i1, i2, j, j1, j2, row, x, x1, x2, y, y1, y2;
+        var bs, cell, focusedCells, i, i1, i2, j, j1, j2, row, x, x1, x2, y, y1, y2;
         bs = (this.app.currentBrushSize - 1) * this.cellSize;
         x = mouse.rel.x;
         y = mouse.rel.y;
-        focusedCells = [];
         x1 = x - (bs / 2);
         x2 = x + (bs / 2);
         y1 = y - (bs / 2);
         y2 = y + (bs / 2);
+        if (x1 < 0) {
+          x1 = 0;
+          x2 += -x1;
+        }
+        if (y1 < 0) {
+          y1 = 0;
+          y2 += -y1;
+        }
         j1 = Math.floor(x1 / this.cellSize);
         j2 = Math.floor(x2 / this.cellSize);
         i1 = Math.floor(y1 / this.cellSize);
         i2 = Math.floor(y2 / this.cellSize);
+        focusedCells = {};
         for (i = i1; i1 <= i2 ? i <= i2 : i >= i2; i1 <= i2 ? i++ : i--) {
+          row = this.cells[i];
           for (j = j1; j1 <= j2 ? j <= j2 : j >= j2; j1 <= j2 ? j++ : j--) {
-            row = this.cells[i];
-            if (row && row[j]) {
-              focusedCells.push(row[j]);
-            }
+            cell = row[j];
+            focusedCells[cell.coords()] = cell;
           }
         }
         return this.focusedCells = focusedCells;
@@ -273,40 +279,17 @@
         ptc = this.tiledPreviewCanvas;
         return ptc.ctx.clearRect(0, 0, ptc.width, ptc.height);
       },
-      _highlightFocusedCells: function() {
-        var cell, ctx, currentColor, isDragging, _i, _len, _ref;
-        ctx = this.workingCanvas.ctx;
-        isDragging = this.workingCanvas.$element.mouseTracker("isDragging");
-        if (this.focusedCells && !(isDragging || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) && this.app.currentToolName === "pencil") {
-          currentColor = this.app.currentColor[this.app.currentColor.type];
-          ctx.save();
-          _ref = this.focusedCells;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            cell = _ref[_i];
-            this.drawWorkingCell(cell, {
-              color: "#fff"
-            });
-            this.drawWorkingCell(cell, {
-              color: currentColor["with"]({
-                alpha: 0.5
-              })
-            });
-          }
-          return ctx.restore();
-        }
-      },
       _fillCells: function() {
-        var customCell, origCell, pc, row, wc, _i, _j, _len, _len2, _ref;
-        wc = this.workingCanvas;
-        pc = this.previewCanvas;
+        var cell, opts, pc, row, wc, _i, _j, _len, _len2, _ref, _ref2;
+        _ref = [this.workingCanvas, this.previewCanvas], wc = _ref[0], pc = _ref[1];
         wc.ctx.save();
-        _ref = this.cells;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          row = _ref[_i];
+        _ref2 = this.cells;
+        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+          row = _ref2[_i];
           for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
-            origCell = row[_j];
-            customCell = this.app.currentTool().trigger("cellToDraw", origCell);
-            this.drawCell(customCell || origCell);
+            cell = row[_j];
+            opts = this.app.currentTool().trigger("cellOptions", cell) || {};
+            this.drawCell(cell, opts);
           }
         }
         wc.ctx.restore();

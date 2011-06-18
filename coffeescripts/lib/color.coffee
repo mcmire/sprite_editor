@@ -6,9 +6,15 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
       hsl: [ "hue", "sat", "lum" ]
     @correctHue: true
 
-    # Much of the code in the next three methods were stolen from <http://hslpicker.com>,
-    # which in turn was adapted from the SASS source
-    # which in turn was adapted from algorithms on <http://en.wikipedia.org/wiki/HSL_and_HSV>
+    # Much of the code in the next three methods was stolen from
+    # hslpicker.com [1], which in turn was adapted from the Sass source [2],
+    # which in turn was adapted from algorithms on Wikipedia [3] and the CSS3
+    # spec [4].
+    #
+    # [1]: https://github.com/imathis/hsl-color-picker/blob/master/javascripts/slider.js>
+    # [2]: https://github.com/nex3/sass/blob/master/lib/sass/script/color.rb
+    # [3]: http://en.wikipedia.org/wiki/HSL_and_HSV
+    # [4]: http://www.w3.org/TR/css3-color/#hsl-color
 
     @rgb2hsl: (rgb) ->
       hsl = {}
