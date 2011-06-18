@@ -91,9 +91,6 @@
         }
         return _results;
       },
-      updateCell: function(cell) {
-        return this.cells[cell.i][cell.j] = cell.clone();
-      },
       _initCells: function() {
         var color, i, j, needsReload, row, _ref, _results;
         needsReload = localStorage.getItem("pixel_editor.saved") === "true";

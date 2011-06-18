@@ -70,10 +70,6 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
           cellJSON = JSON.stringify(cell.color)
           localStorage.setItem("cells."+cell.coords(), cellJSON)
 
-    # TODO: Keep this?
-    updateCell: (cell) ->
-      @cells[cell.i][cell.j] = cell.clone()
-
     _initCells: ->
       needsReload = (localStorage.getItem("pixel_editor.saved") == "true")
       for i in [0...@heightInCells]
