@@ -1,11 +1,11 @@
 (function() {
   var __slice = Array.prototype.slice, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  $["export"]("SpriteEditor.ColorPickerBox", function(SpriteEditor) {
-    var ColorPickerBox, Keyboard;
+  $["export"]("SpriteEditor.ColorPicker", function(SpriteEditor) {
+    var ColorPicker, Keyboard;
     Keyboard = SpriteEditor.Keyboard;
-    ColorPickerBox = {};
-    SpriteEditor.DOMEventHelpers.mixin(ColorPickerBox, "SpriteEditor_ColorPickerBox");
-    $.extend(ColorPickerBox, {
+    ColorPicker = {};
+    SpriteEditor.DOMEventHelpers.mixin(ColorPicker, "SpriteEditor_ColorPicker");
+    $.extend(ColorPicker, {
       hueSatCanvasSize: {
         width: 265,
         height: 300
@@ -294,6 +294,6 @@
         return l;
       }
     });
-    return ColorPickerBox;
+    return ColorPicker;
   });
 }).call(this);

@@ -1,11 +1,11 @@
-$.export "SpriteEditor.ColorPickerBox", (SpriteEditor) ->
+$.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
 
   Keyboard = SpriteEditor.Keyboard
 
-  ColorPickerBox = {}
-  SpriteEditor.DOMEventHelpers.mixin(ColorPickerBox, "SpriteEditor_ColorPickerBox")
+  ColorPicker = {}
+  SpriteEditor.DOMEventHelpers.mixin(ColorPicker, "SpriteEditor_ColorPicker")
 
-  $.extend ColorPickerBox,
+  $.extend ColorPicker,
     hueSatCanvasSize: {width: 265, height: 300}
     lumCanvasSize: {width: 25, height: 300}
     # This is always stored in HSL!
@@ -251,4 +251,4 @@ $.export "SpriteEditor.ColorPickerBox", (SpriteEditor) ->
       l = Math.round(-100 * (y - h) / h)
       return l
 
-  return ColorPickerBox
+  return ColorPicker
