@@ -141,7 +141,7 @@
         $importDiv.append($importFileInput);
         $importDiv.append($importFileButton);
         $importExportDiv.append($importDiv);
-        $exportForm = $("<form id=\"export\" action=\"/\" method=\"POST\"><input name=\"data\" type=\"hidden\" /><button type=\"submit\">Export PNG</button></form>");
+        $exportForm = $('<form id="export" action="" method="POST"><input name="data" type="hidden" /><button type="submit">Export PNG</button></form>');
         $exportForm.bind("submit", __bind(function() {
           var data;
           data = this.previewCanvas.element.toDataURL("image/png");
@@ -163,7 +163,7 @@
         this.colorSampleDivs = {};
         $.v.each(["foreground", "background"], __bind(function(colorType) {
           var $div;
-          $div = $("<div class=\"color_sample\" />");
+          $div = $('<div class="color_sample" />');
           $div.bind({
             click: __bind(function() {
               this.currentColor.beingEdited = colorType;
@@ -304,14 +304,14 @@
           c.ctx.stroke();
           c.ctx.closePath();
           fontSize = 11;
-          c.ctx.font = fontSize + "px Helvetica";
+          c.ctx.font = "" + fontSize + " px Helvetica";
           text = (size / cellSize) + "px";
           metrics = c.ctx.measureText(text);
           return c.ctx.fillText(text, size / 2 - metrics.width / 2, size / 2 + fontSize / 4);
         }, this));
       },
       _createMask: function() {
-        this.$maskDiv = $("<div id=\"mask\" />").hide();
+        this.$maskDiv = $('<div id="mask" />').hide();
         return $(document.body).append(this.$maskDiv);
       },
       _showMask: function() {

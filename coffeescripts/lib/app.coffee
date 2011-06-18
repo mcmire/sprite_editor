@@ -138,7 +138,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
         else if !file.type or file.type isnt "image/png"
           # file.type will be empty if the type couldn't be detected
           error = "Sorry, you can only import PNGs."
-        else error = "Sorry, the image you're trying to import is too big."  if file.size > 1000
+        else error = "Sorry, the image you're trying to import is too big." if file.size > 1000
         if error
           $importErrorSpan.html(error).show()
         else
@@ -173,7 +173,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       #
       # I'm not sure what this means??
       #
-      $exportForm = $("<form id=\"export\" action=\"/\" method=\"POST\"><input name=\"data\" type=\"hidden\" /><button type=\"submit\">Export PNG</button></form>")
+      $exportForm = $('<form id="export" action="" method="POST"><input name="data" type="hidden" /><button type="submit">Export PNG</button></form>')
       $exportForm.bind "submit", =>
         data = @previewCanvas.element.toDataURL("image/png")
         data = data.replace(/^data:image\/png;base64,/, "")
@@ -194,7 +194,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
       @colorSampleDivs = {}
       $.v.each ["foreground", "background"], (colorType) =>
-        $div = $("<div class=\"color_sample\" />")
+        $div = $('<div class="color_sample" />')
         $div.bind
           click: =>
             @currentColor.beingEdited = colorType
@@ -319,7 +319,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
         c.ctx.closePath()
 
         fontSize = 11
-        c.ctx.font = fontSize + "px Helvetica"
+        c.ctx.font = "#{fontSize} px Helvetica"
         text = (size / cellSize) + "px"
         # Place the text that indicates the brush size in the center of the canvas
         # I don't know why I have to put "/4" here, but I do...
@@ -327,7 +327,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
         c.ctx.fillText(text, size/2 - metrics.width/2, size/2 + fontSize/4)
 
     _createMask: ->
-      @$maskDiv = $("<div id=\"mask\" />").hide()
+      @$maskDiv = $('<div id="mask" />').hide()
       $(document.body).append(@$maskDiv)
 
     _showMask: ->

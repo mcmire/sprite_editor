@@ -1,5 +1,6 @@
 # Add class methods to the global ender object
 $.ender {
+
   # $.extend(deep, target, objects...)
   # $.extend(target, objects...)
   #
@@ -100,6 +101,7 @@ $.ender {
 
 # Add methods to each ender element
 $.ender {
+
   center: ->
     vp = $.viewport()
     self = $([ this[0] ])
@@ -147,16 +149,19 @@ $.ender {
 
 # Returns a random number between min (inclusive) and max (exclusive).
 # Copied from the MDC wiki
+#
 Math.randomFloat = (min, max) ->
   Math.random() * (max - min) + min
 
 # Returns a random integer between min (inclusive) and max (exclusive?).
 # Using Math.round() will give you a non-uniform distribution!
 # Copied from the MDC wiki
+#
 Math.randomInt = (min, max) ->
   Math.floor(Math.random() * (max - min + 1)) + min
 
 # <http://stackoverflow.com/questions/610406/javascript-printf-string-format>
+#
 String.format = (str, args...) ->
   for i in [0..args.length]
     regexp = new RegExp("\\{"+i+"\\}", "gi")
