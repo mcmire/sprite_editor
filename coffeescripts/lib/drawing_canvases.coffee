@@ -193,6 +193,14 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       x2 = x + (bs / 2)
       y1 = y - (bs / 2)
       y2 = y + (bs / 2)
+      # (Ensure that x and y are inside the canvas, though)
+      if x1 < 0
+        x1 = 0
+        x2 += -x1
+      if y1 < 0
+        y1 = 0
+        y2 += -y1
+
       # Scale each coordinate on the working canvas down to the coordinate
       # on the preview canvas (which also serves as the cell coordinate
       # within the cells array-of-arrays)
