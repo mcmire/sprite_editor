@@ -1,5 +1,5 @@
 guard 'shell' do
-  watch(/^sass\/(.*)\.scss/) {|m| `compass compile` }
+  watch(/^app\/stylesheets\/(.*)\.scss/) {|m| `compass compile` }
 end
 
-guard 'coffeescript', :input => 'coffeescripts', :output => 'javascripts'
+guard 'coffeescript', :input => 'app/javascripts', :output => 'public/javascripts'

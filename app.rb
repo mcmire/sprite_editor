@@ -2,6 +2,8 @@ require 'sinatra'
 require 'base64'
 require 'pp'
 
+set :views, "app/views"
+
 get "/?" do
   erb :index
 end

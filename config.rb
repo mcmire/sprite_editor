@@ -1,10 +1,10 @@
 # Require any additional compass plugins here.
 # Set this to the root of your project when deployed:
 http_path = "/"
-css_dir = "stylesheets"
-sass_dir = "sass"
-images_dir = "images"
-javascripts_dir = "javascripts"
+css_dir = "public/stylesheets"
+sass_dir = "app/stylesheets"
+images_dir = "public/images"
+javascripts_dir = "public/javascripts"
 # You can select your preferred output style here (can be overridden via the command line):
 output_style = :compact
 # To enable relative paths to assets via compass helper functions. Uncomment:
