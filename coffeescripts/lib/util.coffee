@@ -10,9 +10,8 @@ $.ender {
   # handled specially, however. To wit, if two properties share the same name
   # and are functions (let's call them function A and B), instead of function A
   # being overridden with function B, you get a new function C which wraps
-  # function B. Function C is exactly the same as B, except its argument list
-  # is prepended with a reference to function A (you could call it the "_super"
-  # reference).
+  # function B. Function C is exactly the same as B, except that within C
+  # you have a reference to B through a `_super` property.
   #
   extend: ->
     args = Array::slice.call(arguments)
@@ -92,6 +91,9 @@ $.ender {
     newObj = newObj.apply(newObj, chain) if typeof newObj is "function"
     tail[newIdStr] = newObj
 
+  # The Kestrel combinator. Lets you group a block of code that's intended
+  # to not only operate on a value but return it at the end, too.
+  #
   tap: (obj, fn) ->
     fn(obj)
     obj
