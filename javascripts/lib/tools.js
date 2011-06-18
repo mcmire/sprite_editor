@@ -299,23 +299,25 @@
             },
             canvases: {}
           };
-          changedCells = [];
+          changedCells = {
+            src: [],
+            tgt: []
+          };
           _ref = t.selectedCells;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             srcBefore = _ref[_i];
+            srcAfter = srcBefore.asClear();
             tgtLoc = srcBefore.loc.plus(t.dragOffset);
             tgtBefore = t.canvases.cells[tgtLoc.i][tgtLoc.j];
             tgtAfter = tgtBefore.withColor(srcBefore.color);
             t.canvases.cells[tgtLoc.i][tgtLoc.j] = tgtAfter;
-            changedCells.push({
-              before: tgtBefore,
-              after: tgtAfter
-            });
-            srcAfter = srcBefore.asClear();
-            t.canvases.cells[srcBefore.loc.i][srcBefore.loc.j] = srcAfter;
-            changedCells.push({
+            changedCells.src.push({
               before: srcBefore,
               after: srcAfter
+            });
+            changedCells.tgt.push({
+              before: tgtBefore,
+              after: tgtAfter
             });
           }
           event.canvases.changedCells = changedCells;
@@ -328,10 +330,15 @@
           return event;
         },
         undo: function(event) {
-          var cell, _i, _len, _ref;
-          _ref = event.canvases.changedCells;
+          var cell, _i, _j, _len, _len2, _ref, _ref2;
+          _ref = event.canvases.changedCells.tgt;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             cell = _ref[_i];
+            t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before;
+          }
+          _ref2 = event.canvases.changedCells.src;
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            cell = _ref2[_j];
             t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before;
           }
           t.selectionStart = event.me.selectionStart.before;
@@ -339,10 +346,15 @@
           return t.calculateSelectedCells();
         },
         redo: function(event) {
-          var cell, _i, _len, _ref;
-          _ref = event.canvases.changedCells;
+          var cell, _i, _j, _len, _len2, _ref, _ref2;
+          _ref = event.canvases.changedCells.src;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             cell = _ref[_i];
+            t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after;
+          }
+          _ref2 = event.canvases.changedCells.tgt;
+          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+            cell = _ref2[_j];
             t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after;
           }
           t.selectionStart = event.me.selectionStart.after;
@@ -374,6 +386,8 @@
       return $.extend(t, {
         selectionStart: null,
         selectionEnd: null,
+        selectionStartBeforeDrag: null,
+        selectionEndBeforeDrag: null,
         selectedCells: [],
         makingSelection: false,
         animOffset: 0,
@@ -381,16 +395,22 @@
         reset: function() {
           this.selectionStart = null;
           this.selectionEnd = null;
+          this.selectionStartBeforeDrag = null;
+          this.selectionEndBeforeDrag = null;
           this.selectedCells = [];
           return this.makingSelection = false;
         },
         calculateSelectedCells: function() {
-          var i, j, selectedCells, _ref, _ref2, _ref3, _ref4;
+          var i, j, selectedCells;
           selectedCells = [];
-          for (i = _ref = this.selectionStart.i, _ref2 = this.selectionEnd.i; _ref <= _ref2 ? i < _ref2 : i > _ref2; _ref <= _ref2 ? i++ : i--) {
-            for (j = _ref3 = this.selectionStart.j, _ref4 = this.selectionEnd.j; _ref3 <= _ref4 ? j < _ref4 : j > _ref4; _ref3 <= _ref4 ? j++ : j--) {
+          i = this.selectionStart.i;
+          while (i <= this.selectionEnd.i) {
+            j = this.selectionStart.j;
+            while (j <= this.selectionEnd.j) {
               selectedCells.push(this.canvases.cells[i][j].clone());
+              j++;
             }
+            i++;
           }
           return this.selectedCells = selectedCells;
         },
@@ -416,18 +436,19 @@
           }
         },
         mousedragstart: function(event) {
-          var c, cell, _i, _len, _ref;
+          var cell, _i, _len, _ref;
           if (this.selectionStart && this._focusIsInsideOfSelection()) {
             _ref = this.selectedCells;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               cell = _ref[_i];
               this.canvases.cells[cell.loc.i][cell.loc.j].clear();
             }
+            this.selectionStartBeforeDrag = this.selectionStart.clone();
+            this.selectionEndBeforeDrag = this.selectionEnd.clone();
           } else {
             this._exitSelection();
             this.makingSelection = true;
-            c = this.canvases.focusedCell;
-            this.selectionStart = c.loc.clone();
+            this.selectionStart = this.canvases.focusedCell.loc.clone();
           }
           return this.animateSelectionBox = false;
         },
@@ -444,6 +465,8 @@
           } else {
             this._moveSelection();
             this.dragOffset = null;
+            this.selectionStartBeforeDrag = null;
+            this.selectionEndBeforeDrag = null;
           }
           this.makingSelection = false;
           return this.animateSelectionBox = true;
@@ -456,17 +479,33 @@
           }
         },
         draw: function() {
-          var bounds, cell, ctx, loc, x, x1, x2, y, y1, y2, _i, _j, _len, _len2, _ref, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _step, _step2, _step3, _step4;
-          if (!this.selectionStart || !this.selectionEnd) {
-            return;
+          if (this.selectionStart && this.selectionEnd) {
+            this._drawSelectionBox({
+              start: this.selectionStart,
+              end: this.selectionEnd,
+              offset: this.dragOffset,
+              animate: this.animateSelectionBox
+            });
           }
+          if (this.selectionStartBeforeDrag && this.selectionEndBeforeDrag) {
+            return this._drawSelectionBox({
+              start: this.selectionStartBeforeDrag,
+              end: this.selectionEndBeforeDrag,
+              animate: false,
+              shadow: true
+            });
+          }
+        },
+        _drawSelectionBox: function(args) {
+          var alpha, bounds, cell, ctx, loc, x, x1, x2, y, y1, y2, _i, _j, _len, _len2, _ref, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _step, _step2, _step3, _step4;
+          alpha = (args.shadow ? 0.3 : 1);
           ctx = this.canvases.workingCanvas.ctx;
           ctx.save();
-          if (this.dragOffset) {
+          if (args.offset) {
             _ref = this.selectedCells;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               cell = _ref[_i];
-              loc = SpriteEditor.CellLocation.add(cell.loc, this.dragOffset);
+              loc = SpriteEditor.CellLocation.add(cell.loc, args.offset);
               this.canvases.drawCell(cell, {
                 loc: loc
               });
@@ -475,18 +514,22 @@
             _ref2 = this.selectedCells;
             for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
               cell = _ref2[_j];
-              this.canvases.drawCell(cell);
+              this.canvases.drawCell(cell, {
+                color: cell.color["with"]({
+                  alpha: alpha
+                })
+              });
             }
           }
-          bounds = this._selectionBounds(this.dragOffset);
-          ctx.strokeStyle = "#000";
+          bounds = this._selectionBounds(args);
+          ctx.strokeStyle = "rgba(0, 0, 0, " + alpha + ")";
           ctx.beginPath();
           for (x = _ref3 = bounds.x1 + this.animOffset, _ref4 = bounds.x2, _step = 4; _ref3 <= _ref4 ? x <= _ref4 : x >= _ref4; x += _step) {
             y1 = bounds.y1;
             ctx.moveTo(x, y1 + 0.5);
             ctx.lineTo(x + 2, y1 + 0.5);
           }
-          for (y = _ref5 = bounds.y1 + this.animOffset, _ref6 = bounds.x2, _step2 = 4; _ref5 <= _ref6 ? y <= _ref6 : y >= _ref6; y += _step2) {
+          for (y = _ref5 = bounds.y1 + this.animOffset, _ref6 = bounds.y2, _step2 = 4; _ref5 <= _ref6 ? y <= _ref6 : y >= _ref6; y += _step2) {
             x2 = bounds.x2;
             ctx.moveTo(x2 + 0.5, y);
             ctx.lineTo(x2 + 0.5, y + 2);
@@ -503,14 +546,14 @@
           }
           ctx.stroke();
           ctx.restore();
-          if (this.animateSelectionBox) {
+          if (args.animate) {
             this.animOffset++;
             return this.animOffset %= 4;
           }
         },
-        _selectionBounds: function(offset) {
+        _selectionBounds: function(args) {
           var bounds, se, ss, _ref;
-          _ref = [this.selectionStart, this.selectionEnd], ss = _ref[0], se = _ref[1];
+          _ref = [args.start, args.end], ss = _ref[0], se = _ref[1];
           bounds = {};
           if (ss.i > se.i) {
             bounds.y1 = se.y;
@@ -526,11 +569,11 @@
             bounds.x1 = ss.x;
             bounds.x2 = se.x;
           }
-          if (offset) {
-            bounds.x1 += offset.x;
-            bounds.x2 += offset.x;
-            bounds.y1 += offset.y;
-            bounds.y2 += offset.y;
+          if (args.offset) {
+            bounds.x1 += args.offset.x;
+            bounds.x2 += args.offset.x;
+            bounds.y1 += args.offset.y;
+            bounds.y2 += args.offset.y;
           }
           bounds.x2 += this.canvases.cellSize;
           bounds.y2 += this.canvases.cellSize;

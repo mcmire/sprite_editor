@@ -70,6 +70,9 @@
           j: this.j
         });
       };
+      CellLocation.prototype.inspect = function() {
+        return "(" + this.i + ", " + this.j + ")";
+      };
       CellLocation.prototype._calculateXandY = function() {
         this.x = this.j * this.app.cellSize;
         return this.y = this.i * this.app.cellSize;

@@ -22,12 +22,18 @@
       widthInCells: 16,
       heightInCells: 16,
       cellSize: 30,
+      showGrid: false,
       init: function(app) {
         this.app = app;
         this._initCells();
-        this._createGridBgCanvas();
+        if (this.showGrid) {
+          this._createGridBgCanvas();
+        }
         this._createWorkingCanvas();
         this._createPreviewCanvases();
+        this.autoSaveTimer = setInterval((__bind(function() {
+          return this.save();
+        }, this)), 30000);
         return this;
       },
       destroy: function() {
@@ -66,6 +72,7 @@
       },
       save: function() {
         var cell, cellJSON, row, _i, _len, _ref, _results;
+        console.log("Saving...");
         localStorage.setItem("pixel_editor.saved", "true");
         _ref = this.cells;
         _results = [];
@@ -176,7 +183,11 @@
           color = color.toRGB().toString();
         }
         wc.ctx.fillStyle = color;
-        return wc.ctx.fillRect(loc.x + 1, loc.y + 1, this.cellSize - 1, this.cellSize - 1);
+        if (this.showGrid) {
+          return wc.ctx.fillRect(loc.x + 1, loc.y + 1, this.cellSize - 1, this.cellSize - 1);
+        } else {
+          return wc.ctx.fillRect(loc.x, loc.y, this.cellSize, this.cellSize);
+        }
       },
       drawPreviewCell: function(cell) {
         var color, pc;
@@ -203,7 +214,10 @@
         this.width = this.widthInCells * this.cellSize;
         this.height = this.heightInCells * this.cellSize;
         this.workingCanvas = SpriteEditor.Canvas.create(this.width, this.height);
-        return this.workingCanvas.$element.attr("id", "working_canvas").css("background-image", "url(" + this.gridBgCanvas.element.toDataURL("image/png") + ")");
+        this.workingCanvas.$element.attr("id", "working_canvas");
+        if (this.showGrid) {
+          return this.workingCanvas.$element.css("background-image", "url(" + this.gridBgCanvas.element.toDataURL("image/png") + ")");
+        }
       },
       _createPreviewCanvases: function() {
         this.previewCanvas = SpriteEditor.Canvas.create(this.widthInCells, this.heightInCells);

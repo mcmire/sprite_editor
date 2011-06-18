@@ -25,7 +25,9 @@
       Cell.prototype.withColor = function(color) {
         var clone;
         clone = this.clone();
-        clone.color = color.clone();
+        if (!color.isClear()) {
+          clone.color = color.clone();
+        }
         return clone;
       };
       Cell.prototype.coords = function() {
@@ -33,6 +35,9 @@
       };
       Cell.prototype.clone = function() {
         return new Cell(this);
+      };
+      Cell.prototype.inspect = function() {
+        return "{loc: " + (this.loc.inspect()) + ", color: " + (this.color.inspect()) + "}";
       };
       return Cell;
     })();

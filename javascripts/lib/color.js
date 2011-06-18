@@ -137,11 +137,7 @@
         }
       };
       RGB.prototype.isClear = function() {
-        var self;
-        self = this;
-        return $.v.every(Color.RGB.properties, function(prop) {
-          return typeof self[prop] === "undefined";
-        });
+        return !((this.red != null) || (this.green != null) || (this.blue != null));
       };
       RGB.prototype.clone = function() {
         return new Color.RGB(this);
@@ -149,16 +145,19 @@
       RGB.prototype.toString = function() {
         var prop, values;
         values = (function() {
-          var _i, _len, _ref, _results;
+          var _i, _len, _ref, _ref2, _results;
           _ref = Color.RGB.properties;
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             prop = _ref[_i];
-            _results.push(this[prop] || 0);
+            _results.push((_ref2 = this[prop]) != null ? _ref2 : "null");
           }
           return _results;
         }).call(this);
         return "rgba(" + values.join(", ") + ")";
+      };
+      RGB.prototype.inspect = function() {
+        return this.toString();
       };
       RGB.prototype.eq = function(other) {
         return $.v.every(Color.RGB.properties, __bind(function(prop) {
@@ -214,11 +213,7 @@
         return this;
       };
       HSL.prototype.isClear = function() {
-        var self;
-        self = this;
-        return $.v.every(Color.HSL.properties, function(prop) {
-          return typeof self[prop] === "undefined";
-        });
+        return !((this.hue != null) || (this.sat != null) || (this.lum != null));
       };
       HSL.prototype.clone = function() {
         return new Color.HSL(this);
@@ -226,16 +221,19 @@
       HSL.prototype.toString = function() {
         var prop, values;
         values = (function() {
-          var _i, _len, _ref, _results;
+          var _i, _len, _ref, _ref2, _results;
           _ref = Color.HSL.properties;
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             prop = _ref[_i];
-            _results.push(this[prop] || 0);
+            _results.push((_ref2 = this[prop]) != null ? _ref2 : "null");
           }
           return _results;
         }).call(this);
         return "hsla(" + values.join(", ") + ")";
+      };
+      HSL.prototype.inspect = function() {
+        return this.toString();
       };
       HSL.prototype.eq = function(other) {
         return $.v.every(Color.HSL.properties, __bind(function(prop) {
