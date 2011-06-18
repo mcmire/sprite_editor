@@ -35,7 +35,7 @@ input[type="submit"], input[type="button"], select { cursor: pointer; }
 .box { border: 1px solid #333; border-radius: 4px; padding: 20px; /*float: left;*/ overflow: auto; background-color: white; }
 .box h3 { margin: -20px; margin-bottom: 20px; background-color: #333; color: white; padding: 5px 10px; font-size: 15px; text-align: center; }
 
-#working_canvas { border: 1px solid red; cursor: pointer; display: inline; }
+#working_canvas { /*border: 1px solid red;*/ cursor: pointer; display: inline; }
 
 #working_canvas.crosshair { cursor: crosshair; }
 

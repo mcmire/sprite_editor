@@ -22,7 +22,7 @@
       widthInCells: 16,
       heightInCells: 16,
       cellSize: 30,
-      showGrid: false,
+      showGrid: true,
       init: function(app) {
         this.app = app;
         this._initCells();

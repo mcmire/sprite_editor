@@ -23,7 +23,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
     widthInCells: 16    # cells
     heightInCells: 16   # cells
     cellSize: 30        # pixels
-    showGrid: false ##true
+    showGrid: true
 
     init: (app) ->
       @app = app

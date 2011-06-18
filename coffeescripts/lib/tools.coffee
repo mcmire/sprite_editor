@@ -257,8 +257,6 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         event.me.selectionEnd.before = t.selectionEnd
         event.me.selectionEnd.after = t.selectionEnd = t.selectionEnd.plus(t.dragOffset)
         t.calculateSelectedCells()
-        #console.log "Selected cells:"
-        #console.log cell.inspect() for cell in t.selectedCells
 
         # XXX: Does this belong here?
         t.dragOffset = null
@@ -276,8 +274,6 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         t.selectionStart = event.me.selectionStart.before
         t.selectionEnd = event.me.selectionEnd.before
         t.calculateSelectedCells()
-        #console.log "Selected cells:"
-        #console.log cell.inspect() for cell in t.selectedCells
 
       redo: (event) ->
         # Move the source cells back to the target cells
@@ -290,8 +286,6 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         t.selectionStart = event.me.selectionStart.after
         t.selectionEnd = event.me.selectionEnd.after
         t.calculateSelectedCells()
-        #console.log "Selected cells:"
-        #console.log cell.inspect() for cell in t.selectedCells
 
     t.addAction "resetSelection",
       do: (event) ->
