@@ -48,6 +48,9 @@ $.export "SpriteEditor.ColorPickerBox", (SpriteEditor) ->
       @_removeEvents()
       @options?.close.call(this)
 
+    trigger: (method, args...) ->
+      @options[method]?.apply(this, args)
+
     _addHueSatDiv: ->
       $div = @$hueSatDiv = $('<div class="hue_sat_div" />')
       $div.css {
@@ -148,7 +151,7 @@ $.export "SpriteEditor.ColorPickerBox", (SpriteEditor) ->
           self._setColorFields()
           self._setColorSample()
           self._drawLightnessCanvas()
-          self.options.change?.call(self, self.currentColor)
+          self.trigger("change", self.currentColor)
 
       @$lumDiv.mouseTracker
         "mousedown mousedrag": ->
@@ -156,7 +159,7 @@ $.export "SpriteEditor.ColorPickerBox", (SpriteEditor) ->
           self._setLightnessFromSelectorPosition()
           self._setColorFields()
           self._setColorSample()
-          self.options.change?.call(self, self.currentColor)
+          self.trigger("change", self.currentColor)
 
     _removeEvents: ->
       @_unbindEvents(document, "keyup")
@@ -180,6 +183,7 @@ $.export "SpriteEditor.ColorPickerBox", (SpriteEditor) ->
 
     _positionLightnessSelectorFromMouse: ->
       mouse = @$lumDiv.mouseTracker("pos").rel
+      # Same thing for this
       top = mouse.y - 5
       @$lumDiv.css("background-position", "0px "+top+"px")
 

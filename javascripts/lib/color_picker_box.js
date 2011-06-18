@@ -1,5 +1,5 @@
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var __slice = Array.prototype.slice, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $["export"]("SpriteEditor.ColorPickerBox", function(SpriteEditor) {
     var ColorPickerBox, Keyboard;
     Keyboard = SpriteEditor.Keyboard;
@@ -48,6 +48,11 @@
         this.$container.hide();
         this._removeEvents();
         return (_ref = this.options) != null ? _ref.close.call(this) : void 0;
+      },
+      trigger: function() {
+        var args, method, _ref;
+        method = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+        return (_ref = this.options[method]) != null ? _ref.apply(this, args) : void 0;
       },
       _addHueSatDiv: function() {
         var $div;
@@ -162,23 +167,21 @@
         });
         this.$hueSatDiv.mouseTracker({
           "mousedown mousedrag": function() {
-            var _ref;
             self._positionHueSatSelectorFromMouse();
             self._setHueAndSatFromSelectorPosition();
             self._setColorFields();
             self._setColorSample();
             self._drawLightnessCanvas();
-            return (_ref = self.options.change) != null ? _ref.call(self, self.currentColor) : void 0;
+            return self.trigger("change", self.currentColor);
           }
         });
         return this.$lumDiv.mouseTracker({
           "mousedown mousedrag": function() {
-            var _ref;
             self._positionLightnessSelectorFromMouse();
             self._setLightnessFromSelectorPosition();
             self._setColorFields();
             self._setColorSample();
-            return (_ref = self.options.change) != null ? _ref.call(self, self.currentColor) : void 0;
+            return self.trigger("change", self.currentColor);
           }
         });
       },

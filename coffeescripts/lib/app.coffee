@@ -199,9 +199,9 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
           click: =>
             @currentColor.beingEdited = colorType
             @colorPickerBox.open @currentColor[colorType]
-          update: =>
+          render: =>
             $div.css "background-color", @currentColor[colorType].toRGB().toString()
-        $div.trigger("update")
+        $div.trigger("render")
         $boxDiv.append($div)
         @colorSampleDivs[colorType] = $div
 
@@ -216,7 +216,8 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
           @addEvents()
           @currentColor.beingEdited = null
         change: (color) =>
-          @colorSampleDivs[@currentColor.beingEdited].trigger("update")
+          @currentColor[@currentColor.beingEdited] = color
+          @colorSampleDivs[@currentColor.beingEdited].trigger("render")
 
       $(document.body).append(@colorPickerBox.$container)
 
@@ -229,8 +230,8 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       tmp = @currentColor.foreground
       @currentColor.foreground = @currentColor.background
       @currentColor.background = tmp
-      @colorSampleDivs.foreground.trigger("update")
-      @colorSampleDivs.background.trigger("update")
+      @colorSampleDivs.foreground.trigger("render")
+      @colorSampleDivs.background.trigger("render")
 
     _createPreviewBox: ->
       $boxDiv = $("<div/>").attr("id", "preview_box").addClass("box")

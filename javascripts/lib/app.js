@@ -169,11 +169,11 @@
               this.currentColor.beingEdited = colorType;
               return this.colorPickerBox.open(this.currentColor[colorType]);
             }, this),
-            update: __bind(function() {
+            render: __bind(function() {
               return $div.css("background-color", this.currentColor[colorType].toRGB().toString());
             }, this)
           });
-          $div.trigger("update");
+          $div.trigger("render");
           $boxDiv.append($div);
           return this.colorSampleDivs[colorType] = $div;
         }, this));
@@ -189,7 +189,8 @@
             return this.currentColor.beingEdited = null;
           }, this),
           change: __bind(function(color) {
-            return this.colorSampleDivs[this.currentColor.beingEdited].trigger("update");
+            this.currentColor[this.currentColor.beingEdited] = color;
+            return this.colorSampleDivs[this.currentColor.beingEdited].trigger("render");
           }, this)
         });
         return $(document.body).append(this.colorPickerBox.$container);
@@ -204,8 +205,8 @@
         tmp = this.currentColor.foreground;
         this.currentColor.foreground = this.currentColor.background;
         this.currentColor.background = tmp;
-        this.colorSampleDivs.foreground.trigger("update");
-        return this.colorSampleDivs.background.trigger("update");
+        this.colorSampleDivs.foreground.trigger("render");
+        return this.colorSampleDivs.background.trigger("render");
       },
       _createPreviewBox: function() {
         var $boxDiv, $header;
