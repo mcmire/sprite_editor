@@ -32,7 +32,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @_createGridBgCanvas() if @showGrid
       @_createWorkingCanvas()
       @_createPreviewCanvases()
-      #@autoSaveTimer = setInterval((=> @save()), 30000)
+      @autoSaveTimer = setInterval((=> @save()), 30000)
 
       return this
 
@@ -63,6 +63,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       return this
 
     save: ->
+      console.log "Saving..."
       localStorage.setItem("pixel_editor.saved", "true")
       for row in @cells
         for cell in row

@@ -222,20 +222,32 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
           canvases: {}
 
         # Move the cells that the currently selected cells point to
-        changedCells = []
+
+        # Separate the source and target cells so on undo/redo we can control
+        # which type of cells get drawn first. There *is* a difference in order:
+        # on undo, we want to draw target first, then source, whereas on redo,
+        # we want source first, then target. This is to prevent clear cells
+        # from overwriting non-clear cells unintentionally.
+        #
+        changedCells = {src: [], tgt: []}
+
         for srcBefore in t.selectedCells
-          # Use the dragOffset to find the target cell, and replace it with a
-          # copy of the source cell
+          # Make a clear version of the source cell
+          srcAfter = srcBefore.asClear()
+          # Use the dragOffset to find the target cell
           tgtLoc = srcBefore.loc.plus(t.dragOffset)
           tgtBefore = t.canvases.cells[tgtLoc.i][tgtLoc.j]
           tgtAfter = tgtBefore.withColor(srcBefore.color)
-          t.canvases.cells[tgtLoc.i][tgtLoc.j] = tgtAfter
-          changedCells.push(before: tgtBefore, after: tgtAfter)
 
-          # Clear the source cell
-          srcAfter = srcBefore.asClear()
-          t.canvases.cells[srcBefore.loc.i][srcBefore.loc.j] = srcAfter
-          changedCells.push(before: srcBefore, after: srcAfter)
+          # Replace the target cell with a copy of the source cell
+          # (We've already cleared the source cell internally, as that happened
+          # as soon as the selection started being moved.)
+          t.canvases.cells[tgtLoc.i][tgtLoc.j] = tgtAfter
+
+          # Record the change
+          changedCells.src.push(before: srcBefore, after: srcAfter)
+          changedCells.tgt.push(before: tgtBefore, after: tgtAfter)
+
         event.canvases.changedCells = changedCells
 
         # Move the selection box
@@ -245,6 +257,8 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         event.me.selectionEnd.before = t.selectionEnd
         event.me.selectionEnd.after = t.selectionEnd = t.selectionEnd.plus(t.dragOffset)
         t.calculateSelectedCells()
+        #console.log "Selected cells:"
+        #console.log cell.inspect() for cell in t.selectedCells
 
         # XXX: Does this belong here?
         t.dragOffset = null
@@ -252,22 +266,32 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         return event
 
       undo: (event) ->
-        # Move the cells themselves back
-        for cell in event.canvases.changedCells
+        # Move the target cells to the source cells
+        for cell in event.canvases.changedCells.tgt
           t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
+        for cell in event.canvases.changedCells.src
+          t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
+
         # Move the selection box back
         t.selectionStart = event.me.selectionStart.before
         t.selectionEnd = event.me.selectionEnd.before
         t.calculateSelectedCells()
+        #console.log "Selected cells:"
+        #console.log cell.inspect() for cell in t.selectedCells
 
       redo: (event) ->
-        # Move the cells themselves back
-        for cell in event.canvases.changedCells
+        # Move the source cells back to the target cells
+        for cell in event.canvases.changedCells.src
           t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
+        for cell in event.canvases.changedCells.tgt
+          t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
+
         # Move the selection box back
         t.selectionStart = event.me.selectionStart.after
         t.selectionEnd = event.me.selectionEnd.after
         t.calculateSelectedCells()
+        #console.log "Selected cells:"
+        #console.log cell.inspect() for cell in t.selectedCells
 
     t.addAction "resetSelection",
       do: (event) ->
@@ -293,6 +317,8 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
     $.extend t,
       selectionStart: null
       selectionEnd: null
+      selectionStartBeforeDrag: null
+      selectionEndBeforeDrag: null
       selectedCells: []
       makingSelection: false
       animOffset: 0
@@ -302,14 +328,20 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         # Clear the selection box and reset other involved variables
         @selectionStart = null
         @selectionEnd = null
+        @selectionStartBeforeDrag = null
+        @selectionEndBeforeDrag = null
         @selectedCells = []
         @makingSelection = false
 
       calculateSelectedCells: ->
         selectedCells = []
-        for i in [@selectionStart.i...@selectionEnd.i]
-          for j in [@selectionStart.j...@selectionEnd.j]
-            selectedCells.push(@canvases.cells[i][j].clone())
+        i = @selectionStart.i
+        while i <= @selectionEnd.i
+          j = @selectionStart.j
+          while j <= @selectionEnd.j
+            selectedCells.push @canvases.cells[i][j].clone()
+            j++
+          i++
         @selectedCells = selectedCells
 
       select: ->
@@ -342,12 +374,13 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         if @selectionStart and @_focusIsInsideOfSelection()
           for cell in @selectedCells
             @canvases.cells[cell.loc.i][cell.loc.j].clear()
+          @selectionStartBeforeDrag = @selectionStart.clone()
+          @selectionEndBeforeDrag = @selectionEnd.clone()
         # Otherwise, the user is making a new selection
         else
           @_exitSelection()
           @makingSelection = true
-          c = @canvases.focusedCell
-          @selectionStart = c.loc.clone()
+          @selectionStart = @canvases.focusedCell.loc.clone()
         @animateSelectionBox = false
 
       mousedrag: (event) ->
@@ -371,6 +404,8 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         else
           @_moveSelection()
           @dragOffset = null
+          @selectionStartBeforeDrag = null
+          @selectionEndBeforeDrag = null
         @makingSelection = false
         @animateSelectionBox = true
 
@@ -382,25 +417,44 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
           @_exitSelection()
 
       draw: ->
-        return if !@selectionStart or !@selectionEnd
+        if @selectionStart and @selectionEnd
+          @_drawSelectionBox(
+            start: @selectionStart,
+            end: @selectionEnd,
+            offset: @dragOffset,
+            animate: @animateSelectionBox
+          )
+
+        if @selectionStartBeforeDrag and @selectionEndBeforeDrag
+          @_drawSelectionBox(
+            start: @selectionStartBeforeDrag,
+            end: @selectionEndBeforeDrag,
+            animate: false,
+            shadow: true
+          )
+
+      _drawSelectionBox: (args) ->
+        alpha = (if args.shadow then 0.3 else 1)
+
         ctx = @canvases.workingCanvas.ctx
         ctx.save()
+
         # Draw the selected cells, which is actually a separate layer, since
         # they may have been dragged to a different place than the actual
         # cells they originally point to
-        if @dragOffset
+        if args.offset
           for cell in @selectedCells
-            loc = SpriteEditor.CellLocation.add(cell.loc, @dragOffset)
+            loc = SpriteEditor.CellLocation.add(cell.loc, args.offset)
             @canvases.drawCell(cell, loc: loc)
         else
           for cell in @selectedCells
-            @canvases.drawCell(cell)
+            @canvases.drawCell(cell, color: cell.color.with(alpha: alpha))
 
-        bounds = @_selectionBounds(@dragOffset)
+        bounds = @_selectionBounds(args)
 
         # Draw a rectangle that represents the selection area, with an animated
         # "marching ants" dotted border
-        ctx.strokeStyle = "#000"
+        ctx.strokeStyle = "rgba(0, 0, 0, #{alpha})"
         ctx.beginPath()
         # top
         for x in [ bounds.x1 + @animOffset .. bounds.x2 ] by 4
@@ -408,7 +462,7 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
           ctx.moveTo(x, y1 + 0.5)
           ctx.lineTo(x + 2, y1 + 0.5)
         # right
-        for y in [ bounds.y1 + @animOffset .. bounds.x2 ] by 4
+        for y in [ bounds.y1 + @animOffset .. bounds.y2 ] by 4
           x2 = bounds.x2
           ctx.moveTo(x2 + 0.5, y)
           ctx.lineTo(x2 + 0.5, y + 2)
@@ -423,15 +477,16 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
           ctx.moveTo(x1 + 0.5, y)
           ctx.lineTo(x1 + 0.5, y - 2)
         ctx.stroke()
+
         ctx.restore()
 
-        if @animateSelectionBox
+        if args.animate
           # Animate the "marching ants"
           @animOffset++
           @animOffset %= 4
 
-      _selectionBounds: (offset) ->
-        [ss, se] = [@selectionStart, @selectionEnd]
+      _selectionBounds: (args) ->
+        [ss, se] = [args.start, args.end]
         bounds = {}
         # Ensure that x2 > x1 and y2 > y1, as the following could happen if the
         # selection box is created by the following motions:
@@ -450,11 +505,11 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         else
           bounds.x1 = ss.x
           bounds.x2 = se.x
-        if offset
-          bounds.x1 += offset.x
-          bounds.x2 += offset.x
-          bounds.y1 += offset.y
-          bounds.y2 += offset.y
+        if args.offset
+          bounds.x1 += args.offset.x
+          bounds.x2 += args.offset.x
+          bounds.y1 += args.offset.y
+          bounds.y2 += args.offset.y
         # Snap the bottom-right corner of the selection box to the bottom-right
         # corner of the bottom-right cell (got it?)
         bounds.x2 += @canvases.cellSize
