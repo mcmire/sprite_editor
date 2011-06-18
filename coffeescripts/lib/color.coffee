@@ -121,8 +121,7 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
         new Color.HSL(hsl.hue, hsl.sat, hsl.lum, @alpha)
 
     isClear: ->
-      self = this
-      $.v.every(Color.RGB.properties, (prop) -> (typeof self[prop] is "undefined"))
+      !(@red? or @green? or @blue?)
 
     clone: ->
       new Color.RGB(this)
@@ -169,8 +168,7 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
     toHSL: -> this
 
     isClear: ->
-      self = this
-      $.v.every(Color.HSL.properties, (prop) -> typeof self[prop] is "undefined")
+      !(@hue? or @sat? or @lum?)
 
     clone: ->
       new Color.HSL(this)
