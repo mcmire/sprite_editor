@@ -4,7 +4,7 @@
     var Keyboard, Tools;
     Keyboard = SpriteEditor.Keyboard;
     Tools = {};
-    SpriteEditor.DOMEventHelpers.mixin(Tools, "SpriteEditor_Tools");
+    SpriteEditor.DOMEventHelpers.mixin(Tools, "SpriteEditor_Box_Tools");
     $.extend(Tools, {
       name: "Tools",
       header: "Toolbox",

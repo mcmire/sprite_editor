@@ -31,10 +31,7 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
       @canvases.workingCanvas.$element.removeClass("dropper")
 
     mousedown: (event) ->
-      app = @app
-      color = @canvases.focusedCell.color
-      app.currentColor[app.currentColor.type] = color.clone()
-      app.colorSampleDivs[app.currentColor.type].trigger("update")
+      @app.boxes.colors.update @canvases.focusedCell.color.clone()
 
   #-----------------------------------------------------------------------------
 
@@ -76,7 +73,7 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         # Use the current mouse position and the last mouse position and
         #  fill in or erase cells in between.
         erase = (event.rightClick or Keyboard.pressedKeys[Keyboard.CTRL_KEY])
-        currentColor = @app.currentColor[@app.currentColor.type]
+        currentColor = @app.boxes.colors.currentColor()
         for _, cell of @canvases.focusedCells
           continue if cell.coords() of @upcomingCells
           # Copy the cell so that if its color changes in the future, it won't
@@ -90,7 +87,7 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
 
       cellOptions: (cell) ->
         opts = {}
-        currentColor = @app.currentColor[@app.currentColor.type]
+        currentColor = @app.boxes.colors.currentColor()
         upcomingCell = @upcomingCells[cell.coords()]
         focusedCell = @canvases.focusedCells && @canvases.focusedCells[cell.coords()]
 
@@ -117,7 +114,7 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
       do: ->
         event = canvases: {}
 
-        currentColor = t.app.currentColor[t.app.currentColor.type]
+        currentColor = t.app.boxes.colors.currentColor()
         focusedColor = t.canvases.focusedCells[0].color.clone()
 
         # Look for all cells with the color of the current cell (or look for all

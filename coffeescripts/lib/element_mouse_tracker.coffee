@@ -16,7 +16,7 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
       # make it possible to do special behavior when the user moves the mouse
       # outside of the element in question. For instance, we definitely want
       # to trigger the mouseup event outside the element. As another example,
-      # the ColorPickerBox widget has logic that keeps the hue/saturation
+      # the ColorPicker widget has logic that keeps the hue/saturation
       # selector indicator inside the canvas for hue/saturation even if the
       # user moves the mouse outside of the canvas.
       #

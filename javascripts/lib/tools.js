@@ -35,11 +35,7 @@
         return this.canvases.workingCanvas.$element.removeClass("dropper");
       },
       mousedown: function(event) {
-        var app, color;
-        app = this.app;
-        color = this.canvases.focusedCell.color;
-        app.currentColor[app.currentColor.type] = color.clone();
-        return app.colorSampleDivs[app.currentColor.type].trigger("update");
+        return this.app.boxes.colors.update(this.canvases.focusedCell.color.clone());
       }
     });
     Tools.pencil = $.tap($.extend(true, {}, Tools.base), function(t) {
@@ -96,7 +92,7 @@
           var cell, currentColor, erase, self, _, _ref, _results;
           self = this;
           erase = event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY];
-          currentColor = this.app.currentColor[this.app.currentColor.type];
+          currentColor = this.app.boxes.colors.currentColor();
           _ref = this.canvases.focusedCells;
           _results = [];
           for (_ in _ref) {
@@ -116,7 +112,7 @@
         cellOptions: function(cell) {
           var currentColor, focusedCell, opts, upcomingCell;
           opts = {};
-          currentColor = this.app.currentColor[this.app.currentColor.type];
+          currentColor = this.app.boxes.colors.currentColor();
           upcomingCell = this.upcomingCells[cell.coords()];
           focusedCell = this.canvases.focusedCells && this.canvases.focusedCells[cell.coords()];
           if (upcomingCell) {
@@ -143,7 +139,7 @@
           event = {
             canvases: {}
           };
-          currentColor = t.app.currentColor[t.app.currentColor.type];
+          currentColor = t.app.boxes.colors.currentColor();
           focusedColor = t.canvases.focusedCells[0].color.clone();
           changedCells = [];
           $.v.each(t.canvases.cells, function(row) {

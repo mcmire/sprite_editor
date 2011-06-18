@@ -11,15 +11,6 @@
       $centerPane: null,
       $rightPane: null,
       boxes: [],
-      colorSampleDivs: {
-        foreground: null,
-        background: null
-      },
-      currentColor: {
-        type: "foreground",
-        foreground: (new SpriteEditor.Color.RGB(172, 85, 255)).toHSL(),
-        background: (new SpriteEditor.Color.RGB(255, 38, 192)).toHSL()
-      },
       init: function() {
         Keyboard.init();
         this.canvases = SpriteEditor.DrawingCanvases.init(this);
@@ -32,7 +23,7 @@
         this._addWorkingCanvas();
         this._createToolBox();
         this._createBrushSizesBox();
-        this._createColorPickerBox();
+        this._createColorPicker();
         this._createPreviewBox();
         this.addEvents();
         this.canvases.draw();
@@ -42,6 +33,7 @@
         this.canvases.addEvents();
         this.boxes.tools.addEvents();
         this.boxes.sizes.addEvents();
+        this.boxes.colors.addEvents();
         return this._bindEvents(document, {
           keydown: __bind(function(event) {
             var key;
@@ -56,23 +48,19 @@
                   this.history.undo();
                 }
               }
-            } else if (key === Keyboard.X_KEY) {
-              this._switchForegroundAndBackgroundColor();
-            } else if (key === Keyboard.SHIFT_KEY) {
-              this.selectColorType("background");
             }
             return this.boxes.tools.currentTool().trigger("keydown", event);
           }, this),
           keyup: __bind(function(event) {
-            this.selectColorType("foreground");
             return this.boxes.tools.currentTool().trigger("keyup", event);
           }, this)
         });
       },
       removeEvents: function() {
         this.canvases.removeEvents();
-        this.boxes.tools.addEvents();
-        this.boxes.sizes.addEvents();
+        this.boxes.tools.removeEvents();
+        this.boxes.sizes.removeEvents();
+        this.boxes.colors.removeEvents();
         return this._unbindEvents(document, "keydown", "keyup");
       },
       _createWrapperDivs: function() {
@@ -145,7 +133,12 @@
         $importDiv.append($importFileInput);
         $importDiv.append($importFileButton);
         $importExportDiv.append($importDiv);
-        $exportForm = $('<form id="export" action="" method="POST"><input name="data" type="hidden" /><button type="submit">Export PNG</button></form>');
+        $exportForm = $('\
+        <form id="export" action="" method="POST">\
+          <input name="data" type="hidden" />\
+          <button type="submit">Export PNG</button>\
+        </form>\
+      ');
         $exportForm.bind("submit", __bind(function() {
           var data;
           data = this.previewCanvas.element.toDataURL("image/png");
@@ -158,59 +151,21 @@
       _addWorkingCanvas: function() {
         return this.$centerPane.append(this.canvases.workingCanvas.$element);
       },
-      _createColorPickerBox: function() {
-        var $boxDiv, $header;
-        $boxDiv = $("<div/>").attr("id", "color_box").addClass("box");
-        this.$rightPane.append($boxDiv);
-        $header = $("<h3/>").html("Color");
-        $boxDiv.append($header);
-        this.colorSampleDivs = {};
-        $.v.each(["foreground", "background"], __bind(function(colorType) {
-          var $div;
-          $div = $('<div class="color_sample" />');
-          $div.bind({
-            click: __bind(function() {
-              this.currentColor.beingEdited = colorType;
-              return this.colorPickerBox.open(this.currentColor[colorType]);
-            }, this),
-            render: __bind(function() {
-              return $div.css("background-color", this.currentColor[colorType].toRGB().toString());
-            }, this)
-          });
-          $div.trigger("render");
-          $boxDiv.append($div);
-          return this.colorSampleDivs[colorType] = $div;
-        }, this));
-        this.selectColorType(this.currentColor.type);
-        this.colorPickerBox = SpriteEditor.ColorPickerBox.init({
+      _createColorPicker: function() {
+        var box;
+        this.boxes.colors = box = SpriteEditor.Box.Colors.init(this);
+        this.$rightPane.append(box.$element);
+        this.colorPicker = SpriteEditor.ColorPicker.init(this, {
           open: __bind(function() {
             this.removeEvents();
             return this._showMask();
           }, this),
           close: __bind(function() {
             this._hideMask();
-            this.addEvents();
-            return this.currentColor.beingEdited = null;
-          }, this),
-          change: __bind(function(color) {
-            this.currentColor[this.currentColor.beingEdited] = color;
-            return this.colorSampleDivs[this.currentColor.beingEdited].trigger("render");
+            return this.addEvents();
           }, this)
         });
-        return $(document.body).append(this.colorPickerBox.$container);
-      },
-      selectColorType: function(colorType) {
-        this.colorSampleDivs[this.currentColor.type].removeClass("selected");
-        this.currentColor.type = colorType;
-        return this.colorSampleDivs[colorType].addClass("selected");
-      },
-      _switchForegroundAndBackgroundColor: function() {
-        var tmp;
-        tmp = this.currentColor.foreground;
-        this.currentColor.foreground = this.currentColor.background;
-        this.currentColor.background = tmp;
-        this.colorSampleDivs.foreground.trigger("render");
-        return this.colorSampleDivs.background.trigger("render");
+        return $(document.body).append(this.colorPicker.$container);
       },
       _createPreviewBox: function() {
         var $boxDiv, $header;

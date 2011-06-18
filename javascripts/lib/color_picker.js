@@ -6,6 +6,10 @@
     ColorPicker = {};
     SpriteEditor.DOMEventHelpers.mixin(ColorPicker, "SpriteEditor_ColorPicker");
     $.extend(ColorPicker, {
+      $container: null,
+      hueSatCanvas: null,
+      lumCanvas: null,
+      colorFields: {},
       hueSatCanvasSize: {
         width: 265,
         height: 300
@@ -15,44 +19,78 @@
         height: 300
       },
       currentColor: (new SpriteEditor.Color.RGB(255, 0, 0)).toHSL(),
-      $container: null,
-      hueSatCanvas: null,
-      lumCanvas: null,
-      colorFields: {},
-      init: function(options) {
+      currentColorType: null,
+      init: function(app, options) {
+        this.app = app;
         this.options = options;
         this.$container = $('<div class="square_color_picker dialog" />').hide();
         this._addHueSatDiv();
-        this._addLightnessDiv();
+        this._addLumDiv();
         this._addColorFields();
         this._addColorSample();
         this._addCloseButton();
         return this;
       },
-      open: function(color) {
-        var _ref;
-        if ((_ref = this.options.open) != null) {
-          _ref.call(this);
-        }
-        this.$container.show().center();
+      addEvents: function() {
+        var self;
+        self = this;
+        this._bindEvents(document, {
+          keyup: function(event) {
+            var key;
+            key = event.keyCode;
+            if (key === Keyboard.ESC_KEY) {
+              return self.close();
+            }
+          }
+        });
+        this.$hueSatDiv.mouseTracker({
+          "mousedown mousedrag": function() {
+            self._positionHueSatSelectorFromMouse();
+            self._setHueAndSatFromSelectorPosition();
+            self._drawLumCanvas();
+            return self.update();
+          }
+        });
+        return this.$lumDiv.mouseTracker({
+          "mousedown mousedrag": function() {
+            self._positionLumSelectorFromMouse();
+            self._setLumFromSelectorPosition();
+            return self.update();
+          }
+        });
+      },
+      removeEvents: function() {
+        this._unbindEvents(document, "keyup");
+        this.$hueSatDiv.mouseTracker("destroy");
+        return this.$lumDiv.mouseTracker("destroy");
+      },
+      open: function(color, colorType) {
         this.currentColor = color;
-        this._drawLightnessCanvas();
+        this.currentColorType = colorType;
+        this.trigger("open");
+        this.$container.show().center();
+        this._drawLumCanvas();
         this._setColorFields();
         this._positionHueSatSelectorFromColor();
-        this._positionLightnessSelectorFromColor();
+        this._positionLumSelectorFromColor();
         this._setColorSample();
-        return this._addEvents();
+        return this.addEvents();
       },
       close: function() {
-        var _ref;
+        this.currentColorType = null;
         this.$container.hide();
-        this._removeEvents();
-        return (_ref = this.options) != null ? _ref.close.call(this) : void 0;
+        this.removeEvents();
+        return this.trigger("close");
       },
       trigger: function() {
         var args, method, _ref;
         method = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
         return (_ref = this.options[method]) != null ? _ref.apply(this, args) : void 0;
+      },
+      update: function() {
+        this._setColorFields();
+        this._setColorSample();
+        return this.app.boxes.colors.update(this.currentColor);
       },
       _addHueSatDiv: function() {
         var $div;
@@ -90,21 +128,21 @@
         this.$hueSatSelectorDiv = $('<div class="hue_sat_selector" />');
         return this.$hueSatDiv.append(this.$hueSatSelectorDiv);
       },
-      _addLightnessDiv: function() {
+      _addLumDiv: function() {
         this.$lumDiv = $("<div class=\"lum_div\" />");
         this.$lumDiv.css({
           width: this.lumCanvasSize.width + 11,
           height: this.lumCanvasSize.height
         });
         this.$container.append(this.$lumDiv);
-        return this._addLightnessCanvas();
+        return this._addLumCanvas();
       },
-      _addLightnessCanvas: function() {
+      _addLumCanvas: function() {
         this.lumCanvas = SpriteEditor.Canvas.create(this.lumCanvasSize.width, this.lumCanvasSize.height);
         this.lumCanvas.$element.addClass("lum_canvas");
         return this.$lumDiv.append(this.lumCanvas.$element);
       },
-      _drawLightnessCanvas: function() {
+      _drawLumCanvas: function() {
         var c, hsl, imageData, l, rgb, x, y, _ref, _ref2;
         c = this.lumCanvas;
         imageData = c.ctx.createImageData(c.width, c.height);
@@ -153,43 +191,6 @@
         $p.append(this.$closeButton);
         return this.$container.append($p);
       },
-      _addEvents: function() {
-        var self;
-        self = this;
-        this._bindEvents(document, {
-          keyup: function(event) {
-            var key;
-            key = event.keyCode;
-            if (key === Keyboard.ESC_KEY) {
-              return self.close();
-            }
-          }
-        });
-        this.$hueSatDiv.mouseTracker({
-          "mousedown mousedrag": function() {
-            self._positionHueSatSelectorFromMouse();
-            self._setHueAndSatFromSelectorPosition();
-            self._setColorFields();
-            self._setColorSample();
-            self._drawLightnessCanvas();
-            return self.trigger("change", self.currentColor);
-          }
-        });
-        return this.$lumDiv.mouseTracker({
-          "mousedown mousedrag": function() {
-            self._positionLightnessSelectorFromMouse();
-            self._setLightnessFromSelectorPosition();
-            self._setColorFields();
-            self._setColorSample();
-            return self.trigger("change", self.currentColor);
-          }
-        });
-      },
-      _removeEvents: function() {
-        this._unbindEvents(document, "keyup");
-        this.$hueSatDiv.mouseTracker("destroy");
-        return this.$lumDiv.mouseTracker("destroy");
-      },
       _setColorFields: function() {
         var hsl, prop, rgb, _i, _j, _len, _len2, _ref, _ref2, _ref3, _ref4, _results;
         hsl = this.currentColor;
@@ -216,7 +217,7 @@
         left = mouse.x - 5;
         return this.$hueSatSelectorDiv.css("background-position", left + "px " + top + "px");
       },
-      _positionLightnessSelectorFromMouse: function() {
+      _positionLumSelectorFromMouse: function() {
         var mouse, top;
         mouse = this.$lumDiv.mouseTracker("pos").rel;
         top = mouse.y - 5;
@@ -228,7 +229,7 @@
         left = this._hue2px();
         return this.$hueSatSelectorDiv.css("background-position", left + "px " + top + "px");
       },
-      _positionLightnessSelectorFromColor: function() {
+      _positionLumSelectorFromColor: function() {
         var top;
         top = this._lum2px();
         return this.$lumDiv.css("background-position", "0px " + top + "px");
@@ -239,7 +240,7 @@
           sat: this._px2sat()
         });
       },
-      _setLightnessFromSelectorPosition: function() {
+      _setLumFromSelectorPosition: function() {
         return this.currentColor = this.currentColor["with"]({
           lum: this._px2lum()
         });

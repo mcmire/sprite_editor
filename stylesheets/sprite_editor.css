@@ -61,10 +61,10 @@ vertical-align: middle;
 #se-box-sizes canvas:hover, #se-box-sizes canvas.selected { opacity: 1; }
 #se-box-sizes canvas.selected { border-width: 2px; }
 
-#color_box { clear: left; margin-bottom: 20px; text-align: center; }
-#color_box .color_sample { width: 60px; height: 60px; border: 1px solid black; margin: 0 auto; display: inline-block; margin-right: 30px; cursor: pointer; }
-#color_box .color_sample:last-child { margin-right: 0; }
-#color_box .color_sample.selected { border: 2px solid black; }
+#se-box-colors { clear: left; margin-bottom: 20px; text-align: center; }
+#se-box-colors .color_sample { width: 60px; height: 60px; border: 1px solid black; margin: 0 auto; display: inline-block; margin-right: 30px; cursor: pointer; }
+#se-box-colors .color_sample:last-child { margin-right: 0; }
+#se-box-colors .color_sample.selected { border: 2px solid black; }
 
 .square_color_picker { overflow: hidden; }
 .square_color_picker .hue_sat_canvas, .square_color_picker .lum_canvas, .square_color_picker .color_sample { border: 2px solid #666; }

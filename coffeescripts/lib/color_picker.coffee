@@ -6,50 +6,83 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
   SpriteEditor.DOMEventHelpers.mixin(ColorPicker, "SpriteEditor_ColorPicker")
 
   $.extend ColorPicker,
-    hueSatCanvasSize: {width: 265, height: 300}
-    lumCanvasSize: {width: 25, height: 300}
-    # This is always stored in HSL!
-    currentColor: (new SpriteEditor.Color.RGB(255, 0, 0)).toHSL()
-
     $container: null
     hueSatCanvas: null
     lumCanvas: null
     colorFields: {}
 
-    init: (options) ->
-      @options = options
+    hueSatCanvasSize: {width: 265, height: 300}
+    lumCanvasSize: {width: 25, height: 300}
+    # This is always stored in HSL!
+    currentColor: (new SpriteEditor.Color.RGB(255, 0, 0)).toHSL()
+    currentColorType: null
 
+    init: (@app, @options) ->
       @$container = $('<div class="square_color_picker dialog" />').hide()
 
       @_addHueSatDiv()
-      @_addLightnessDiv()
+      @_addLumDiv()
       @_addColorFields()
       @_addColorSample()
       @_addCloseButton()
 
       return this
 
-    open: (color) ->
-      @options.open?.call(this)
+    addEvents: ->
+      self = this
+
+      @_bindEvents document,
+        keyup: (event) ->
+          key = event.keyCode
+          self.close() if key == Keyboard.ESC_KEY
+
+      @$hueSatDiv.mouseTracker
+        "mousedown mousedrag": ->
+          self._positionHueSatSelectorFromMouse()
+          self._setHueAndSatFromSelectorPosition()
+          self._drawLumCanvas()
+          self.update()
+
+      @$lumDiv.mouseTracker
+        "mousedown mousedrag": ->
+          self._positionLumSelectorFromMouse()
+          self._setLumFromSelectorPosition()
+          self.update()
+
+    removeEvents: ->
+      @_unbindEvents(document, "keyup")
+      @$hueSatDiv.mouseTracker("destroy")
+      @$lumDiv.mouseTracker("destroy")
+
+    open: (color, colorType) ->
+      @currentColor = color
+      @currentColorType = colorType
+
+      @trigger("open")
 
       @$container.show().center()
 
-      @currentColor = color
-      @_drawLightnessCanvas()
+      @_drawLumCanvas()
       @_setColorFields()
       @_positionHueSatSelectorFromColor()
-      @_positionLightnessSelectorFromColor()
+      @_positionLumSelectorFromColor()
       @_setColorSample()
 
-      @_addEvents()
+      @addEvents()
 
     close: ->
+      @currentColorType = null
       @$container.hide()
-      @_removeEvents()
-      @options?.close.call(this)
+      @removeEvents()
+      @trigger("close")
 
     trigger: (method, args...) ->
       @options[method]?.apply(this, args)
+
+    update: ->
+      @_setColorFields()
+      @_setColorSample()
+      @app.boxes.colors.update(@currentColor)
 
     _addHueSatDiv: ->
       $div = @$hueSatDiv = $('<div class="hue_sat_div" />')
@@ -84,7 +117,7 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
       @$hueSatSelectorDiv = $('<div class="hue_sat_selector" />')
       @$hueSatDiv.append(@$hueSatSelectorDiv)
 
-    _addLightnessDiv: ->
+    _addLumDiv: ->
       @$lumDiv = $("<div class=\"lum_div\" />")
       @$lumDiv.css {
         width: @lumCanvasSize.width + 11
@@ -92,14 +125,14 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
       }
       @$container.append(@$lumDiv)
 
-      @_addLightnessCanvas()
+      @_addLumCanvas()
 
-    _addLightnessCanvas: ->
+    _addLumCanvas: ->
       @lumCanvas = SpriteEditor.Canvas.create(@lumCanvasSize.width, @lumCanvasSize.height)
       @lumCanvas.$element.addClass("lum_canvas")
       @$lumDiv.append(@lumCanvas.$element)
 
-    _drawLightnessCanvas: ->
+    _drawLumCanvas: ->
       c = @lumCanvas
       imageData = c.ctx.createImageData(c.width, c.height)
       hsl = @currentColor
@@ -136,36 +169,6 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
       $p.append(@$closeButton)
       @$container.append($p)
 
-    _addEvents: ->
-      self = this
-
-      @_bindEvents document,
-        keyup: (event) ->
-          key = event.keyCode
-          self.close() if key == Keyboard.ESC_KEY
-
-      @$hueSatDiv.mouseTracker
-        "mousedown mousedrag": ->
-          self._positionHueSatSelectorFromMouse()
-          self._setHueAndSatFromSelectorPosition()
-          self._setColorFields()
-          self._setColorSample()
-          self._drawLightnessCanvas()
-          self.trigger("change", self.currentColor)
-
-      @$lumDiv.mouseTracker
-        "mousedown mousedrag": ->
-          self._positionLightnessSelectorFromMouse()
-          self._setLightnessFromSelectorPosition()
-          self._setColorFields()
-          self._setColorSample()
-          self.trigger("change", self.currentColor)
-
-    _removeEvents: ->
-      @_unbindEvents(document, "keyup")
-      @$hueSatDiv.mouseTracker("destroy")
-      @$lumDiv.mouseTracker("destroy")
-
     _setColorFields: ->
       hsl = @currentColor
       rgb = hsl.toRGB()
@@ -181,7 +184,7 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
       left = mouse.x - 5
       @$hueSatSelectorDiv.css("background-position", left+"px "+top+"px")
 
-    _positionLightnessSelectorFromMouse: ->
+    _positionLumSelectorFromMouse: ->
       mouse = @$lumDiv.mouseTracker("pos").rel
       # Same thing for this
       top = mouse.y - 5
@@ -192,14 +195,14 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
       left = @_hue2px()
       @$hueSatSelectorDiv.css("background-position", left+"px "+top+"px")
 
-    _positionLightnessSelectorFromColor: ->
+    _positionLumSelectorFromColor: ->
       top = @_lum2px()
       @$lumDiv.css("background-position", "0px "+top+"px")
 
     _setHueAndSatFromSelectorPosition: ->
       @currentColor = @currentColor.with( hue: @_px2hue(), sat: @_px2sat() )
 
-    _setLightnessFromSelectorPosition: ->
+    _setLumFromSelectorPosition: ->
       @currentColor = @currentColor.with( lum: @_px2lum() )
 
     _setColorSample: ->

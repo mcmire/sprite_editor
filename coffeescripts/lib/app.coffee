@@ -11,14 +11,6 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
     $centerPane: null
     $rightPane: null
     boxes: []
-    colorSampleDivs:
-      foreground: null
-      background: null
-    currentColor:
-      type: "foreground"
-      # These are always stored in HSL!
-      foreground: (new SpriteEditor.Color.RGB(172, 85, 255)).toHSL()
-      background: (new SpriteEditor.Color.RGB(255, 38, 192)).toHSL()
 
     init: ->
       Keyboard.init()
@@ -34,7 +26,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       @_addWorkingCanvas()
       @_createToolBox()
       @_createBrushSizesBox()
-      @_createColorPickerBox()
+      @_createColorPicker()
       @_createPreviewBox()
 
       @addEvents()
@@ -47,6 +39,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       @canvases.addEvents()
       @boxes.tools.addEvents()
       @boxes.sizes.addEvents()
+      @boxes.colors.addEvents()
 
       @_bindEvents document,
         keydown: (event) =>
@@ -58,20 +51,17 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
             else
               # Ctrl-Z or Command-Z: Undo last action
               @history.undo() if @history.canUndo()
-          else if key == Keyboard.X_KEY
-            @_switchForegroundAndBackgroundColor()
-          else if key == Keyboard.SHIFT_KEY
-            @selectColorType("background")
           @boxes.tools.currentTool().trigger("keydown", event)
 
         keyup: (event) =>
-          @selectColorType("foreground")
           @boxes.tools.currentTool().trigger("keyup", event)
 
     removeEvents: ->
       @canvases.removeEvents()
-      @boxes.tools.addEvents()
-      @boxes.sizes.addEvents()
+      @boxes.tools.removeEvents()
+      @boxes.sizes.removeEvents()
+      @boxes.colors.removeEvents()
+
       @_unbindEvents(document, "keydown", "keyup")
 
     _createWrapperDivs: ->
@@ -180,7 +170,12 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       #
       # I'm not sure what this means??
       #
-      $exportForm = $('<form id="export" action="" method="POST"><input name="data" type="hidden" /><button type="submit">Export PNG</button></form>')
+      $exportForm = $('
+        <form id="export" action="" method="POST">
+          <input name="data" type="hidden" />
+          <button type="submit">Export PNG</button>
+        </form>
+      ')
       $exportForm.bind "submit", =>
         data = @previewCanvas.element.toDataURL("image/png")
         data = data.replace(/^data:image\/png;base64,/, "")
@@ -192,54 +187,19 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
     _addWorkingCanvas: ->
       @$centerPane.append(@canvases.workingCanvas.$element)
 
-    _createColorPickerBox: ->
-      $boxDiv = $("<div/>").attr("id", "color_box").addClass("box")
-      @$rightPane.append($boxDiv)
+    _createColorPicker: ->
+      @boxes.colors = box = SpriteEditor.Box.Colors.init(this)
+      @$rightPane.append(box.$element)
 
-      $header = $("<h3/>").html("Color")
-      $boxDiv.append($header)
-
-      @colorSampleDivs = {}
-      $.v.each ["foreground", "background"], (colorType) =>
-        $div = $('<div class="color_sample" />')
-        $div.bind
-          click: =>
-            @currentColor.beingEdited = colorType
-            @colorPickerBox.open @currentColor[colorType]
-          render: =>
-            $div.css "background-color", @currentColor[colorType].toRGB().toString()
-        $div.trigger("render")
-        $boxDiv.append($div)
-        @colorSampleDivs[colorType] = $div
-
-      @selectColorType(@currentColor.type)
-
-      @colorPickerBox = SpriteEditor.ColorPickerBox.init(
+      @colorPicker = SpriteEditor.ColorPicker.init(this,
         open: =>
           @removeEvents()
           @_showMask()
         close: =>
           @_hideMask()
           @addEvents()
-          @currentColor.beingEdited = null
-        change: (color) =>
-          @currentColor[@currentColor.beingEdited] = color
-          @colorSampleDivs[@currentColor.beingEdited].trigger("render")
       )
-
-      $(document.body).append(@colorPickerBox.$container)
-
-    selectColorType: (colorType) ->
-      @colorSampleDivs[@currentColor.type].removeClass("selected")
-      @currentColor.type = colorType
-      @colorSampleDivs[colorType].addClass("selected")
-
-    _switchForegroundAndBackgroundColor: ->
-      tmp = @currentColor.foreground
-      @currentColor.foreground = @currentColor.background
-      @currentColor.background = tmp
-      @colorSampleDivs.foreground.trigger("render")
-      @colorSampleDivs.background.trigger("render")
+      $(document.body).append(@colorPicker.$container)
 
     _createPreviewBox: ->
       $boxDiv = $("<div/>").attr("id", "preview_box").addClass("box")
