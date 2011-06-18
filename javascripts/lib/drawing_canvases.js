@@ -56,7 +56,7 @@
         this._clearPreviewCanvas();
         this._clearTiledPreviewCanvas();
         this._fillCells();
-        if (typeof (_base = this.app.currentTool()).draw === "function") {
+        if (typeof (_base = this.app.boxes.tools.currentTool()).draw === "function") {
           _base.draw();
         }
         return this._updateTiledPreviewCanvas();
@@ -117,11 +117,11 @@
             return self.draw();
           },
           mousedown: function(event) {
-            self.app.currentTool().trigger("mousedown", event);
+            self.app.boxes.tools.currentTool().trigger("mousedown", event);
             return event.preventDefault();
           },
           mouseup: function(event) {
-            self.app.currentTool().trigger("mouseup", event);
+            self.app.boxes.tools.currentTool().trigger("mouseup", event);
             return event.preventDefault();
           },
           mousemove: function(event) {
@@ -132,17 +132,17 @@
           },
           mousedragstart: function(event) {
             self.startDragAtCell = self.focusedCell.clone();
-            return self.app.currentTool().trigger("mousedragstart", event);
+            return self.app.boxes.tools.currentTool().trigger("mousedragstart", event);
           },
           mousedragstop: function(event) {
             self.startDragAtCell = null;
-            return self.app.currentTool().trigger("mousedragstop", event);
+            return self.app.boxes.tools.currentTool().trigger("mousedragstop", event);
           },
           mousedrag: function(event) {
-            return self.app.currentTool().trigger("mousedrag", event);
+            return self.app.boxes.tools.currentTool().trigger("mousedrag", event);
           },
           mouseglide: function(event) {
-            return self.app.currentTool().trigger("mouseglide", event);
+            return self.app.boxes.tools.currentTool().trigger("mouseglide", event);
           },
           draggingDistance: 3
         });
@@ -285,7 +285,7 @@
           row = _ref2[_i];
           for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
             cell = row[_j];
-            opts = this.app.currentTool().trigger("cellOptions", cell) || {};
+            opts = this.app.boxes.tools.currentTool().trigger("cellOptions", cell) || {};
             this.drawCell(cell, opts);
           }
         }

@@ -1,5 +1,7 @@
 $.export "SpriteEditor.App", (SpriteEditor) ->
 
+  Keyboard = SpriteEditor.Keyboard
+
   App = {}
   SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App")
 
@@ -8,6 +10,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
     $leftPane: null
     $centerPane: null
     $rightPane: null
+    boxes: []
     colorSampleDivs:
       foreground: null
       background: null
@@ -16,11 +19,10 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       # These are always stored in HSL!
       foreground: (new SpriteEditor.Color.RGB(172, 85, 255)).toHSL()
       background: (new SpriteEditor.Color.RGB(255, 38, 192)).toHSL()
-    currentToolName: "pencil"
     currentBrushSize: 1
 
     init: ->
-      SpriteEditor.Keyboard.init()
+      Keyboard.init()
 
       @canvases = SpriteEditor.DrawingCanvases.init(this)
       @tools = SpriteEditor.Tools.init(this, @canvases)
@@ -44,24 +46,27 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
     addEvents: ->
       @canvases.addEvents()
+      @tools.addEvents()
+
       @_bindEvents document,
         keydown: (event) =>
           key = event.keyCode
-          if key == SpriteEditor.Keyboard.Z_KEY and (event.ctrlKey or event.metaKey)
+          if key == Keyboard.Z_KEY and (event.ctrlKey or event.metaKey)
             if event.shiftKey
               # Ctrl-Shift-Z or Command-Shift-Z: Redo last action
               @history.redo() if @history.canRedo()
             else
               # Ctrl-Z or Command-Z: Undo last action
               @history.undo() if @history.canUndo()
-          else if key == SpriteEditor.Keyboard.X_KEY
+          else if key == Keyboard.X_KEY
             @_switchForegroundAndBackgroundColor()
-          else if key == SpriteEditor.Keyboard.SHIFT_KEY
+          else if key == Keyboard.SHIFT_KEY
             @selectColorType("background")
-          @currentTool().trigger("keydown", event)
+          @boxes.tools.currentTool().trigger("keydown", event)
+
         keyup: (event) =>
           @selectColorType("foreground")
-          @currentTool().trigger("keyup", event)
+          @boxes.tools.currentTool().trigger("keyup", event)
 
     removeEvents: ->
       @canvases.removeEvents()
@@ -207,7 +212,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
       @selectColorType(@currentColor.type)
 
-      @colorPickerBox = SpriteEditor.ColorPickerBox.init
+      @colorPickerBox = SpriteEditor.ColorPickerBox.init(
         open: =>
           @removeEvents()
           @_showMask()
@@ -218,6 +223,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
         change: (color) =>
           @currentColor[@currentColor.beingEdited] = color
           @colorSampleDivs[@currentColor.beingEdited].trigger("render")
+      )
 
       $(document.body).append(@colorPickerBox.$container)
 
@@ -244,38 +250,8 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       $boxDiv.append(@canvases.tiledPreviewCanvas.$element)
 
     _createToolBox: ->
-      self = this
-
-      $boxDiv = $("<div/>").attr("id", "tool_box").addClass("box")
-      @$leftPane.append($boxDiv)
-
-      $header = $("<h3/>").html("Toolbox")
-      $boxDiv.append($header)
-
-      $ul = $("<ul/>")
-      $boxDiv.append($ul)
-
-      $imgs = $([])
-      for name in @tools.toolNames
-        do (name) ->
-          $li = $("<li/>")
-          $img = $("<img/>")
-          $img.addClass("tool")
-            .attr("width", 24)
-            .attr("height", 24)
-            .attr("src", "images/"+name+".png")
-          $imgs.push($img[0])
-          $li.append($img)
-          $ul.append($li)
-          $img.bind "click", ->
-            self.currentTool().unselect?() if name isnt self.currentToolName
-            self.currentToolName = name
-            $imgs.removeClass("selected")
-            $img.addClass("selected")
-            self.tools[name].select?()
-          $img.trigger("click") if self.currentToolName == name
-
-    currentTool: -> @tools[@currentToolName]
+      @boxes.tools = box = SpriteEditor.Box.Tools.init(this)
+      @$leftPane.append(box.$element)
 
     # TODO: when the paint bucket tool is selected, hide the brush sizes box
     # and set the brush size to 1

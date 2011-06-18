@@ -1,7 +1,8 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $["export"]("SpriteEditor.App", function(SpriteEditor) {
-    var App;
+    var App, Keyboard;
+    Keyboard = SpriteEditor.Keyboard;
     App = {};
     SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App");
     $.extend(App, {
@@ -9,6 +10,7 @@
       $leftPane: null,
       $centerPane: null,
       $rightPane: null,
+      boxes: [],
       colorSampleDivs: {
         foreground: null,
         background: null
@@ -18,10 +20,9 @@
         foreground: (new SpriteEditor.Color.RGB(172, 85, 255)).toHSL(),
         background: (new SpriteEditor.Color.RGB(255, 38, 192)).toHSL()
       },
-      currentToolName: "pencil",
       currentBrushSize: 1,
       init: function() {
-        SpriteEditor.Keyboard.init();
+        Keyboard.init();
         this.canvases = SpriteEditor.DrawingCanvases.init(this);
         this.tools = SpriteEditor.Tools.init(this, this.canvases);
         this.history = SpriteEditor.EventHistory.init(this);
@@ -40,11 +41,12 @@
       },
       addEvents: function() {
         this.canvases.addEvents();
+        this.tools.addEvents();
         return this._bindEvents(document, {
           keydown: __bind(function(event) {
             var key;
             key = event.keyCode;
-            if (key === SpriteEditor.Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
+            if (key === Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
               if (event.shiftKey) {
                 if (this.history.canRedo()) {
                   this.history.redo();
@@ -54,16 +56,16 @@
                   this.history.undo();
                 }
               }
-            } else if (key === SpriteEditor.Keyboard.X_KEY) {
+            } else if (key === Keyboard.X_KEY) {
               this._switchForegroundAndBackgroundColor();
-            } else if (key === SpriteEditor.Keyboard.SHIFT_KEY) {
+            } else if (key === Keyboard.SHIFT_KEY) {
               this.selectColorType("background");
             }
-            return this.currentTool().trigger("keydown", event);
+            return this.boxes.tools.currentTool().trigger("keydown", event);
           }, this),
           keyup: __bind(function(event) {
             this.selectColorType("foreground");
-            return this.currentTool().trigger("keyup", event);
+            return this.boxes.tools.currentTool().trigger("keyup", event);
           }, this)
         });
       },
@@ -218,48 +220,9 @@
         return $boxDiv.append(this.canvases.tiledPreviewCanvas.$element);
       },
       _createToolBox: function() {
-        var $boxDiv, $header, $imgs, $ul, name, self, _i, _len, _ref, _results;
-        self = this;
-        $boxDiv = $("<div/>").attr("id", "tool_box").addClass("box");
-        this.$leftPane.append($boxDiv);
-        $header = $("<h3/>").html("Toolbox");
-        $boxDiv.append($header);
-        $ul = $("<ul/>");
-        $boxDiv.append($ul);
-        $imgs = $([]);
-        _ref = this.tools.toolNames;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          name = _ref[_i];
-          _results.push((function(name) {
-            var $img, $li;
-            $li = $("<li/>");
-            $img = $("<img/>");
-            $img.addClass("tool").attr("width", 24).attr("height", 24).attr("src", "images/" + name + ".png");
-            $imgs.push($img[0]);
-            $li.append($img);
-            $ul.append($li);
-            $img.bind("click", function() {
-              var _base, _base2;
-              if (name !== self.currentToolName) {
-                if (typeof (_base = self.currentTool()).unselect === "function") {
-                  _base.unselect();
-                }
-              }
-              self.currentToolName = name;
-              $imgs.removeClass("selected");
-              $img.addClass("selected");
-              return typeof (_base2 = self.tools[name]).select === "function" ? _base2.select() : void 0;
-            });
-            if (self.currentToolName === name) {
-              return $img.trigger("click");
-            }
-          })(name));
-        }
-        return _results;
-      },
-      currentTool: function() {
-        return this.tools[this.currentToolName];
+        var box;
+        this.boxes.tools = box = SpriteEditor.Box.Tools.init(this);
+        return this.$leftPane.append(box.$element);
       },
       _createBrushSizesBox: function() {
         var $boxDiv, $grids, $header, brushSize, self, _results;

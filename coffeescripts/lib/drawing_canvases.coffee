@@ -52,7 +52,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @_clearPreviewCanvas()
       @_clearTiledPreviewCanvas()
       @_fillCells()
-      @app.currentTool().draw?()
+      @app.boxes.tools.currentTool().draw?()
       @_updateTiledPreviewCanvas()
 
     stop: ->
@@ -86,10 +86,10 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
           self._unsetFocusedCells()
           self.draw()
         mousedown: (event) ->
-          self.app.currentTool().trigger("mousedown", event)
+          self.app.boxes.tools.currentTool().trigger("mousedown", event)
           event.preventDefault()
         mouseup: (event) ->
-          self.app.currentTool().trigger("mouseup", event)
+          self.app.boxes.tools.currentTool().trigger("mouseup", event)
           event.preventDefault()
         mousemove: (event) ->
           mouse = self.workingCanvas.$element.mouseTracker("pos")
@@ -97,14 +97,14 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
           self._setFocusedCells(mouse)
         mousedragstart: (event) ->
           self.startDragAtCell = self.focusedCell.clone()
-          self.app.currentTool().trigger("mousedragstart", event)
+          self.app.boxes.tools.currentTool().trigger("mousedragstart", event)
         mousedragstop: (event) ->
           self.startDragAtCell = null
-          self.app.currentTool().trigger("mousedragstop", event)
+          self.app.boxes.tools.currentTool().trigger("mousedragstop", event)
         mousedrag: (event) ->
-          self.app.currentTool().trigger("mousedrag", event)
+          self.app.boxes.tools.currentTool().trigger("mousedrag", event)
         mouseglide: (event) ->
-          self.app.currentTool().trigger("mouseglide", event)
+          self.app.boxes.tools.currentTool().trigger("mouseglide", event)
         draggingDistance: 3
 
       @_bindEvents window,
@@ -235,7 +235,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       for row in @cells
         for cell in row
           # Allow custom cell options -- this is used by the pencil tool
-          opts = @app.currentTool().trigger("cellOptions", cell) || {}
+          opts = @app.boxes.tools.currentTool().trigger("cellOptions", cell) || {}
           @drawCell(cell, opts)
       wc.ctx.restore()
       pc.ctx.putImageData(pc.imageData, 0, 0)

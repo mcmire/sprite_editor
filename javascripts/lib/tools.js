@@ -1,9 +1,12 @@
 (function() {
-  var __slice = Array.prototype.slice;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __slice = Array.prototype.slice;
   $["export"]("SpriteEditor.Tools", function(SpriteEditor) {
-    var Keyboard, Tools;
+    var Keyboard, Toolbox, Tools;
     Keyboard = SpriteEditor.Keyboard;
-    Tools = {
+    Toolbox = SpriteEditor.Box.Tools;
+    Tools = {};
+    SpriteEditor.DOMEventHelpers.mixin(Tools, "SpriteEditor_Tools");
+    $.extend(Tools, {
       toolNames: ["pencil", "bucket", "select", "dropper"],
       init: function(app, canvases) {
         var name, _i, _len, _ref;
@@ -13,8 +16,29 @@
           this[name].init(app, canvases);
         }
         return this;
+      },
+      addEvents: function() {
+        return this._bindEvents(document, {
+          keydown: __bind(function(event) {
+            var key;
+            key = event.keyCode;
+            switch (key) {
+              case Keyboard.E_KEY:
+                return Toolbox.select("pencil");
+              case Keyboard.G_KEY:
+                return Toolbox.select("bucket");
+              case Keyboard.S_KEY:
+                return Toolbox.select("select");
+              case Keyboard.Q_KEY:
+                return Toolbox.select("dropper");
+            }
+          }, this)
+        });
+      },
+      removeEvents: function() {
+        return this._unbindEvents(document, "keydown");
       }
-    };
+    });
     Tools.base = $.extend({}, SpriteEditor.Eventable, {
       init: function(app, canvases) {
         this.app = app;

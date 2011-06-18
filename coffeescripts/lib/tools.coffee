@@ -1,14 +1,35 @@
 $.export "SpriteEditor.Tools", (SpriteEditor) ->
 
   Keyboard = SpriteEditor.Keyboard
+  Toolbox  = SpriteEditor.Box.Tools
 
-  Tools =
+  Tools = {}
+  SpriteEditor.DOMEventHelpers.mixin(Tools, "SpriteEditor_Tools")
+
+  $.extend Tools,
     toolNames: [ "pencil", "bucket", "select", "dropper" ]
 
     init: (app, canvases) ->
       for name in @toolNames
         @[name].init(app, canvases)
       return this
+
+    addEvents: ->
+      @_bindEvents document,
+        keydown: (event) =>
+          key = event.keyCode
+          switch key
+            when Keyboard.E_KEY
+              Toolbox.select("pencil")
+            when Keyboard.G_KEY
+              Toolbox.select("bucket")
+            when Keyboard.S_KEY
+              Toolbox.select("select")
+            when Keyboard.Q_KEY
+              Toolbox.select("dropper")
+
+    removeEvents: ->
+      @_unbindEvents(document, "keydown")
 
   #-----------------------------------------------------------------------------
 
