@@ -9,6 +9,5 @@ gem 'growl'
 gem 'guard', :git => "http://github.com/mcmire/guard", :branch => "dont_swallow_error_on_running_task"
 gem 'guard-shell'
 gem 'guard-coffeescript'
-# Recent commits bring support for CoffeeScript and the ability to
-# organize spec files in subfolders
-gem 'evergreen', :git => "http://github.com/jnicklas/evergreen", :submodules => true
+gem 'guard-jasmine-headless-webkit'
+gem 'jasmine-headless-webkit', :git => "http://github.com/johnbintz/jasmine-headless-webkit"
