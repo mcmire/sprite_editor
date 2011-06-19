@@ -1,70 +1,57 @@
+GIT
+  remote: http://github.com/mcmire/guard
+  revision: b41f31e4206c1df89362b1a1bb836018de0109a8
+  branch: dont_swallow_error_on_running_task
+  specs:
+    guard (0.4.2)
+      thor (~> 0.14.6)
+
+PATH
+  remote: vendor/guard-jasmine
+  specs:
+    guard-jasmine (0.1.0)
+      guard (>= 0.4)
+
 GEM
   remote: http://rubygems.org/
   specs:
-    childprocess (0.1.8)
-      ffi (~> 1.0.6)
     chunky_png (0.12.0)
     coffee-script (2.2.0)
       coffee-script-source
       execjs
     coffee-script-source (1.1.1)
+    colored (1.2)
     compass (0.11.beta.2)
       chunky_png (~> 0.12.0)
       sass (>= 3.1.0.alpha.218)
-    diff-lcs (1.1.2)
-    execjs (1.1.3)
+    execjs (1.2.0)
       multi_json (~> 1.0)
-    ffi (1.0.7)
-      rake (>= 0.8.7)
     growl (1.0.3)
-    guard (0.3.4)
-      thor (~> 0.14.6)
-    guard-coffeescript (0.2.4)
-      coffee-script (~> 2.2.0)
-      guard (~> 0.3.0)
+    guard-coffeescript (0.3.0)
+      coffee-script (>= 2.2.0)
+      guard (>= 0.4)
     guard-shell (0.1.1)
       guard (>= 0.2.0)
-    jasmine (1.0.2.0)
-      json_pure (>= 1.4.3)
-      rack (>= 1.1)
-      rspec (>= 1.3.1)
-      selenium-webdriver (>= 0.1.3)
-    json (1.5.1)
-    json_pure (1.5.1)
     multi_json (1.0.3)
-    rack (1.2.2)
-    rake (0.8.7)
+    rack (1.3.0)
     rb-fsevent (0.4.0)
-    rspec (2.5.0)
-      rspec-core (~> 2.5.0)
-      rspec-expectations (~> 2.5.0)
-      rspec-mocks (~> 2.5.0)
-    rspec-core (2.5.2)
-    rspec-expectations (2.5.0)
-      diff-lcs (~> 1.1.2)
-    rspec-mocks (2.5.0)
-    rubyzip (0.9.4)
-    sass (3.2.0.alpha.4)
-    selenium-webdriver (0.2.0)
-      childprocess (>= 0.1.7)
-      ffi (>= 1.0.7)
-      json_pure
-      rubyzip
+    sass (3.2.0.alpha.8)
     sinatra (1.1.4)
       rack (~> 1.1)
       tilt (< 2.0, >= 1.2.2)
     thor (0.14.6)
-    tilt (1.3)
+    tilt (1.3.2)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
+  colored
   compass (= 0.11.beta.2)
   growl
+  guard!
   guard-coffeescript
+  guard-jasmine!
   guard-shell
-  jasmine
-  json
   rb-fsevent
   sinatra (= 1.1.4)
