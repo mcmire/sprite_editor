@@ -12,7 +12,24 @@
 #
 src_files:
   - public/javascripts/vendor/ender.js
-  - app/javascripts/**/*.coffee
+  - app/javascripts/lib/util.coffee
+  - app/javascripts/lib/dom_event_helpers.coffee
+  - app/javascripts/lib/canvas.coffee
+  - app/javascripts/lib/color.coffee
+  - app/javascripts/lib/element_mouse_tracker.coffee
+  - app/javascripts/lib/keyboard.coffee
+  - app/javascripts/lib/cell_location.coffee
+  - app/javascripts/lib/cell.coffee
+  - app/javascripts/lib/event_history.coffee
+  - app/javascripts/lib/eventable.coffee
+  - app/javascripts/lib/box.coffee
+  - app/javascripts/lib/box/tools.coffee
+  - app/javascripts/lib/box/sizes.coffee
+  - app/javascripts/lib/box/colors.coffee
+  - app/javascripts/lib/color_picker.coffee
+  - app/javascripts/lib/drawing_canvases.coffee
+  - app/javascripts/lib/tools.coffee
+  - app/javascripts/lib/app.coffee
 
 # stylesheets
 #

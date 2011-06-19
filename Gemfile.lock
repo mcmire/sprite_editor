@@ -1,4 +1,16 @@
 GIT
+  remote: http://github.com/jnicklas/evergreen
+  revision: 0402087fd081a3244ea0d2ca69a58966accb4797
+  submodules: true
+  specs:
+    evergreen (0.4.0)
+      capybara (~> 0.4.0)
+      coffee-script (~> 2.1)
+      json_pure (>= 1.0.0)
+      launchy (>= 0.3.5)
+      sinatra (>= 1.1)
+
+GIT
   remote: http://github.com/mcmire/guard
   revision: b41f31e4206c1df89362b1a1bb836018de0109a8
   branch: dont_swallow_error_on_running_task
@@ -9,6 +21,16 @@ GIT
 GEM
   remote: http://rubygems.org/
   specs:
+    capybara (0.4.1.2)
+      celerity (>= 0.7.9)
+      culerity (>= 0.2.4)
+      mime-types (>= 1.16)
+      nokogiri (>= 1.3.3)
+      rack (>= 1.0.0)
+      rack-test (>= 0.5.4)
+      selenium-webdriver (>= 0.0.27)
+      xpath (~> 0.1.3)
+    celerity (0.8.9)
     childprocess (0.1.9)
       ffi (~> 1.0.6)
     chunky_png (0.12.0)
@@ -16,11 +38,11 @@ GEM
       coffee-script-source
       execjs
     coffee-script-source (1.1.1)
-    colored (1.2)
     compass (0.11.beta.2)
       chunky_png (~> 0.12.0)
       sass (>= 3.1.0.alpha.218)
-    diff-lcs (1.1.2)
+    configuration (1.2.0)
+    culerity (0.2.15)
     execjs (1.2.0)
       multi_json (~> 1.0)
     ffi (1.0.9)
@@ -28,33 +50,20 @@ GEM
     guard-coffeescript (0.3.0)
       coffee-script (>= 2.2.0)
       guard (>= 0.4)
-    guard-jasmine-headless-webkit (0.1.0)
-      guard (>= 0.2.2)
-      jasmine-headless-webkit (>= 0.2.2)
     guard-shell (0.1.1)
       guard (>= 0.2.0)
-    jasmine (1.0.2.1)
-      json_pure (>= 1.4.3)
-      rack (>= 1.1)
-      rspec (>= 1.3.1)
-      selenium-webdriver (>= 0.1.3)
-    jasmine-headless-webkit (0.4.0)
-      coffee-script (>= 2.2)
-      jasmine
-      rainbow
     json_pure (1.5.2)
+    launchy (0.4.0)
+      configuration (>= 0.0.5)
+      rake (>= 0.8.1)
+    mime-types (1.16)
     multi_json (1.0.3)
+    nokogiri (1.4.5)
     rack (1.3.0)
-    rainbow (1.1.1)
+    rack-test (0.6.0)
+      rack (>= 1.0)
+    rake (0.9.2)
     rb-fsevent (0.4.0)
-    rspec (2.6.0)
-      rspec-core (~> 2.6.0)
-      rspec-expectations (~> 2.6.0)
-      rspec-mocks (~> 2.6.0)
-    rspec-core (2.6.4)
-    rspec-expectations (2.6.0)
-      diff-lcs (~> 1.1.2)
-    rspec-mocks (2.6.0)
     rubyzip (0.9.4)
     sass (3.2.0.alpha.8)
     selenium-webdriver (0.2.1)
@@ -67,17 +76,18 @@ GEM
       tilt (< 2.0, >= 1.2.2)
     thor (0.14.6)
     tilt (1.3.2)
+    xpath (0.1.4)
+      nokogiri (~> 1.3)
 
 PLATFORMS
   ruby
 
 DEPENDENCIES
-  colored
   compass (= 0.11.beta.2)
+  evergreen!
   growl
   guard!
   guard-coffeescript
-  guard-jasmine-headless-webkit
   guard-shell
   rb-fsevent
   sinatra (= 1.1.4)
