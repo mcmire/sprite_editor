@@ -1,4 +1,4 @@
-require 'color'
+Color = SpriteEditor.Color
 
 describe "Color", ->
   describe ".new", ->
