@@ -12,24 +12,24 @@
 #
 src_files:
   - public/javascripts/vendor/ender.js
-  - app/javascripts/lib/util.coffee
-  - app/javascripts/lib/dom_event_helpers.coffee
-  - app/javascripts/lib/canvas.coffee
-  - app/javascripts/lib/color.coffee
-  - app/javascripts/lib/element_mouse_tracker.coffee
-  - app/javascripts/lib/keyboard.coffee
-  - app/javascripts/lib/cell_location.coffee
-  - app/javascripts/lib/cell.coffee
-  - app/javascripts/lib/event_history.coffee
-  - app/javascripts/lib/eventable.coffee
-  - app/javascripts/lib/box.coffee
-  - app/javascripts/lib/box/tools.coffee
-  - app/javascripts/lib/box/sizes.coffee
-  - app/javascripts/lib/box/colors.coffee
-  - app/javascripts/lib/color_picker.coffee
-  - app/javascripts/lib/drawing_canvases.coffee
-  - app/javascripts/lib/tools.coffee
-  - app/javascripts/lib/app.coffee
+  - public/javascripts/lib/util.js
+  - public/javascripts/lib/dom_event_helpers.js
+  - public/javascripts/lib/canvas.js
+  - public/javascripts/lib/color.js
+  - public/javascripts/lib/element_mouse_tracker.js
+  - public/javascripts/lib/keyboard.js
+  - public/javascripts/lib/cell_location.js
+  - public/javascripts/lib/cell.js
+  - public/javascripts/lib/event_history.js
+  - public/javascripts/lib/eventable.js
+  - public/javascripts/lib/box.js
+  - public/javascripts/lib/box/tools.js
+  - public/javascripts/lib/box/sizes.js
+  - public/javascripts/lib/box/colors.js
+  - public/javascripts/lib/color_picker.js
+  - public/javascripts/lib/drawing_canvases.js
+  - public/javascripts/lib/tools.js
+  - public/javascripts/lib/app.js
 
 # stylesheets
 #
@@ -55,7 +55,7 @@ stylesheets:
 #   - helpers/**/*.js
 #
 helpers:
-  - helpers/**/*.coffee
+  - helpers/**/*.js
 
 # spec_files
 #
@@ -68,7 +68,7 @@ helpers:
 #   - **/*[sS]pec.js
 #
 spec_files:
-  - "**/*_spec.coffee"
+  - "**/*_spec.js"
 
 # src_dir
 #
@@ -90,4 +90,4 @@ src_dir:
 #
 # spec_dir: spec/javascripts
 #
-spec_dir: spec/coffeescripts
+spec_dir: spec/javascripts
