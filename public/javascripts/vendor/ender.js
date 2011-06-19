@@ -14,9 +14,9 @@
     return o;
   }
 
-  function boosh(s, r) {
-    var els;
-    if (ender._select && typeof s == 'string' || s.nodeName || s.length && 'item' in s || s == window) { //string || node || nodelist || window
+  function boosh(s, r, els) {
+                          // string || node || nodelist || window
+    if (ender._select && (typeof s == 'string' || s.nodeName || s.length && 'item' in s || s == window)) {
       els = ender._select(s, r);
       els.selector = s;
     } else {
@@ -30,22 +30,24 @@
   }
 
   aug(ender, {
-    _VERSION: '0.2.0',
+    _VERSION: '0.2.4',
     ender: function (o, chain) {
       aug(chain ? boosh : ender, o);
-    }
+    },
+    fn: context.$ && context.$.fn || {} // for easy compat to jQuery plugins
   });
 
   aug(boosh, {
-    forEach: function (fn, scope) {
+    forEach: function (fn, scope, i) {
       // opt out of native forEach so we can intentionally call our own scope
-      // defaulting to the current item
-      for (var i = 0, l = this.length; i < l; ++i) {
+      // defaulting to the current item and be able to return self
+      for (i = 0, l = this.length; i < l; ++i) {
         i in this && fn.call(scope || this[i], this[i], i, this);
       }
       // return self for chaining
       return this;
-    }
+    },
+    $: ender // handy reference to self
   });
 
   var old = context.$;
@@ -59,7 +61,7 @@
   context['ender'] = context['$'] = ender;
 
 }(this);
-!function () { var exports = {}, module = { exports: exports }; !function (doc) {
+!function (context, doc) {
   var loaded = 0, fns = [], ol, f = false,
       testEl = doc.createElement('a'),
       domContentLoaded = 'DOMContentLoaded',
@@ -108,23 +110,24 @@
       loaded ? fn() : fns.push(fn);
     };
 
-    (typeof module !== 'undefined') && module.exports ?
-      (module.exports = {domReady: domReady}) :
-      (window.domReady = domReady);
+    context['domReady'] = domReady;
 
-}(document); $.ender(module.exports); }.call($);
+}(this, document);!function ($) {
+  $.ender({domReady: domReady});
+  $.ender({
+    ready: function (f) {
+      domReady(f);
+      return this;
+    }
+  }, true);
+}(ender);
 /*!
-  * qwery.js - copyright @dedfat
+  * Qwery - A Blazing Fast query selector engine
   * https://github.com/ded/qwery
-  * Follow our software http://twitter.com/dedfat
+  * copyright Dustin Diaz & Jacob Thornton 2011
   * MIT License
   */
-/*!
-  * qwery.js - copyright @dedfat
-  * https://github.com/ded/qwery
-  * Follow our software http://twitter.com/dedfat
-  * MIT License
-  */
+
 !function (context, doc) {
 
   var c, i, j, k, l, m, o, p, r, v,
@@ -372,12 +375,24 @@
     context.qwery = oldQwery;
     return this;
   };
-  context.qwery = qwery;
+  context['qwery'] = qwery;
 
 }(this, document);!function (doc) {
   var q = qwery.noConflict();
+  var table = 'table',
+      nodeMap = {
+        thead: table,
+        tbody: table,
+        tfoot: table,
+        tr: 'tbody',
+        th: 'tr',
+        td: 'tr',
+        fieldset: 'form',
+        option: 'select'
+      }
   function create(node, root) {
-    var el = (root || doc).createElement('div'), els = [];
+    var tag = /^<([^\s>]+)/.exec(node)[1]
+    var el = (root || doc).createElement(nodeMap[tag] || 'div'), els = [];
     el.innerHTML = node;
     var nodes = el.childNodes;
     el = el.firstChild;
@@ -386,7 +401,7 @@
       (el.nodeType == 1) && els.push(el);
     }
     return els;
-  };
+  }
   $._select = function (s, r) {
     return /^\s*</.test(s) ? create(s, r) : q(s, r);
   };
@@ -551,14 +566,14 @@
   },
 
   remove = function (element, orgEvents, fn) {
-    var k, type, events,
+    var k, type, events, i,
         isString = typeof(orgEvents) == 'string',
         names = isString && orgEvents.replace(namespace, ''),
         rm = removeListener,
         attached = retrieveEvents(element);
     if (isString && /\s/.test(orgEvents)) {
       orgEvents = orgEvents.split(' ');
-      var i = orgEvents.length - 1;
+      i = orgEvents.length - 1;
       while (remove(element, orgEvents[i]) && i--) {}
       return element;
     }
@@ -764,8 +779,8 @@
 
     cloneEvents: integrate('clone'),
 
-    hover: function (enter, leave) {
-      for (var i = 0, l = this.length; i < l; i++) {
+    hover: function (enter, leave, i) { // i for internal
+      for (i = this.length; i--;) {
         b.add.call(this, this[i], 'mouseenter', enter);
         b.add.call(this, this[i], 'mouseleave', leave);
       }
@@ -773,16 +788,15 @@
     }
   };
 
-  var shortcuts = [
+  var i, shortcuts = [
     'blur', 'change', 'click', 'dblclick', 'error', 'focus', 'focusin',
     'focusout', 'keydown', 'keypress', 'keyup', 'load', 'mousedown',
-    'mouseenter', 'mouseleave', 'mouseout', 'mouseover', 'mouseup',
+    'mouseenter', 'mouseleave', 'mouseout', 'mouseover', 'mouseup', 'mousemove',
     'resize', 'scroll', 'select', 'submit', 'unload'
   ];
 
-  for (var i = shortcuts.length; i--;) {
-    var shortcut = shortcuts[i];
-    methods[shortcut] = integrate('add', shortcut);
+  for (i = shortcuts.length; i--;) {
+    methods[shortcuts[i]] = integrate('add', shortcuts[i]);
   }
 
   $.ender(methods, true);
@@ -793,15 +807,17 @@
   * Follow our software http://twitter.com/dedfat
   * MIT License
   */
-!function (context) {
+!function (context, win) {
 
   var doc = context.document,
       html = doc.documentElement,
+      parentNode = 'parentNode',
       query = null,
       byTag = 'getElementsByTagName',
       specialAttributes = /^checked|value|selected$/,
-      specialTags = /select|map|fieldset|table|tbody|tr|colgroup/i,
-      tagMap = { select: 'option', table: 'tbody', tr: 'td' },
+      specialTags = /select|fieldset|table|tbody|tfoot|td|tr|colgroup/i,
+      table = 'table',
+      tagMap = { thead: table, tbody: table, tfoot: table, tr: 'tbody', th: 'tr', td: 'tr', fieldset: 'form', option: 'select' },
       stateAttributes = /^checked|selected$/,
       ie = /msie/i.test(navigator.userAgent),
       uidList = [],
@@ -888,10 +904,19 @@
     };
 
   function insert(target, host, fn) {
-    var i = 0, self = host || this, r = [];
-    each(normalize(query ? query(target) : target), function (t) {
+    var i = 0, self = host || this, r = [],
+        nodes = query && typeof target == 'string' && target.charAt(0) != '<' ? function (n) {
+          return (n = query(target)) && (n.selected = 1) && n;
+        }() : target;
+    each(normalize(nodes), function (t) {
       each(self, function (el) {
-        var n = el.cloneNode(true);
+        var n = !el[parentNode] || (el[parentNode] && !el[parentNode][parentNode]) ?
+                  function () {
+                    var c = el.cloneNode(true);
+                    self.$ && self.cloneEvents && self.$(c).cloneEvents(el);
+                    return c;
+                  }() :
+                  el;
         fn(t, n);
         r[i] = n;
         i++;
@@ -925,9 +950,8 @@
 
   }
 
-  function _bonzo(elements) {
+  function Bonzo(elements) {
     this.length = 0;
-    this.original = elements;
     if (elements) {
       elements = typeof elements !== 'string' &&
         !elements.nodeType &&
@@ -941,15 +965,15 @@
     }
   }
 
-  _bonzo.prototype = {
+  Bonzo.prototype = {
 
     each: function (fn, scope) {
       return each(this, fn, scope);
     },
 
     map: function (fn, reject) {
-      var m = [], n;
-      for (var i = 0; i < this.length; i++) {
+      var m = [], n, i;
+      for (i = 0; i < this.length; i++) {
         n = fn.call(this, this[i]);
         reject ? (reject(n) && m.push(n)) : m.push(n);
       }
@@ -970,11 +994,11 @@
           'innerText' :
           'textContent' :
         'innerHTML', m;
-      function append(el, tag) {
+      function append(el) {
         while (el.firstChild) {
           el.removeChild(el.firstChild);
         }
-        each(normalize(h, tag), function (node) {
+        each(normalize(h), function (node) {
           el.appendChild(node);
         });
       }
@@ -1089,7 +1113,7 @@
     before: function (node) {
       return this.each(function (el) {
         each(bonzo.create(node), function (i) {
-          el.parentNode.insertBefore(i, el);
+          el[parentNode].insertBefore(i, el);
         });
       });
     },
@@ -1097,14 +1121,14 @@
     after: function (node) {
       return this.each(function (el) {
         each(bonzo.create(node), function (i) {
-          el.parentNode.insertBefore(i, el.nextSibling);
+          el[parentNode].insertBefore(i, el.nextSibling);
         });
       });
     },
 
     insertBefore: function (target, host) {
       return insert.call(this, target, host, function (t, el) {
-        t.parentNode.insertBefore(el, t);
+        t[parentNode].insertBefore(el, t);
       });
     },
 
@@ -1112,18 +1136,28 @@
       return insert.call(this, target, host, function (t, el) {
         var sibling = t.nextSibling;
         if (sibling) {
-          t.parentNode.insertBefore(el, sibling);
+          t[parentNode].insertBefore(el, sibling);
         }
         else {
-          t.parentNode.appendChild(el);
+          t[parentNode].appendChild(el);
         }
       });
     },
 
-    css: function (o, v) {
+    css: function (o, v, p) {
       // is this a request for just getting a style?
       if (v === undefined && typeof o == 'string') {
-        return getStyle(this[0], o);
+        // repurpose 'v'
+        v = this[0];
+        if (!v) {
+          return null;
+        }
+        if (v == doc || v == win) {
+          p = (v == doc) ? bonzo.doc() : bonzo.viewport();
+          return o == 'width' ? p.width :
+            o == 'height' ? p.height : '';
+        }
+        return getStyle(v, o);
       }
       var iter = o;
       if (typeof o == 'string') {
@@ -1223,7 +1257,7 @@
 
     remove: function () {
       return this.each(function (el) {
-        el.parentNode && el.parentNode.removeChild(el);
+        el[parentNode] && el[parentNode].removeChild(el);
       });
     },
 
@@ -1237,7 +1271,7 @@
 
     detach: function () {
       return this.map(function (el) {
-        return el.parentNode.removeChild(el);
+        return el[parentNode].removeChild(el);
       });
     },
 
@@ -1250,8 +1284,8 @@
     }
   };
 
-  function normalize(node, tag) {
-    return typeof node == 'string' ? bonzo.create(node, tag) : is(node) ? [node] : node;
+  function normalize(node) {
+    return typeof node == 'string' ? bonzo.create(node) : is(node) ? [node] : node; // assume [nodes]
   }
 
   function scroll(x, y, type) {
@@ -1260,7 +1294,7 @@
       return (isBody(el) ? getWindowScroll() : { x: el.scrollLeft, y: el.scrollTop })[type];
     }
     if (isBody(el)) {
-      window.scrollTo(x, y);
+      win.scrollTo(x, y);
     } else {
       x != null && (el.scrollLeft = x);
       y != null && (el.scrollTop = y);
@@ -1269,15 +1303,15 @@
   }
 
   function isBody(element) {
-    return element === window || (/^(?:body|html)$/i).test(element.tagName);
+    return element === win || (/^(?:body|html)$/i).test(element.tagName);
   }
 
   function getWindowScroll() {
-    return { x: window.pageXOffset || html.scrollLeft, y: window.pageYOffset || html.scrollTop };
+    return { x: win.pageXOffset || html.scrollLeft, y: win.pageYOffset || html.scrollTop };
   }
 
   function bonzo(els, host) {
-    return new _bonzo(els, host);
+    return new Bonzo(els, host);
   }
 
   bonzo.setQueryEngine = function (q) {
@@ -1287,26 +1321,16 @@
 
   bonzo.aug = function (o, target) {
     for (var k in o) {
-      o.hasOwnProperty(k) && ((target || _bonzo.prototype)[k] = o[k]);
+      o.hasOwnProperty(k) && ((target || Bonzo.prototype)[k] = o[k]);
     }
   };
 
-  bonzo.create = function (node, tag) {
+  bonzo.create = function (node) {
     return typeof node == 'string' ?
       function () {
-        var t = tag ? tagMap[tag.toLowerCase()] : null;
-        var el = doc.createElement(t || 'div'), els = [];
-        if (tag) {
-          var bitches = node.match(new RegExp("<" + t + ">.+?<\\/" + t + ">", "g"));
-          each(bitches, function (m) {
-            m = m.replace(/<(.+)>(.+?)<\/\1>/, '$2');
-            var bah = doc.createElement(t);
-            bah.appendChild(doc.createDocumentFragment(m));
-            el.appendChild(bah);
-          });
-        } else {
-          el.innerHTML = node;
-        }
+        var tag = /^<([^\s>]+)/.exec(node);
+        var el = doc.createElement(tag && tagMap[tag[1].toLowerCase()] || 'div'), els = [];
+        el.innerHTML = node;
         var nodes = el.childNodes;
         el = el.firstChild;
         els.push(el);
@@ -1340,7 +1364,10 @@
   bonzo.viewport = function () {
     var h = self.innerHeight,
         w = self.innerWidth;
-    ie && (h = html.clientHeight) && (w = html.clientWidth);
+    if (ie) {
+      h = html.clientHeight;
+      w = html.clientWidth;
+    }
     return {
       width: w,
       height: h
@@ -1355,7 +1382,7 @@
       return container !== element && container.contains(element);
     } :
     function (container, element) {
-      while (element = element.parentNode) {
+      while (element = element[parentNode]) {
         if (element === container) {
           return true;
         }
@@ -1370,7 +1397,7 @@
   };
   context['bonzo'] = bonzo;
 
-}(this);!function ($) {
+}(this, window);!function ($) {
 
   var b = bonzo;
   b.setQueryEngine($);
@@ -1381,6 +1408,10 @@
       return $(b.create(node));
     }
   });
+
+  $.id = function (id) {
+    return $([document.getElementById(id)]);
+  };
 
   function indexOf(ar, val) {
     for (var i = 0; i < ar.length; i++) {
@@ -1404,6 +1435,7 @@
     }
     return a;
   }
+
   $.ender({
     parents: function (selector, closest) {
       var collection = $(selector), j, k, p, r = [];
@@ -1776,7 +1808,7 @@
       };
 
   function klass(o) {
-    return extend.call(typeof o == f ? o : noop, o, 1);
+    return extend.call(isFn(o) ? o : noop, o, 1);
   }
 
   function wrap(k, fn, supr) {
@@ -1792,8 +1824,8 @@
   function process(what, o, supr) {
     for (var k in o) {
       if (o.hasOwnProperty(k)) {
-        what[k] = typeof o[k] == f
-          && typeof supr[proto][k] == f
+        what[k] = isFn(o[k])
+          && isFn(supr[proto][k])
           && fnTest.test(o[k])
           ? wrap(k, o[k], supr) : o[k];
       }
@@ -1801,17 +1833,19 @@
   }
 
   function extend(o, fromSub) {
+    // must redefine noop each time so it doesn't inherit from previous arbitrary classes
+    function noop() {}
     noop[proto] = this[proto];
     var supr = this,
         prototype = new noop(),
-        isFunction = typeof o == f,
+        isFunction = isFn(o),
         _constructor = isFunction ? o : this,
         _methods = isFunction ? {} : o,
         fn = function () {
           if (this.initialize) {
             this.initialize.apply(this, arguments);
           } else {
-            fromSub || isFn(o) && supr.apply(this, arguments);
+            fromSub || isFunction && supr.apply(this, arguments);
             _constructor.apply(this, arguments);
           }
         };
@@ -1886,8 +1920,8 @@
         return ap.map.call(a, fn, scope);
       } :
       function (a, fn, scope) {
-        var r = [];
-        for (var i = 0, l = a.length; i < l; i++) {
+        var r = [], i;
+        for (i = 0, l = a.length; i < l; i++) {
           i in a && (r[i] = fn.call(scope, a[i], i, a));
         }
         return r;
@@ -2076,6 +2110,21 @@
         a[a.length] = ar[i];
       }
       return a;
+    },
+
+    merge: function (one, two) {
+      var i = one.length, j = 0, l;
+      if (isFinite(two.length)) {
+        for (l = two.length; j < l; j++) {
+          one[i++] = two[j];
+        }
+      } else {
+        while (two[j] !== undefined) {
+          first[i++] = second[j++];
+        }
+      }
+      one.length = i;
+      return one;
     }
 
   };
@@ -2102,7 +2151,7 @@
     arr: function (ar) {
       return ar instanceof Array;
     },
-    
+
     arrLike: function (ar) {
       return (ar && ar.length && isFinite(ar.length));
     },
@@ -2169,7 +2218,7 @@
 
     map: function (a, fn, scope) {
       var r = [], i = 0;
-      return is.arr(a) ?
+      return is.arrLike(a) ?
         iters.map(a, fn, scope) : !function () {
           for (var k in a) {
             op.hasOwnProperty.call(a, k) && (r[i++] = fn.call(scope, k, a[k], a));
@@ -2291,6 +2340,17 @@
     (context['v'] = v);
 
 }(this);ender.ender(v);
+ender.ender({
+  merge: v.merge,
+  extend: v.extend,
+  each: v.each,
+  map: v.map,
+  toArray: v.toArray,
+  keys: v.keys,
+  values: v.values,
+  trim: v.trim,
+  bind: v.bind
+})
 /*!
   * Reqwest! A x-browser general purpose XHR connection manager
   * copyright Dustin Diaz 2011
@@ -2301,8 +2361,7 @@
   var twoHundo = /^20\d$/,
       doc = document,
       byTag = 'getElementsByTagName',
-      topScript = doc[byTag]('script')[0],
-      head = topScript.parentNode,
+      head = doc[byTag]('head')[0],
       xhr = ('XMLHttpRequest' in window) ?
         function () {
           return new XMLHttpRequest();
@@ -2312,6 +2371,8 @@
         };
 
   var uniqid = 0;
+  // data stored by the most recent JSONP callback
+  var lastValue;
 
   function readyState(o, success, error) {
     return function () {
@@ -2328,8 +2389,9 @@
   function setHeaders(http, options) {
     var headers = options.headers || {};
     headers.Accept = 'text/javascript, text/html, application/xml, text/xml, */*';
+    headers['X-Requested-With'] = headers['X-Requested-With'] || 'XMLHttpRequest';
     if (options.data) {
-      headers['Content-type'] = 'application/x-www-form-urlencoded';
+      headers['Content-type'] = headers['Content-type'] || 'application/x-www-form-urlencoded';
       for (var h in headers) {
         headers.hasOwnProperty(h) && http.setRequestHeader(h, headers[h], false);
       }
@@ -2338,7 +2400,7 @@
 
   function getCallbackName(o) {
     var callbackVar = o.jsonpCallback || "callback";
-    if (o.url.substr(-(callbackVar.length + 2)) == (callbackVar + "=?")) {
+    if (o.url.slice(-(callbackVar.length + 2)) == (callbackVar + "=?")) {
       // Generate a guaranteed unique callback name
       var callbackName = "reqwest_" + uniqid++;
 
@@ -2352,30 +2414,39 @@
     }
   }
 
+  // Store the data returned by the most recent callback
+  function generalCallback(data) {
+    lastValue = data;
+  }
+
   function getRequest(o, fn, err) {
     if (o.type == 'jsonp') {
       var script = doc.createElement('script');
 
       // Add the global callback
-      var callbackName = getCallbackName(o);
-      window[callbackName] = function (data) {
-        // Call the success callback
-        o.success && o.success(data);
-      };
+      window[getCallbackName(o)] = generalCallback;
 
       // Setup our script element
       script.type = "text/javascript";
       script.src = o.url;
       script.async = true;
-      script.onload = function () {
-        // Script has been loaded, and thus the user callback has
-        // been called, so lets clean up now.
+
+      var onload = function () {
+        // Call the user callback with the last value stored
+        // and clean up values and scripts.
+        o.success && o.success(lastValue);
+        lastValue = undefined;
         head.removeChild(script);
-        delete window[callbackName];
+      };
+
+      script.onload = onload;
+      // onload for IE
+      script.onreadystatechange = function () {
+        /^loaded|complete$/.test(script.readyState) && onload();
       };
 
       // Add the script to the DOM head
-      head.insertBefore(script, topScript);
+      head.appendChild(script);
     } else {
       var http = xhr();
       http.open(o.method || 'GET', typeof o == 'string' ? o : o.url, true);
@@ -2497,7 +2568,7 @@
       case 'radio':
         return el.checked ? n + '=' + (el.value ? enc(el.value) : true) + '&' : '';
       default: // text hidden password submit
-        return n + '=' + (el.value ? enc(el.value) : true) + '&';
+        return n + '=' + (el.value ? enc(el.value) : '') + '&';
       }
       break;
     case 'textarea':
@@ -2535,7 +2606,15 @@
   // do not change to (dot) '.' syntax
   window['reqwest'] = reqwest;
 
-}(this);ender.ender({
+}(this);
+ender.ender({
   ajax: reqwest
 });
-ender.ender(reqwest, true);
+ender.ender({
+  serialize: function () {
+    return reqwest.serialize(this[0]);
+  }
+  , serializeArray: function() {
+    return reqwest.serializeArray(this[0]);
+  }
+}, true);
