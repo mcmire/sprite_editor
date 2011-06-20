@@ -1,6 +1,6 @@
 GIT
   remote: http://github.com/johnbintz/jasmine-headless-webkit
-  revision: ff792b81f6f8aba124b0fcb8a2ff5763d9cb02ea
+  revision: d4b886099cdc0a382892d8977d70006dfd2fbad5
   specs:
     jasmine-headless-webkit (0.4.1)
       coffee-script (>= 2.2)

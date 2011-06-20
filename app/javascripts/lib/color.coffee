@@ -22,6 +22,7 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
 
     @rgb2hsl: (rgb) ->
       hsl = {}
+      correctHue = rgb.correctHue ? true
 
       r = rgb.red / 255
       g = rgb.green / 255
@@ -36,7 +37,7 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
         when min
           # According to the spec, hue is undefined when min == max,
           # but for display purposes this isn't very convenient, so let's correct this by default
-          h = 0 if rgb.correctHue
+          h = 0 if correctHue
         when r
           h = ((60 * (g - b) / diff) + 360) % 360
         when g
@@ -55,7 +56,10 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
       else
         s = diff / (2 - sum)
 
-      hsl.hue = Math.round(h) if h?
+      console.log("correctHue: ", correctHue)
+      console.log("Hue: ", h)
+
+      hsl.hue = (if h? then Math.round(h) else null)
       hsl.sat = Math.round(s * 100)
       hsl.lum = Math.round(l * 100)
 
@@ -97,15 +101,19 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
       return p
 
     constructor: (args) ->
-      @set(args) if args?
+      @set(args, true) if args?
       @alpha = 1 if !@alpha? and @isFilled()
       @correctHue = true
 
-    set: (args) ->
+    set: (args, validatePresence=false) ->
       if args instanceof Color
         @[prop] = args[prop] for prop of args
       else
         if type = @_detectType(args)
+          if validatePresence
+            components = Color.componentsByType[type]
+            if !$.v.every(components, (prop) -> args[prop]?)
+              throw "An #{type.toUpperCase()} color requires #{components[0..1].join(", ")}, and #{components[2]} properties!"
           for prop in Color.componentsByType[type]
             @[prop] = args[prop] if args[prop]?
           if type == "rgb"

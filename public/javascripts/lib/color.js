@@ -14,8 +14,9 @@
       };
       Color.allProperties = Color.allComponents.concat(["alpha"]);
       Color.rgb2hsl = function(rgb) {
-        var b, diff, g, h, hsl, l, max, min, r, s, sum;
+        var b, correctHue, diff, g, h, hsl, l, max, min, r, s, sum, _ref;
         hsl = {};
+        correctHue = (_ref = rgb.correctHue) != null ? _ref : true;
         r = rgb.red / 255;
         g = rgb.green / 255;
         b = rgb.blue / 255;
@@ -25,7 +26,7 @@
         sum = min + max;
         switch (max) {
           case min:
-            if (rgb.correctHue) {
+            if (correctHue) {
               h = 0;
             }
             break;
@@ -48,9 +49,9 @@
         } else {
           s = diff / (2 - sum);
         }
-        if (h != null) {
-          hsl.hue = Math.round(h);
-        }
+        console.log("correctHue: ", correctHue);
+        console.log("Hue: ", h);
+        hsl.hue = (h != null ? Math.round(h) : null);
         hsl.sat = Math.round(s * 100);
         hsl.lum = Math.round(l * 100);
         return hsl;
@@ -94,15 +95,18 @@
       };
       function Color(args) {
         if (args != null) {
-          this.set(args);
+          this.set(args, true);
         }
         if (!(this.alpha != null) && this.isFilled()) {
           this.alpha = 1;
         }
         this.correctHue = true;
       }
-      Color.prototype.set = function(args) {
-        var prop, type, _i, _len, _ref, _results;
+      Color.prototype.set = function(args, validatePresence) {
+        var components, prop, type, _i, _len, _ref, _results;
+        if (validatePresence == null) {
+          validatePresence = false;
+        }
         if (args instanceof Color) {
           _results = [];
           for (prop in args) {
@@ -111,6 +115,14 @@
           return _results;
         } else {
           if (type = this._detectType(args)) {
+            if (validatePresence) {
+              components = Color.componentsByType[type];
+              if (!$.v.every(components, function(prop) {
+                return args[prop] != null;
+              })) {
+                throw "An " + (type.toUpperCase()) + " color requires " + (components.slice(0, 2).join(", ")) + ", and " + components[2] + " properties!";
+              }
+            }
             _ref = Color.componentsByType[type];
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {
               prop = _ref[_i];
