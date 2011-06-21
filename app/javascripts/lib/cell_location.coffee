@@ -17,7 +17,7 @@ $.export "SpriteEditor.CellLocation", (SpriteEditor) ->
     constructor: ->
       if arguments.length == 1 and $.v.is.obj(arguments[0])
         obj  = arguments[0]
-        [@app, @i, @j, @x, @y] = [obj.app, obj.i, obj.j, obj.x, obj.y]
+        {@app, @i, @j, @x, @y} = obj
       else
         [@app, @i, @j] = arguments
       @_calculateXandY() unless @x? or @y?

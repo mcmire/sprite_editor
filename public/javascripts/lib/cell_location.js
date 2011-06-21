@@ -15,10 +15,10 @@
         return this.minus.apply(this, arguments);
       };
       function CellLocation() {
-        var obj, _ref;
+        var obj;
         if (arguments.length === 1 && $.v.is.obj(arguments[0])) {
           obj = arguments[0];
-          _ref = [obj.app, obj.i, obj.j, obj.x, obj.y], this.app = _ref[0], this.i = _ref[1], this.j = _ref[2], this.x = _ref[3], this.y = _ref[4];
+          this.app = obj.app, this.i = obj.i, this.j = obj.j, this.x = obj.x, this.y = obj.y;
         } else {
           this.app = arguments[0], this.i = arguments[1], this.j = arguments[2];
         }
