@@ -538,9 +538,3 @@ describe "Color", ->
       color = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
       color2 = new Color(red: 90, green: 188, blue: 72, alpha: 0.4)
       expect(color.eq(color2)).toBeFalsy()
-
-
-
-
-
-
