@@ -4,7 +4,7 @@
     var Keyboard, Sizes;
     Keyboard = SpriteEditor.Keyboard;
     Sizes = {};
-    SpriteEditor.DOMEventHelpers.mixin(Sizes, "SpriteEditor_Sizes");
+    SpriteEditor.DOMEventHelpers.mixin(Sizes, "SpriteEditor_Box_Sizes");
     $.extend(Sizes, {
       name: "Sizes",
       header: "Sizes",
