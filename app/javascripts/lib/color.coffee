@@ -56,9 +56,6 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
       else
         s = diff / (2 - sum)
 
-      console.log("correctHue: ", correctHue)
-      console.log("Hue: ", h)
-
       hsl.hue = (if h? then Math.round(h) else null)
       hsl.sat = Math.round(s * 100)
       hsl.lum = Math.round(l * 100)
@@ -101,26 +98,29 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
       return p
 
     constructor: (args) ->
-      @set(args, true) if args?
-      @alpha = 1 if !@alpha? and @isFilled()
-      @correctHue = true
-
-    set: (args, validatePresence=false) ->
-      if args instanceof Color
-        @[prop] = args[prop] for prop of args
-      else
-        if type = @_detectType(args)
-          if validatePresence
+      if args?
+        if args instanceof Color or args._s?
+          for prop of args
+            @[prop] = args[prop] unless prop is "_s"
+        else
+          @set(args, (type) ->
             components = Color.componentsByType[type]
             if !$.v.every(components, (prop) -> args[prop]?)
               throw "An #{type.toUpperCase()} color requires #{components[0..1].join(", ")}, and #{components[2]} properties!"
-          for prop in Color.componentsByType[type]
-            @[prop] = args[prop] if args[prop]?
-          if type == "rgb"
-            @_recalculateHSL()
-          else
-            @_recalculateRGB()
-        @alpha = args.alpha if args.alpha?
+          )
+      @alpha = 1 if !@alpha? and @isFilled()
+      @correctHue = true
+
+    set: (args, onDetectType) ->
+      if type = @_detectType(args)
+        onDetectType?(type)
+        for prop in Color.componentsByType[type]
+          @[prop] = args[prop] if args[prop]?
+        if type == "rgb"
+          @_recalculateHSL()
+        else
+          @_recalculateRGB()
+      @alpha = args.alpha if args.alpha?
 
     with: (args) ->
       clone = @clone()
@@ -138,13 +138,13 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
       new Color(this)
 
     toJSON: ->
-      JSON.stringify(hue: @hue, sat: @sat, lum: @lum, alpha: @alpha)
-
-    _recalculateRGB: ->
-      $.extend this, Color.hsl2rgb(this)
-
-    _recalculateHSL: ->
-      $.extend this, Color.rgb2hsl(this)
+      JSON.stringify(
+        # tells Color.new not to bomb since properties of both types are present
+        _s: true,
+        red: @red, green: @green, blue: @blue,
+        hue: @hue, sat: @sat, lum: @lum,
+        alpha: @alpha
+      )
 
     toRGBAString: ->
       values = (@[prop] ? "null" for prop in Color.propertiesByType.rgb)
@@ -160,6 +160,12 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
     eq: (other) ->
       self = this
       $.v.every(Color.allProperties, (prop) => self[prop] == other[prop])
+
+    _recalculateRGB: ->
+      $.extend this, Color.hsl2rgb(this)
+
+    _recalculateHSL: ->
+      $.extend this, Color.rgb2hsl(this)
 
     _detectType: (args, sig) ->
       # Either red, green, and blue can passed, or hue, sat, and lum,

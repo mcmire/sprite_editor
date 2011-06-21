@@ -49,8 +49,6 @@
         } else {
           s = diff / (2 - sum);
         }
-        console.log("correctHue: ", correctHue);
-        console.log("Hue: ", h);
         hsl.hue = (h != null ? Math.round(h) : null);
         hsl.sat = Math.round(s * 100);
         hsl.lum = Math.round(l * 100);
@@ -94,51 +92,52 @@
         return p;
       };
       function Color(args) {
+        var prop;
         if (args != null) {
-          this.set(args, true);
-        }
-        if (!(this.alpha != null) && this.isFilled()) {
-          this.alpha = 1;
-        }
-        this.correctHue = true;
-      }
-      Color.prototype.set = function(args, validatePresence) {
-        var components, prop, type, _i, _len, _ref, _results;
-        if (validatePresence == null) {
-          validatePresence = false;
-        }
-        if (args instanceof Color) {
-          _results = [];
-          for (prop in args) {
-            _results.push(this[prop] = args[prop]);
-          }
-          return _results;
-        } else {
-          if (type = this._detectType(args)) {
-            if (validatePresence) {
+          if (args instanceof Color || (args._s != null)) {
+            for (prop in args) {
+              if (prop !== "_s") {
+                this[prop] = args[prop];
+              }
+            }
+          } else {
+            this.set(args, function(type) {
+              var components;
               components = Color.componentsByType[type];
               if (!$.v.every(components, function(prop) {
                 return args[prop] != null;
               })) {
                 throw "An " + (type.toUpperCase()) + " color requires " + (components.slice(0, 2).join(", ")) + ", and " + components[2] + " properties!";
               }
-            }
-            _ref = Color.componentsByType[type];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              prop = _ref[_i];
-              if (args[prop] != null) {
-                this[prop] = args[prop];
-              }
-            }
-            if (type === "rgb") {
-              this._recalculateHSL();
-            } else {
-              this._recalculateRGB();
+            });
+          }
+        }
+        if (!(this.alpha != null) && this.isFilled()) {
+          this.alpha = 1;
+        }
+        this.correctHue = true;
+      }
+      Color.prototype.set = function(args, onDetectType) {
+        var prop, type, _i, _len, _ref;
+        if (type = this._detectType(args)) {
+          if (typeof onDetectType === "function") {
+            onDetectType(type);
+          }
+          _ref = Color.componentsByType[type];
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            prop = _ref[_i];
+            if (args[prop] != null) {
+              this[prop] = args[prop];
             }
           }
-          if (args.alpha != null) {
-            return this.alpha = args.alpha;
+          if (type === "rgb") {
+            this._recalculateHSL();
+          } else {
+            this._recalculateRGB();
           }
+        }
+        if (args.alpha != null) {
+          return this.alpha = args.alpha;
         }
       };
       Color.prototype["with"] = function(args) {
@@ -162,17 +161,15 @@
       };
       Color.prototype.toJSON = function() {
         return JSON.stringify({
+          _s: true,
+          red: this.red,
+          green: this.green,
+          blue: this.blue,
           hue: this.hue,
           sat: this.sat,
           lum: this.lum,
           alpha: this.alpha
         });
-      };
-      Color.prototype._recalculateRGB = function() {
-        return $.extend(this, Color.hsl2rgb(this));
-      };
-      Color.prototype._recalculateHSL = function() {
-        return $.extend(this, Color.rgb2hsl(this));
       };
       Color.prototype.toRGBAString = function() {
         var prop, values;
@@ -211,6 +208,12 @@
         return $.v.every(Color.allProperties, __bind(function(prop) {
           return self[prop] === other[prop];
         }, this));
+      };
+      Color.prototype._recalculateRGB = function() {
+        return $.extend(this, Color.hsl2rgb(this));
+      };
+      Color.prototype._recalculateHSL = function() {
+        return $.extend(this, Color.rgb2hsl(this));
       };
       Color.prototype._detectType = function(args, sig) {
         var count;

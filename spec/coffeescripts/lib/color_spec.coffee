@@ -2,10 +2,13 @@ Color = SpriteEditor.Color
 
 describe "Color", ->
   describe ".new", ->
-    describe "an RGB color", ->
-      it "accepts red, green, and blue properties (defaulting alpha to 1)", ->
+    describe "given properties of an RGB color", ->
+      it "sets red, blue, and green (defaulting alpha to 1)", ->
         color = new Color(red: 90, green: 188, blue: 73)
         expect(color).toContainObject(red: 90, green: 188, blue: 73, alpha: 1)
+      it "calculates the HSL color based on the RGB color", ->
+        color = new Color(red: 90, green: 188, blue: 73)
+        expect(color).toContainObject(hue: 111, sat: 46, lum: 51)
       it "accepts an alpha property too", ->
         color = new Color(red: 90, green: 188, blue: 73, alpha: 0.5)
         expect(color).toContainObject(red: 90, green: 188, blue: 73, alpha: 0.5)
@@ -17,10 +20,14 @@ describe "Color", ->
         expect(-> new Color(red: 90, green: 188)).toThrow(msg)
         expect(-> new Color(green: 90, blue: 188)).toThrow(msg)
         expect(-> new Color(red: 90, blue: 188)).toThrow(msg)
-    describe "an HSL color", ->
-      it "accepts hue, sat, and lum properties (defaulting alpha to 1)", ->
+
+    describe "given properties of an HSL color", ->
+      it "sets hue, sat, and lum (defaulting alpha to 1)", ->
         color = new Color(hue: 111, sat: 46, lum: 51)
         expect(color).toContainObject(hue: 111, sat: 46, lum: 51, alpha: 1)
+      it "calculates the RGB color based on the HSL color", ->
+        color = new Color(hue: 111, sat: 46, lum: 51)
+        expect(color).toContainObject(red: 90, green: 188, blue: 73)
       it "accepts an alpha property too", ->
         color = new Color(hue: 111, sat: 46, lum: 51, alpha: 0.5)
         expect(color).toContainObject(hue: 111, sat: 46, lum: 51, alpha: 0.5)
@@ -32,6 +39,36 @@ describe "Color", ->
         expect(-> new Color(hue: 111, sat: 46)).toThrow(msg)
         expect(-> new Color(sat: 46, lum: 51)).toThrow(msg)
         expect(-> new Color(hue: 111, lum: 51)).toThrow(msg)
+
+    it "simply copies properties from an existing Color object", ->
+      color = new Color(red: 90, green: 188, blue: 73)
+      color2 = new Color(color)
+      expect(color2).toContainObject(red: 90, green: 188, blue: 73)
+
+    it "simply copies properties from the given object if it came from toJSON()", ->
+      color = new Color(
+        _s: true,
+        red: 90, green: 188, blue: 73,
+        hue: 111, sat: 46, lum: 51,
+        alpha: 0.5
+      )
+      expect(color).toContainObject(
+        red: 90, green: 188, blue: 73,
+        hue: 111, sat: 46, lum: 51,
+        alpha: 0.5
+      )
+      expect(color._s).not.toBeDefined()
+
+    it "sets no properties (creating a clear color) if no arguments are given", ->
+      color = new Color()
+      expect(color.red).not.toBeDefined
+      expect(color.green).not.toBeDefined
+      expect(color.blue).not.toBeDefined
+      expect(color.hue).not.toBeDefined
+      expect(color.sat).not.toBeDefined
+      expect(color.lum).not.toBeDefined
+      expect(color.alpha).not.toBeDefined
+
     it "bails if RGB and HSL properties are mixed", ->
       msg = "To set a Color, you must pass either RGB properties or HSL properties, but not both!"
       expect(-> new Color(red: 90, hue: 111)).toThrow(msg)
@@ -369,3 +406,141 @@ describe "Color", ->
       hsl = {hue: 270, sat: 100, lum: 100}
       rgb = Color.hsl2rgb(hsl)
       expect(rgb).toEqual(red: 255, green: 255, blue: 255)
+
+  describe '#set', ->
+    describe "given properties of an RGB color", ->
+      color = null
+      beforeEach ->
+        color = new Color(red: 90, green: 188, blue: 73)
+      it "allows setting red, green, and blue properties", ->
+        color.set(green: 72, blue: 190)
+        expect(color).toContainObject(red: 90, green: 72, blue: 190)
+      it "does not allow clearing existing properties", ->
+        color.set(green: null, blue: 190)
+        expect(color).toContainObject(red: 90, green: 188, blue: 190)
+      it "accepts an alpha property too", ->
+        color.set(green: 72, alpha: 0.5)
+        expect(color).toContainObject(red: 90, green: 72, blue: 73, alpha: 0.5)
+      it "does not allow clearing the alpha property", ->
+        color.set(green: 72, alpha: null)
+        expect(color).toContainObject(red: 90, green: 72, blue: 73, alpha: 1)
+      it "recalculates the HSL color based on the RGB color", ->
+        color.set(green: 72, blue: 190)
+        expect(color).toContainObject(hue: 249, sat: 48, lum: 51)
+
+    describe "given properties of an HSL color", ->
+      color = null
+      beforeEach ->
+        color = new Color(hue: 111, sat: 46, lum: 51)
+      it "allows setting hue, sat, and lum properties", ->
+        color.set(hue: 80, lum: 23)
+        expect(color).toContainObject(hue: 80, sat: 46, lum: 23)
+      it "does not allow clearing existing properties", ->
+        color.set(hue: null, lum: 23)
+        expect(color).toContainObject(hue: 111, sat: 46, lum: 23)
+      it "accepts an alpha property too", ->
+        color.set(hue: 80, alpha: 0.5)
+        expect(color).toContainObject(hue: 80, sat: 46, lum: 51, alpha: 0.5)
+      it "does not allow clearing the alpha property", ->
+        color.set(hue: 80, alpha: null)
+        expect(color).toContainObject(hue: 80, sat: 46, lum: 51, alpha: 1)
+      it "recalculates the RGB color based on the HSL color", ->
+        color.set(hue: 80, lum: 23)
+        expect(color).toContainObject(red: 68, green: 86, blue: 32)
+
+    it "bails if RGB and HSL properties are mixed", ->
+      msg = "To set a Color, you must pass either RGB properties or HSL properties, but not both!"
+      color = new Color()
+      expect(-> color.set(red: 90, hue: 111)).toThrow(msg)
+      expect(-> color.set(blue: 73, green: 90, sat: 46, lum: 51)).toThrow(msg)
+      expect(-> color.set(red: 90, green: 188, blue: 73, hue: 111, sat: 46, lum: 51)).toThrow(msg)
+
+  describe '#with', ->
+    color = null
+    beforeEach ->
+      color = new Color(red: 90, green: 188, blue: 73)
+    it "returns a clone of the current Color", ->
+      color2 = color.with(red: 90)
+      expect(color2).not.toBe(color)
+    it "sets the given properties on the clone", ->
+      color2 = color.with(green: 29)
+      expect(color2.green).toEqual(29)
+    it "doesn't allow RGB and HSL properties to be mixed", ->
+      msg = "To set a Color, you must pass either RGB properties or HSL properties, but not both!"
+      expect(-> color.with(green: 29, hue: 111)).toThrow(msg)
+
+  describe '#isFilled', ->
+    it "returns true if any of the color properties are set", ->
+      color = new Color()
+      color.red = 90
+      expect(color.isFilled()).toBeTruthy()
+    it "returns false if none of the color properties are set", ->
+      color = new Color()
+      expect(color.isFilled()).toBeFalsy()
+    it "doesn't consider the alpha property in determining filledness", ->
+      color = new Color()
+      color.alpha = 0.4
+      expect(color.isFilled()).toBeFalsy()
+
+  describe '#isClear', ->
+    it "returns false if any of the color properties are set", ->
+      color = new Color()
+      color.red = 90
+      expect(color.isClear()).toBeFalsy()
+    it "returns true if none of the color properties are set", ->
+      color = new Color()
+      expect(color.isClear()).toBeTruthy()
+    it "doesn't consider the alpha property in determining clearness", ->
+      color = new Color()
+      color.alpha = 0.4
+      expect(color.isClear()).toBeTruthy()
+
+  describe '#clone', ->
+    it "returns a copy of the current Color", ->
+      color = new Color()
+      color2 = color.clone()
+      expect(color2).not.toBe(color)
+
+  describe '#toJSON', ->
+    it "excludes the functions from the object representation", ->
+      color = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
+      expect(color.toJSON()).toEqual('{"_s":true,"red":90,"green":188,"blue":73,"hue":111,"sat":46,"lum":51,"alpha":0.4}')
+
+  describe '#toRGBAString', ->
+    it "returns a CSS-compatible string representing the RGBA color", ->
+      color = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
+      expect(color.toRGBAString()).toEqual('rgba(90, 188, 73, 0.4)')
+
+  describe '#toHSLAString', ->
+    it "returns a CSS-compatible string represnting the HSLA color", ->
+      color = new Color(hue: 111, sat: 46, lum: 51, alpha: 0.4)
+      expect(color.toHSLAString()).toEqual('hsla(111, 46, 51, 0.4)')
+
+  describe '#inspect', ->
+    it "returns a debug-friendly representation of the color broken down by type", ->
+      color = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
+      expect(color.inspect()).toEqual("{rgba: rgba(90, 188, 73, 0.4), hsla: hsla(111, 46, 51, 0.4)}")
+
+  describe '#eq', ->
+    it "returns true if all the properties of the given Color match this Color", ->
+      color = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
+      color2 = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
+      expect(color.eq(color2)).toBeTruthy()
+    it "also happens to work if given a straight object", ->
+      color = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
+      color2 = {red: 90, green: 188, blue: 73, hue: 111, sat: 46, lum: 51, alpha: 0.4}
+      expect(color.eq(color2)).toBeTruthy()
+    it "returns false if not all the properties of the given Color match this Color", ->
+      color = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
+      color2 = new Color(red: 90, green: 188, blue: 73)
+      expect(color.eq(color2)).toBeFalsy()
+
+      color = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
+      color2 = new Color(red: 90, green: 188, blue: 72, alpha: 0.4)
+      expect(color.eq(color2)).toBeFalsy()
+
+
+
+
+
+
