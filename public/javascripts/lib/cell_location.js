@@ -18,23 +18,27 @@
         var obj;
         if (arguments.length === 1 && $.v.is.obj(arguments[0])) {
           obj = arguments[0];
-          this.app = obj.app, this.i = obj.i, this.j = obj.j, this.x = obj.x, this.y = obj.y;
+          this.app = obj.app;
+          obj = this._handleCoordsObject(obj, 'CellLocation');
+          this.i = obj.i, this.j = obj.j, this.x = obj.x, this.y = obj.y;
         } else {
           this.app = arguments[0], this.i = arguments[1], this.j = arguments[2];
-        }
-        if (!((this.x != null) || (this.y != null))) {
-          this._calculateXandY();
+          $.extend(this._fillOutCoords(this));
         }
       }
       CellLocation.prototype.add = function(offset) {
-        if ((offset.i != null) && (offset.j != null)) {
+        offset = this._fillOutCoords(offset);
+        if (offset.i != null) {
           this.i += offset.i;
+        }
+        if (offset.j != null) {
           this.j += offset.j;
-          this._calculateXandY();
-        } else if ((offset.x != null) && (offset.y != null)) {
+        }
+        if (offset.x != null) {
           this.x += offset.x;
+        }
+        if (offset.y != null) {
           this.y += offset.y;
-          this._calculateIandJ();
         }
         return this;
       };
@@ -42,14 +46,18 @@
         return this.clone().add(offset);
       };
       CellLocation.prototype.subtract = function(offset) {
-        if ((offset.i != null) && (offset.j != null)) {
+        offset = this._fillOutCoords(offset);
+        if (offset.i != null) {
           this.i -= offset.i;
+        }
+        if (offset.j != null) {
           this.j -= offset.j;
-          this._calculateXandY();
-        } else if ((offset.x != null) && (offset.y != null)) {
+        }
+        if (offset.x != null) {
           this.x -= offset.x;
+        }
+        if (offset.y != null) {
           this.y -= offset.y;
-          this._calculateIandJ();
         }
         return this;
       };
@@ -73,13 +81,50 @@
       CellLocation.prototype.inspect = function() {
         return "(" + this.i + ", " + this.j + ")";
       };
-      CellLocation.prototype._calculateXandY = function() {
-        this.x = this.j * this.app.cellSize;
-        return this.y = this.i * this.app.cellSize;
+      CellLocation.prototype._handleCoordsObject = function(obj, sig) {
+        if (!(obj instanceof CellLocation)) {
+          this._validateCoords(obj, sig);
+          obj = this._fillOutCoords(obj);
+        }
+        return obj;
       };
-      CellLocation.prototype._calculateIandJ = function() {
-        this.i = this.y / this.app.cellSize;
-        return this.j = this.x / this.app.cellSize;
+      CellLocation.prototype._validateCoords = function(obj, sig) {
+        var count;
+        count = 0;
+        if (obj.x != null) {
+          count += 1;
+        }
+        if (obj.y != null) {
+          count += 2;
+        }
+        if (obj.i != null) {
+          count += 3;
+        }
+        if (obj.j != null) {
+          count += 4;
+        }
+        if (count === 5) {
+          throw "" + sig + " accepts an object containing either i and j or x and y, but not a mixture!";
+        }
+        if (count === 0) {
+          throw "An object passed to " + sig + " must contain i and j and/or x and y!";
+        }
+      };
+      CellLocation.prototype._fillOutCoords = function(obj) {
+        obj = $.extend(obj);
+        if ((obj.j != null) && !(obj.x != null)) {
+          obj.x = obj.j * this.app.cellSize;
+        }
+        if ((obj.i != null) && !(obj.y != null)) {
+          obj.y = obj.i * this.app.cellSize;
+        }
+        if ((obj.y != null) && !(obj.i != null)) {
+          obj.i = obj.y / this.app.cellSize;
+        }
+        if ((obj.x != null) && !(obj.j != null)) {
+          obj.j = obj.x / this.app.cellSize;
+        }
+        return obj;
       };
       return CellLocation;
     })();

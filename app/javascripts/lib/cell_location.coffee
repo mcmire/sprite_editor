@@ -16,39 +16,38 @@ $.export "SpriteEditor.CellLocation", (SpriteEditor) ->
 
     constructor: ->
       if arguments.length == 1 and $.v.is.obj(arguments[0])
-        obj  = arguments[0]
-        {@app, @i, @j, @x, @y} = obj
+        obj = arguments[0]
+        @app = obj.app
+        obj = @_handleCoordsObject(obj, 'CellLocation')
+        {@i, @j, @x, @y} = obj
       else
         [@app, @i, @j] = arguments
-      @_calculateXandY() unless @x? or @y?
+        $.extend @_fillOutCoords(this)
 
     add: (offset) ->
-      if offset.i? and offset.j?
-        @i += offset.i
-        @j += offset.j
-        @_calculateXandY()
-      else if offset.x? and offset.y?
-        @x += offset.x
-        @y += offset.y
-        @_calculateIandJ()
+      offset = @_fillOutCoords(offset)
+      @i += offset.i if offset.i?
+      @j += offset.j if offset.j?
+      @x += offset.x if offset.x?
+      @y += offset.y if offset.y?
       return this
 
-    plus: (offset) -> @.clone().add(offset)
+    plus: (offset) ->
+      @clone().add(offset)
 
     subtract: (offset) ->
-      if offset.i? and offset.j?
-        @i -= offset.i
-        @j -= offset.j
-        @_calculateXandY()
-      else if offset.x? and offset.y?
-        @x -= offset.x
-        @y -= offset.y
-        @_calculateIandJ()
+      offset = @_fillOutCoords(offset)
+      @i -= offset.i if offset.i?
+      @j -= offset.j if offset.j?
+      @x -= offset.x if offset.x?
+      @y -= offset.y if offset.y?
       return this
 
-    minus: (offset) -> @clone().subtract(offset)
+    minus: (offset) ->
+      @clone().subtract(offset)
 
-    gt: (other) -> (@i > other.i or @j > other.j)
+    gt: (other) ->
+      (@i > other.i or @j > other.j)
 
     clone: -> new CellLocation(this)
 
@@ -57,10 +56,27 @@ $.export "SpriteEditor.CellLocation", (SpriteEditor) ->
 
     inspect: -> "(#{@i}, #{@j})"
 
-    _calculateXandY: ->
-      @x = @j * @app.cellSize
-      @y = @i * @app.cellSize
+    _handleCoordsObject: (obj, sig) ->
+      unless obj instanceof CellLocation
+        @_validateCoords(obj, sig)
+        obj = @_fillOutCoords(obj)
+      obj
 
-    _calculateIandJ: ->
-      @i = @y / @app.cellSize
-      @j = @x / @app.cellSize
+    _validateCoords: (obj, sig) ->
+      count = 0
+      count += 1 if obj.x?
+      count += 2 if obj.y?
+      count += 3 if obj.i?
+      count += 4 if obj.j?
+      if count is 5
+        throw "#{sig} accepts an object containing either i and j or x and y, but not a mixture!"
+      if count is 0
+        throw "An object passed to #{sig} must contain i and j and/or x and y!"
+
+    _fillOutCoords: (obj) ->
+      obj = $.extend(obj)
+      obj.x = obj.j * @app.cellSize if obj.j? && !obj.x?
+      obj.y = obj.i * @app.cellSize if obj.i? && !obj.y?
+      obj.i = obj.y / @app.cellSize if obj.y? && !obj.i?
+      obj.j = obj.x / @app.cellSize if obj.x? && !obj.j?
+      obj
