@@ -172,8 +172,8 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
       # but not a mixture (alpha is always optional).
       # Blank properties will be ignored.
       count = 0
-      count ^= 1 if $.v.some(Color.componentsByType.rgb, (prop) -> args[prop]?)
-      count ^= 2 if $.v.some(Color.componentsByType.hsl, (prop) -> args[prop]?)
+      count += 1 if $.v.some(Color.componentsByType.rgb, (prop) -> args[prop]?)
+      count += 2 if $.v.some(Color.componentsByType.hsl, (prop) -> args[prop]?)
       switch count
         when 3
           throw "To set a Color, you must pass either RGB properties or HSL properties, but not both!"

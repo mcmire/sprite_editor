@@ -221,12 +221,12 @@
         if ($.v.some(Color.componentsByType.rgb, function(prop) {
           return args[prop] != null;
         })) {
-          count ^= 1;
+          count += 1;
         }
         if ($.v.some(Color.componentsByType.hsl, function(prop) {
           return args[prop] != null;
         })) {
-          count ^= 2;
+          count += 2;
         }
         switch (count) {
           case 3:
