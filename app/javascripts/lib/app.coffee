@@ -175,7 +175,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
           <input name="data" type="hidden" />
           <button type="submit">Export PNG</button>
         </form>
-      ')
+      '.trim())
       $exportForm.bind "submit", =>
         data = @previewCanvas.element.toDataURL("image/png")
         data = data.replace(/^data:image\/png;base64,/, "")

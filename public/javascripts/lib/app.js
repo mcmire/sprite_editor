@@ -138,7 +138,7 @@
           <input name="data" type="hidden" />\
           <button type="submit">Export PNG</button>\
         </form>\
-      ');
+      '.trim());
         $exportForm.bind("submit", __bind(function() {
           var data;
           data = this.previewCanvas.element.toDataURL("image/png");
