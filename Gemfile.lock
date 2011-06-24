@@ -1,6 +1,6 @@
 GIT
   remote: http://github.com/guard/guard
-  revision: a6f3ebebfac92d984b05d3ca6a96f0419d4931ee
+  revision: 5923cef530e5118560ff655d027089a516eb21f0
   specs:
     guard (0.4.2)
       thor (~> 0.14.6)
@@ -15,7 +15,7 @@ GIT
 
 GIT
   remote: http://github.com/johnbintz/jasmine-headless-webkit
-  revision: e7dcffe004129b31ea0673ca65d781810210461f
+  revision: cc370aac0b59ef28ead43df22f26e84cd52f6f42
   specs:
     jasmine-headless-webkit (0.4.2)
       coffee-script (>= 2.2)
@@ -65,8 +65,8 @@ GEM
     rspec-mocks (2.6.0)
     rubyzip (0.9.4)
     sass (3.2.0.alpha.8)
-    selenium-webdriver (0.2.1)
-      childprocess (>= 0.1.7)
+    selenium-webdriver (0.2.2)
+      childprocess (>= 0.1.9)
       ffi (>= 1.0.7)
       json_pure
       rubyzip
