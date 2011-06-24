@@ -1,41 +1,42 @@
 $.export "SpriteEditor.EventHistory",
 
-  events: []
-  currentEvent: null
-  currentIndex: -1
-
   init: (app) ->
     @app = app
+    @_reset()
     return this
 
   recordEvent: (obj, method) ->
     action = obj.actions[method]
-    event = action.do()
+    data = action.do()
     # Limit history to 100 events
-    @events.shift() if @events.length == 100
-    # If the user just performed an undo, all future history which was
-    # saved is now gone - POOF!
-    nextIndex = @currentIndex + 1
-    @events.length = nextIndex
-    @events[nextIndex] =
+    if @events.length == 100
+      @events.shift()
+      @currentIndex = 99
+    else
+      @currentIndex++
+      # If the user just performed an undo, all future history which was
+      # saved is now gone - POOF!
+      @events.length = @currentIndex
+    @events[@currentIndex] = {
       object: obj
       method: method
       action: action
-      event: event
-    @currentIndex++
+      data: data
+    }
 
   undo: ->
-    e = @events[@currentIndex]
-    e.action.undo(e.event)
-    @currentIndex--
-
-  canUndo: ->
-    @currentIndex > -1
+    if @currentIndex > -1
+      e = @events[@currentIndex]
+      e.action.undo(e.data)
+      @currentIndex--
 
   redo: ->
-    e = @events[@currentIndex + 1]
-    e.action.redo(e.event)
-    @currentIndex++
+    if @currentIndex < @events.length - 1
+      e = @events[@currentIndex + 1]
+      e.action.redo(e.data)
+      @currentIndex++
 
-  canRedo: ->
-    @currentIndex < @events.length - 1
+  _reset: ->
+    @events = []
+    @currentEvent = null
+    @currentIndex = -1

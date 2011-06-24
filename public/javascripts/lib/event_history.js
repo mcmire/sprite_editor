@@ -1,46 +1,48 @@
 (function() {
   $["export"]("SpriteEditor.EventHistory", {
-    events: [],
-    currentEvent: null,
-    currentIndex: -1,
     init: function(app) {
       this.app = app;
+      this._reset();
       return this;
     },
     recordEvent: function(obj, method) {
-      var action, event, nextIndex;
+      var action, data;
       action = obj.actions[method];
-      event = action["do"]();
+      data = action["do"]();
       if (this.events.length === 100) {
         this.events.shift();
+        this.currentIndex = 99;
+      } else {
+        this.currentIndex++;
+        this.events.length = this.currentIndex;
       }
-      nextIndex = this.currentIndex + 1;
-      this.events.length = nextIndex;
-      this.events[nextIndex] = {
+      return this.events[this.currentIndex] = {
         object: obj,
         method: method,
         action: action,
-        event: event
+        data: data
       };
-      return this.currentIndex++;
     },
     undo: function() {
       var e;
-      e = this.events[this.currentIndex];
-      e.action.undo(e.event);
-      return this.currentIndex--;
-    },
-    canUndo: function() {
-      return this.currentIndex > -1;
+      if (this.currentIndex > -1) {
+        e = this.events[this.currentIndex];
+        e.action.undo(e.data);
+        return this.currentIndex--;
+      }
     },
     redo: function() {
       var e;
-      e = this.events[this.currentIndex + 1];
-      e.action.redo(e.event);
-      return this.currentIndex++;
+      if (this.currentIndex < this.events.length - 1) {
+        e = this.events[this.currentIndex + 1];
+        e.action.redo(e.data);
+        return this.currentIndex++;
+      }
     },
-    canRedo: function() {
-      return this.currentIndex < this.events.length - 1;
+    _reset: function() {
+      this.events = [];
+      this.currentEvent = null;
+      return this.currentIndex = -1;
     }
   });
 }).call(this);
