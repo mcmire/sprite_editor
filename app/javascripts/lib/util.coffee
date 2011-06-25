@@ -1,3 +1,5 @@
+__arSlice = Array.prototype.slice
+
 # Add class methods to the global ender object
 $.ender {
 
@@ -14,7 +16,7 @@ $.ender {
   # you have a reference to B through a `_super` property.
   #
   extend: ->
-    args = Array::slice.call(arguments)
+    args = __arSlice.call(arguments)
     deep = false
     deep = args.shift() if typeof args[0] == "boolean"
     target = args.shift()
@@ -44,12 +46,25 @@ $.ender {
   #
   clone: (obj) -> $.extend({}, obj)
 
-  # Wraps the given function in another function which will call the original
-  # function in the given context. Useful if you want to use a method of
-  # an object as an event listener, while keeping the 'this' reference inside
-  # the function as the object.
+  # Given a string which represents a chain of objects (separated by "."),
+  # ensures that all objects in the chain exist (by creating them if they don't),
+  # then adds the given object (which may also be a function that returns an
+  # object) to the end of the chain.
   #
-  proxy: (obj, fn) -> obj[fn].apply(obj, arguments)
+  export: (chainStrs, newObj) ->
+    chainStrs = chainStrs.split(".") if typeof chainStrs is "string"
+    newIdStr = chainStrs.pop()
+    tail = @_ns(chainStrs)
+    chain = @_chain(chainStrs)
+    newObj = newObj.apply(newObj, chain) if typeof newObj is "function"
+    tail[newIdStr] = newObj
+
+  # The Kestrel combinator. Lets you group a block of code that's intended
+  # to not only operate on a value but return it at the end, too.
+  #
+  tap: (obj, fn) ->
+    fn(obj)
+    obj
 
   # Given a string which represents a chain of objects (separated by "."),
   # ensures that all objects in the chain exist (by creating them if they don't),
@@ -57,7 +72,7 @@ $.ender {
   # `Foo` would be created if it doesn't exist, then `Foo.Bar`, then
   # `Foo.Bar.Baz`; and then Foo.Bar.Baz would be returned.
   #
-  ns: (chainStrs) ->
+  _ns: (chainStrs) ->
     context = window
     chainStrs = chainStrs.split(".") if typeof chainStrs == "string"
     for idStr in chainStrs
@@ -69,7 +84,7 @@ $.ender {
   # returns the objects in the chain (assuming they exist).
   # For instance, given "Foo.Bar.Baz", returns [Foo, Foo.Bar, Foo.Bar.Baz].
   #
-  chain: (chainStrs) ->
+  _chain: (chainStrs) ->
     obj = window
     chainStrs = chainStrs.split(".") if typeof chainStrs == "string"
     chain = []
@@ -77,26 +92,6 @@ $.ender {
       obj = obj[idStr]
       chain.push(obj)
     chain
-
-  # Given a string which represents a chain of objects (separated by "."),
-  # ensures that all objects in the chain exist (by creating them if they don't),
-  # then adds the given object (which may also be a function that returns an
-  # object) to the end of the chain.
-  #
-  export: (chainStrs, newObj) ->
-    chainStrs = chainStrs.split(".") if typeof chainStrs is "string"
-    newIdStr = chainStrs.pop()
-    tail = @ns(chainStrs)
-    chain = @chain(chainStrs)
-    newObj = newObj.apply(newObj, chain) if typeof newObj is "function"
-    tail[newIdStr] = newObj
-
-  # The Kestrel combinator. Lets you group a block of code that's intended
-  # to not only operate on a value but return it at the end, too.
-  #
-  tap: (obj, fn) ->
-    fn(obj)
-    obj
 }
 
 #-------------------------------------------------------------------------------
@@ -106,44 +101,27 @@ $.ender {
 
   center: ->
     vp = $.viewport()
-    self = $([ this[0] ])
     top = (vp.height / 2) - (@height() / 2)
     left = (vp.width / 2) - (@width() / 2)
     @css("top", top + "px").css("left", left + "px")
     return this
 
-  absoluteOffset: ->
-    return null if @length == 0
-
-    node = this[0]
-    top = 0
-    left = 0
-
-    loop
-      top += node.offsetTop
-      left += node.offsetLeft
-      break unless node = node.offsetParent
-
-    return {top: top, left: left}
-
   position: ->
-    po = @parent().offset()
-    o = @offset()
-    top: o.top - po.top
-    left: o.left - po.left
+    if p = @parent()
+      po = p.offset()
+      o = @offset()
+      {top: o.top - po.top, left: o.left - po.left}
+    else
+      {top: 0, left: 0}
 
   parent: ->
-    $(this[0].parentNode)
+    $(this[0].parentNode) if this[0].parentNode
 
   # Copied from <http://blog.stchur.com/2006/06/21/css-computed-style/>
   computedStyle: (prop) ->
     elem = this[0]
-
-    if typeof elem.currentStyle != "undefined"
-      computedStyle = elem.currentStyle
-    else
-      computedStyle = document.defaultView.getComputedStyle(elem, null)
-    (if prop then computedStyle[prop] else computedStyle)
+    computedStyle = elem.currentStyle ? document.defaultView.getComputedStyle(elem, null)
+    prop and computedStyle[prop] or computedStyle
 
 }, true
 

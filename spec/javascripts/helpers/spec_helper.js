@@ -1,6 +1,6 @@
 (function() {
   beforeEach(function() {
-    return this.addMatchers({
+    this.addMatchers({
       toContainObject: function(expected) {
         var key, success, val;
         success = true;
@@ -10,8 +10,29 @@
         }
         return success;
       },
-      toBeAnInstanceOf: function(klass) {
-        return this.actual instanceof klass;
+      toBeAnInstanceOf: function(cons) {
+        var actual_class, actual_match, expected_class, expected_match;
+        if (!(typeof cons === "function" || cons.toString().match(/Constructor\b/))) {
+          throw "Given constructor is not a Function, it is: " + cons;
+        }
+        if (this.actual instanceof cons) {
+          return true;
+        } else {
+          expected_match = cons.toString().match(/^\[object (\w+)\]$/);
+          actual_match = this.actual.constructor.toString().match(/^\[object (\w+)\]$/);
+          if (expected_match && actual_match) {
+            expected_class = expected_match[1];
+            actual_class = actual_match[1];
+            this.message = function() {
+              return "Expected object to be an instance of " + expected_class + ", but it was an instance of " + actual_class;
+            };
+          } else if (expected_match) {
+            this.message = function() {
+              return "Expected object to be an instance of " + expected_class + ", but it was: " + actual;
+            };
+          }
+          return false;
+        }
       },
       toThrowAnything: function() {
         var result;
@@ -35,5 +56,9 @@
         return result;
       }
     });
+    return $('<div id="sandbox"/>').appendTo(document.body);
+  });
+  afterEach(function() {
+    return $('#sandbox').remove();
   });
 }).call(this);

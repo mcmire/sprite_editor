@@ -1,9 +1,11 @@
 (function() {
+  var __arSlice;
   var __hasProp = Object.prototype.hasOwnProperty, __slice = Array.prototype.slice;
+  __arSlice = Array.prototype.slice;
   $.ender({
     extend: function() {
       var args, deep, obj, objects, prop, target, _i, _len;
-      args = Array.prototype.slice.call(arguments);
+      args = __arSlice.call(arguments);
       deep = false;
       if (typeof args[0] === "boolean") {
         deep = args.shift();
@@ -37,10 +39,24 @@
     clone: function(obj) {
       return $.extend({}, obj);
     },
-    proxy: function(obj, fn) {
-      return obj[fn].apply(obj, arguments);
+    "export": function(chainStrs, newObj) {
+      var chain, newIdStr, tail;
+      if (typeof chainStrs === "string") {
+        chainStrs = chainStrs.split(".");
+      }
+      newIdStr = chainStrs.pop();
+      tail = this._ns(chainStrs);
+      chain = this._chain(chainStrs);
+      if (typeof newObj === "function") {
+        newObj = newObj.apply(newObj, chain);
+      }
+      return tail[newIdStr] = newObj;
     },
-    ns: function(chainStrs) {
+    tap: function(obj, fn) {
+      fn(obj);
+      return obj;
+    },
+    _ns: function(chainStrs) {
       var context, idStr, _i, _len, _ref;
       context = window;
       if (typeof chainStrs === "string") {
@@ -57,7 +73,7 @@
       }
       return context;
     },
-    chain: function(chainStrs) {
+    _chain: function(chainStrs) {
       var chain, idStr, obj, _i, _len;
       obj = window;
       if (typeof chainStrs === "string") {
@@ -70,80 +86,43 @@
         chain.push(obj);
       }
       return chain;
-    },
-    "export": function(chainStrs, newObj) {
-      var chain, newIdStr, tail;
-      if (typeof chainStrs === "string") {
-        chainStrs = chainStrs.split(".");
-      }
-      newIdStr = chainStrs.pop();
-      tail = this.ns(chainStrs);
-      chain = this.chain(chainStrs);
-      if (typeof newObj === "function") {
-        newObj = newObj.apply(newObj, chain);
-      }
-      return tail[newIdStr] = newObj;
-    },
-    tap: function(obj, fn) {
-      fn(obj);
-      return obj;
     }
   });
   $.ender({
     center: function() {
-      var left, self, top, vp;
+      var left, top, vp;
       vp = $.viewport();
-      self = $([this[0]]);
       top = (vp.height / 2) - (this.height() / 2);
       left = (vp.width / 2) - (this.width() / 2);
       this.css("top", top + "px").css("left", left + "px");
       return this;
     },
-    absoluteOffset: function() {
-      var left, node, top;
-      if (this.length === 0) {
-        return null;
-      }
-      node = this[0];
-      top = 0;
-      left = 0;
-      while (true) {
-        top += node.offsetTop;
-        left += node.offsetLeft;
-        if (!(node = node.offsetParent)) {
-          break;
-        }
-      }
-      return {
-        top: top,
-        left: left
-      };
-    },
     position: function() {
-      var o, po;
-      po = this.parent().offset();
-      o = this.offset();
-      return {
-        top: o.top - po.top,
-        left: o.left - po.left
-      };
+      var o, p, po;
+      if (p = this.parent()) {
+        po = p.offset();
+        o = this.offset();
+        return {
+          top: o.top - po.top,
+          left: o.left - po.left
+        };
+      } else {
+        return {
+          top: 0,
+          left: 0
+        };
+      }
     },
     parent: function() {
-      return $(this[0].parentNode);
+      if (this[0].parentNode) {
+        return $(this[0].parentNode);
+      }
     },
     computedStyle: function(prop) {
-      var computedStyle, elem;
+      var computedStyle, elem, _ref;
       elem = this[0];
-      if (typeof elem.currentStyle !== "undefined") {
-        computedStyle = elem.currentStyle;
-      } else {
-        computedStyle = document.defaultView.getComputedStyle(elem, null);
-      }
-      if (prop) {
-        return computedStyle[prop];
-      } else {
-        return computedStyle;
-      }
+      computedStyle = (_ref = elem.currentStyle) != null ? _ref : document.defaultView.getComputedStyle(elem, null);
+      return prop && computedStyle[prop] || computedStyle;
     }
   }, true);
   Math.randomFloat = function(min, max) {
