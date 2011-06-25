@@ -10,16 +10,10 @@ $.export "SpriteEditor.Box.Colors", (SpriteEditor) ->
     header: "Colors"
 
     colorTypes: ["foreground", "background"]
-    colorSampleDivs:
-      foreground: null
-      background: null
-    currentColorType: "foreground"
-    currentColors:
-      foreground: new SpriteEditor.Color(red: 172, green: 85, blue: 255)
-      background: new SpriteEditor.Color(red: 255, green: 38, blue: 192)
 
     init: (app) ->
       SpriteEditor.Box.init.call(this, app)
+      @reset()
 
       @colorSampleDivs = {}
       for type in @colorTypes
@@ -39,6 +33,14 @@ $.export "SpriteEditor.Box.Colors", (SpriteEditor) ->
 
       return this
 
+    reset: ->
+      @colorSampleDivs = {foreground: null, background: null}
+      @currentColorType = "foreground"
+      @currentColors = {
+        foreground: new SpriteEditor.Color(red: 172, green: 85, blue: 255)
+        background: new SpriteEditor.Color(red: 255, green: 38, blue: 192)
+      }
+
     addEvents: ->
       @_bindEvents document,
         keydown: (event) =>
@@ -52,7 +54,7 @@ $.export "SpriteEditor.Box.Colors", (SpriteEditor) ->
           @_selectColorType("foreground")
 
     removeEvents: ->
-      @_unbindEvents(document, "keydown")
+      @_unbindEvents(document, "keydown", "keyup")
 
     update: (color) ->
       @currentColors[@currentColorType] = color

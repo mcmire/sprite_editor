@@ -1,70 +1,88 @@
 (function() {
+  window.specHelpers = {
+    fireEvent: function(element, type, fn) {
+      var evt;
+      evt = document.createEvent("HTMLEvents");
+      evt.initEvent(type, true, true);
+      if (typeof fn === "function") {
+        fn(evt);
+      }
+      return element.dispatchEvent(evt);
+    }
+  };
   beforeEach(function() {
     this.addMatchers({
       toContainObject: function(expected) {
-        var key, success, val;
-        success = true;
+        var key, result, val;
+        result = true;
         for (key in expected) {
           val = expected[key];
-          success &= this.env.equals_(this.actual[key], val);
+          result &= this.env.equals_(this.actual[key], val);
         }
-        return success;
+        return result;
       },
       toBeAnInstanceOf: function(cons) {
-        var actual_class, actual_match, expected_class, expected_match;
+        var actual_class, actual_match, expected_class, expected_match, failure_message, negative_failure_message, result;
         if (!(typeof cons === "function" || cons.toString().match(/Constructor\b/))) {
           throw "Given constructor is not a Function, it is: " + cons;
         }
+        failure_message = negative_failure_message = null;
+        result = null;
         if (this.actual instanceof cons) {
-          return true;
+          result = true;
         } else {
           expected_match = cons.toString().match(/^\[object (\w+)\]$/);
           actual_match = this.actual.constructor.toString().match(/^\[object (\w+)\]$/);
           if (expected_match && actual_match) {
             expected_class = expected_match[1];
             actual_class = actual_match[1];
-            this.message = function() {
-              return "Expected object to be an instance of " + expected_class + ", but it was an instance of " + actual_class;
-            };
+            failure_message = "Expected object to be an instance of " + expected_class + ", but it was an instance of " + actual_class;
           } else if (expected_match) {
-            this.message = function() {
-              return "Expected object to be an instance of " + expected_class + ", but it was: " + actual;
-            };
+            failure_message = "Expected object to be an instance of " + expected_class + ", but it was: " + actual;
           }
-          return false;
+          result = false;
         }
+        this.message = function() {
+          return [failure_message, negative_failure_message];
+        };
+        return result;
       },
       toThrowAnything: function() {
-        var result;
+        var failure_message, negative_failure_message, result;
         if (typeof this.actual !== "function") {
           throw new Error("Actual is not a function");
         }
+        failure_message = negative_failure_message = null;
+        result = null;
         try {
           this.actual();
-          if (result = !this.isNot) {
-            this.message = function() {
-              return "Expected function to throw an exception, but it didn't";
-            };
-          }
+          result = false;
         } catch (e) {
-          if (result = this.isNot) {
-            this.message = function() {
-              return "Expected function not to throw an exception, but it threw " + (e.message || e);
-            };
-          }
+          negative_failure_message = "Expected function not to throw an exception, but it threw " + (e.message || e);
+          result = true;
         }
+        this.message = function() {
+          return [failure_message, negative_failure_message];
+        };
         return result;
       },
       toHaveProperty: function(prop) {
-        var result, self;
-        self = this;
-        result = this.actual.hasOwnProperty(prop);
+        return this.actual.hasOwnProperty(prop);
+      },
+      toBeTypeOf: function(type) {
+        return typeof this.actual === type;
+      },
+      toEqualColor: function(color) {
+        var result;
+        if (!(this.actual instanceof SpriteEditor.Color)) {
+          throw new Error("Actual object isn't a Color!");
+        }
+        if (!(color instanceof SpriteEditor.Color)) {
+          throw new Error("Expected object isn't a Color!");
+        }
+        result = this.actual.eq(color);
         this.message = function() {
-          if (self.isNot && result) {
-            return "Expected " + (jasmine.pp(self.actual)) + " to not have property '" + prop + "', but it did";
-          } else if (!self.isNot && !result) {
-            return "Expected " + (jasmine.pp(self.actual)) + " to have property '" + prop + "', but it didn't";
-          }
+          return ["Expected " + (this.actual.inspect()) + " to be equal to " + (color.inspect()) + ", but it wasn't", "Expected " + (this.actual.inspect()) + " to not be equal to given color, but it was"];
         };
         return result;
       }

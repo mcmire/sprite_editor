@@ -9,26 +9,10 @@
       name: "Colors",
       header: "Colors",
       colorTypes: ["foreground", "background"],
-      colorSampleDivs: {
-        foreground: null,
-        background: null
-      },
-      currentColorType: "foreground",
-      currentColors: {
-        foreground: new SpriteEditor.Color({
-          red: 172,
-          green: 85,
-          blue: 255
-        }),
-        background: new SpriteEditor.Color({
-          red: 255,
-          green: 38,
-          blue: 192
-        })
-      },
       init: function(app) {
         var type, _fn, _i, _len, _ref;
         SpriteEditor.Box.init.call(this, app);
+        this.reset();
         this.colorSampleDivs = {};
         _ref = this.colorTypes;
         _fn = function(self, type) {
@@ -53,6 +37,25 @@
         this._selectColorType(this.currentColorType);
         return this;
       },
+      reset: function() {
+        this.colorSampleDivs = {
+          foreground: null,
+          background: null
+        };
+        this.currentColorType = "foreground";
+        return this.currentColors = {
+          foreground: new SpriteEditor.Color({
+            red: 172,
+            green: 85,
+            blue: 255
+          }),
+          background: new SpriteEditor.Color({
+            red: 255,
+            green: 38,
+            blue: 192
+          })
+        };
+      },
       addEvents: function() {
         return this._bindEvents(document, {
           keydown: __bind(function(event) {
@@ -71,7 +74,7 @@
         });
       },
       removeEvents: function() {
-        return this._unbindEvents(document, "keydown");
+        return this._unbindEvents(document, "keydown", "keyup");
       },
       update: function(color) {
         this.currentColors[this.currentColorType] = color;
