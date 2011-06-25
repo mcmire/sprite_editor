@@ -2,77 +2,51 @@
   var Keyboard;
   Keyboard = SpriteEditor.Keyboard;
   describe('Keyboard', function() {
-    var createEvent, kb;
+    var kb;
     kb = null;
     beforeEach(function() {
       return kb = Keyboard.init();
     });
-    createEvent = function(type) {
-      var evt;
-      evt = document.createEvent("HTMLEvents");
-      evt.initEvent(type, true, true);
-      return evt;
-    };
     describe('when initialized', function() {
       it("initializes @pressedKeys", function() {
         return expect(kb.pressedKeys).toEqual({});
       });
-      describe('on document keydown', function() {
-        return it("adds the pressed key to @pressedKeys", function() {
-          var evt;
-          evt = createEvent("keydown");
-          evt.keyCode = 9;
-          document.dispatchEvent(evt);
-          return expect(kb.pressedKeys).toHaveProperty(9);
+      it("when a key is pressed, adds the pressed key to @pressedKeys", function() {
+        specHelpers.fireEvent(document, "keydown", function(evt) {
+          return evt.keyCode = 9;
         });
+        return expect(kb.pressedKeys).toHaveProperty(9);
       });
-      describe('on document keyup', function() {
-        return it("removes the pressed key from @pressedKeys", function() {
-          var evt;
-          evt = createEvent("keyup");
-          evt.keyCode = 9;
-          document.dispatchEvent(evt);
-          return expect(kb.pressedKeys).not.toHaveProperty(9);
+      it("when a key is lifted, removes the pressed key from @pressedKeys", function() {
+        specHelpers.fireEvent(document, "keyup", function(evt) {
+          return evt.keyCode = 9;
         });
+        return expect(kb.pressedKeys).not.toHaveProperty(9);
       });
-      return describe('on window blur', function() {
-        return it("resets the pressedKeys hash", function() {
-          var evt;
-          evt = createEvent("blur");
-          window.dispatchEvent(evt);
-          return expect(kb.pressedKeys).toEqual({});
-        });
+      return it("when the window loses focus, resets the pressedKeys hash", function() {
+        specHelpers.fireEvent(window, "blur");
+        return expect(kb.pressedKeys).toEqual({});
       });
     });
     describe('when destroyed', function() {
       beforeEach(function() {
         return kb.destroy();
       });
-      describe('on document keydown', function() {
-        return it("does not add the pressed key to @pressedKeys", function() {
-          var evt;
-          evt = createEvent("keydown");
-          evt.keyCode = 9;
-          document.dispatchEvent(evt);
-          return expect(kb.pressedKeys).toEqual({});
+      it("when a key is pressed, does nothing", function() {
+        specHelpers.fireEvent(document, "keydown", function(evt) {
+          return evt.keyCode = 9;
         });
+        return expect(kb.pressedKeys).toEqual({});
       });
-      describe('on document keyup', function() {
-        return it("does not remove the pressed key from @pressedKeys", function() {
-          var evt;
-          evt = createEvent("keyup");
-          evt.keyCode = 9;
-          document.dispatchEvent(evt);
-          return expect(kb.pressedKeys).toEqual({});
+      it("when a key is lifted, does nothing", function() {
+        specHelpers.fireEvent(document, "keyup", function(evt) {
+          return evt.keyCode = 9;
         });
+        return expect(kb.pressedKeys).toEqual({});
       });
-      return describe('on window blur', function() {
-        return it("does not reset the pressedKeys hash", function() {
-          var evt;
-          evt = createEvent("blur");
-          window.dispatchEvent(evt);
-          return expect(kb.pressedKeys).toEqual({});
-        });
+      return it("when the window loses focus, does nothing", function() {
+        specHelpers.fireEvent(window, "blur");
+        return expect(kb.pressedKeys).toEqual({});
       });
     });
     return describe('#modifierKeyPressed', function() {
