@@ -12,6 +12,7 @@
 #
 src_files:
   - public/javascripts/vendor/ender.js
+  - public/javascripts/lib/ender_ext.js
   - public/javascripts/lib/util.js
   #- public/javascripts/lib/dom_event_helpers.js
   #- public/javascripts/lib/canvas.js
