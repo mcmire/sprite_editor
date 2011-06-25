@@ -26,16 +26,19 @@ $.export "SpriteEditor.Keyboard", (SpriteEditor) ->
     init: ->
       self = this
 
-      @_reset()
+      @reset()
 
       @_bindEvents document,
         keydown: (event) -> self.pressedKeys[event.keyCode] = 1
         keyup: (event) -> delete self.pressedKeys[event.keyCode]
 
       @_bindEvents window,
-        blur: (event) -> self._reset()
+        blur: (event) -> self.reset()
 
       return this
+
+    reset: ->
+      @pressedKeys = {}
 
     destroy: ->
       @_unbindEvents document, "keydown", "keyup"
@@ -43,8 +46,5 @@ $.export "SpriteEditor.Keyboard", (SpriteEditor) ->
 
     modifierKeyPressed: (event) ->
       event.shiftKey or event.ctrlKey or event.altKey or event.metaKey
-
-    _reset: ->
-      @pressedKeys = {}
 
   return Keyboard

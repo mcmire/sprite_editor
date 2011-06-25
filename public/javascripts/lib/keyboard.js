@@ -24,7 +24,7 @@
       init: function() {
         var self;
         self = this;
-        this._reset();
+        this.reset();
         this._bindEvents(document, {
           keydown: function(event) {
             return self.pressedKeys[event.keyCode] = 1;
@@ -35,10 +35,13 @@
         });
         this._bindEvents(window, {
           blur: function(event) {
-            return self._reset();
+            return self.reset();
           }
         });
         return this;
+      },
+      reset: function() {
+        return this.pressedKeys = {};
       },
       destroy: function() {
         this._unbindEvents(document, "keydown", "keyup");
@@ -46,9 +49,6 @@
       },
       modifierKeyPressed: function(event) {
         return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
-      },
-      _reset: function() {
-        return this.pressedKeys = {};
       }
     });
     return Keyboard;
