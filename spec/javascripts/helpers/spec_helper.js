@@ -54,6 +54,19 @@
           }
         }
         return result;
+      },
+      toHaveProperty: function(prop) {
+        var result, self;
+        self = this;
+        result = this.actual.hasOwnProperty(prop);
+        this.message = function() {
+          if (self.isNot && result) {
+            return "Expected " + (jasmine.pp(self.actual)) + " to not have property '" + prop + "', but it did";
+          } else if (!self.isNot && !result) {
+            return "Expected " + (jasmine.pp(self.actual)) + " to have property '" + prop + "', but it didn't";
+          }
+        };
+        return result;
       }
     });
     return $('<div id="sandbox"/>').appendTo(document.body);

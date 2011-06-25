@@ -35,6 +35,16 @@ beforeEach ->
         if result = @isNot
           @message = -> "Expected function not to throw an exception, but it threw #{e.message || e}"
       return result
+
+    toHaveProperty: (prop) ->
+      self = this
+      result = @actual.hasOwnProperty(prop)
+      @message = ->
+        if self.isNot && result
+          "Expected #{jasmine.pp(self.actual)} to not have property '#{prop}', but it did"
+        else if !self.isNot && !result
+          "Expected #{jasmine.pp(self.actual)} to have property '#{prop}', but it didn't"
+      return result
   )
 
   # Add container element we can dump elements into

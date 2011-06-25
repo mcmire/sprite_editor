@@ -20,23 +20,25 @@
       S_KEY: 83,
       X_KEY: 88,
       Z_KEY: 90,
-      pressedKeys: {},
+      modifierKeys: [16, 17, 18, 91],
       init: function() {
         var self;
         self = this;
+        this._reset();
         this._bindEvents(document, {
           keydown: function(event) {
-            return self.pressedKeys[event.keyCode] = true;
+            return self.pressedKeys[event.keyCode] = 1;
           },
           keyup: function(event) {
             return delete self.pressedKeys[event.keyCode];
           }
         });
-        return this._bindEvents(window, {
+        this._bindEvents(window, {
           blur: function(event) {
-            return self.pressedKeys = {};
+            return self._reset();
           }
         });
+        return this;
       },
       destroy: function() {
         this._unbindEvents(document, "keydown", "keyup");
@@ -44,12 +46,11 @@
       },
       modifierKeyPressed: function(event) {
         return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;
+      },
+      _reset: function() {
+        return this.pressedKeys = {};
       }
     });
-    Keyboard.modifierKeys = Keyboard.SHIFT_KEY;
-    Keyboard.CTRL_KEY;
-    Keyboard.ALT_KEY;
-    Keyboard.META_KEY;
     return Keyboard;
   });
 }).call(this);
