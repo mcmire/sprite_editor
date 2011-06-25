@@ -123,7 +123,7 @@
         };
         this.isDragging = false;
         this._addEvents();
-        this.elementOffset = this.$element.absoluteOffset();
+        this.elementOffset = this.$element.offset();
         computedStyle = this.$element.computedStyle();
         this.elementSize = {
           width: parseInt(computedStyle["width"], 10),

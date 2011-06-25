@@ -150,7 +150,7 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
       @_addEvents()
 
       # Cache some values for later use
-      @elementOffset = @$element.absoluteOffset()
+      @elementOffset = @$element.offset()
       computedStyle = @$element.computedStyle()
       @elementSize =
         width: parseInt(computedStyle["width"], 10)
