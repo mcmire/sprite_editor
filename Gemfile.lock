@@ -1,6 +1,6 @@
 GIT
   remote: http://github.com/guard/guard
-  revision: 5923cef530e5118560ff655d027089a516eb21f0
+  revision: 59b1ea2c96197cb41dabaea9517940b61bfa2f53
   specs:
     guard (0.4.2)
       thor (~> 0.14.6)
