@@ -2,8 +2,13 @@ $.export "SpriteEditor.EventHistory",
 
   init: (app) ->
     @app = app
-    @_reset()
+    @reset()
     return this
+
+  reset: ->
+    @events = []
+    @currentEvent = null
+    @currentIndex = -1
 
   recordEvent: (obj, method) ->
     action = obj.actions[method]
@@ -35,8 +40,3 @@ $.export "SpriteEditor.EventHistory",
       e = @events[@currentIndex + 1]
       e.action.redo(e.data)
       @currentIndex++
-
-  _reset: ->
-    @events = []
-    @currentEvent = null
-    @currentIndex = -1

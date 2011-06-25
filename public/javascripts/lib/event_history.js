@@ -2,8 +2,13 @@
   $["export"]("SpriteEditor.EventHistory", {
     init: function(app) {
       this.app = app;
-      this._reset();
+      this.reset();
       return this;
+    },
+    reset: function() {
+      this.events = [];
+      this.currentEvent = null;
+      return this.currentIndex = -1;
     },
     recordEvent: function(obj, method) {
       var action, data;
@@ -38,11 +43,6 @@
         e.action.redo(e.data);
         return this.currentIndex++;
       }
-    },
-    _reset: function() {
-      this.events = [];
-      this.currentEvent = null;
-      return this.currentIndex = -1;
     }
   });
 }).call(this);
