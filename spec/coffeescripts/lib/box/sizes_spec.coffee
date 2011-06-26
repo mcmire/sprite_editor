@@ -67,9 +67,11 @@ describe 'Box.Sizes', ->
     it "clears the container element variable", ->
       sizes.destroy()
       expect(sizes.element).toBeUndefined()
+
     it "clears the current size", ->
       sizes.destroy()
       expect(sizes.currentSize).toBeNull()
+
     it "removes any events that may have been added", ->
       spyOn(sizes, 'removeEvents')
       sizes.destroy()
