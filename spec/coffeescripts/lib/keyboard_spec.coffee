@@ -4,6 +4,10 @@ describe 'Keyboard', ->
   kb = null
   beforeEach -> kb = Keyboard.init()
 
+  it "responds to _bindEvents and _unbindEvents", ->
+    expect(Keyboard._bindEvents).toBeTypeOf("function")
+    expect(Keyboard._unbindEvents).toBeTypeOf("function")
+
   describe 'when initialized', ->
     it "initializes @pressedKeys", ->
       expect(kb.pressedKeys).toEqual({})

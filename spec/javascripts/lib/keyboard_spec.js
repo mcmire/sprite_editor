@@ -7,6 +7,10 @@
     beforeEach(function() {
       return kb = Keyboard.init();
     });
+    it("responds to _bindEvents and _unbindEvents", function() {
+      expect(Keyboard._bindEvents).toBeTypeOf("function");
+      return expect(Keyboard._unbindEvents).toBeTypeOf("function");
+    });
     describe('when initialized', function() {
       it("initializes @pressedKeys", function() {
         return expect(kb.pressedKeys).toEqual({});
