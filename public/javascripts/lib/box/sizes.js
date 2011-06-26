@@ -33,7 +33,8 @@
       destroy: function() {
         SpriteEditor.Box.destroy.call(this);
         this.currentSize = null;
-        return this.removeEvents();
+        this.removeEvents();
+        return this;
       },
       reset: function() {
         return this.select(this.sizes[0]);

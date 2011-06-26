@@ -31,6 +31,7 @@ $.export "SpriteEditor.Box.Sizes", (SpriteEditor) ->
       SpriteEditor.Box.destroy.call(this)
       @currentSize = null
       @removeEvents()
+      return this
 
     reset: ->
       @select(@sizes[0])
