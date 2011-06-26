@@ -7,10 +7,13 @@
     var app, colors;
     app = colors = null;
     beforeEach(function() {
-      app = {
+      return app = {
         colorPicker: {}
       };
-      return colors = Colors.init(app);
+    });
+    afterEach(function() {
+      Colors.destroy();
+      return colors = null;
     });
     it("responds to _bindEvents and _unbindEvents", function() {
       expect(Colors._bindEvents).toBeTypeOf("function");
@@ -18,10 +21,12 @@
     });
     describe('when initialized', function() {
       it("sets @app to the given App instance", function() {
+        colors = Colors.init(app);
         return expect(colors.app).toBe(app);
       });
       it("creates a container element for the box, with an h3 inside", function() {
         var $e, $h;
+        colors = Colors.init(app);
         $e = colors.$element;
         $h = colors.$element.find("h3");
         expect($e[0].nodeName).toEqual("DIV");
@@ -32,25 +37,74 @@
       });
       it("adds a div to the container for the foreground color sample, and stores it in colorSampleDivs", function() {
         var $e, $e2;
+        colors = Colors.init(app);
         $e = colors.$element.find('div.color_sample:nth-of-type(1)');
         $e2 = colors.colorSampleDivs.foreground;
         return expect($e[0]).toBe($e2[0]);
       });
-      it("initializes the color of the foreground color sample to the foreground color", function() {
+      it("renders the foreground color sample", function() {
         var $e;
+        colors = Colors.init(app);
         $e = colors.colorSampleDivs.foreground;
-        return expect($e).toHaveCss("background-color", "rgb(172, 85, 255)");
+        return expect($e.css('background-color')).not.toBeNull();
       });
       it("adds a div to the container for the background color sample, and stores it in colorSampleDivs", function() {
         var $e, $e2;
+        colors = Colors.init(app);
         $e = colors.$element.find('div.color_sample:nth-of-type(2)');
         $e2 = colors.colorSampleDivs.background;
         return expect($e[0]).toBe($e2[0]);
       });
-      it("initializes the color of the background color sample to the background color", function() {
+      it("renders the background color sample", function() {
         var $e;
+        colors = Colors.init(app);
         $e = colors.colorSampleDivs.background;
-        return expect($e).toHaveCss("background-color", "rgb(255, 38, 192)");
+        return expect($e.css('background-color')).not.toBeNull();
+      });
+      return it("resets the UI", function() {
+        spyOn(Colors, 'reset');
+        colors = Colors.init(app);
+        return expect(Colors.reset).toHaveBeenCalled();
+      });
+    });
+    describe('when destroyed', function() {
+      beforeEach(function() {
+        return colors = Colors.init(app);
+      });
+      it("clears the container element variable", function() {
+        colors.destroy();
+        return expect(colors.element).toBeUndefined();
+      });
+      it("clears the color sample divs", function() {
+        colors.destroy();
+        return expect(colors.colorSampleDivs).toEqual({});
+      });
+      it("clears the current color type", function() {
+        colors.destroy();
+        return expect(colors.currentColorType).toBeNull();
+      });
+      return it("clears the current colors", function() {
+        colors.destroy();
+        return expect(colors.currentColors).toEqual({});
+      });
+    });
+    describe('when reset', function() {
+      beforeEach(function() {
+        return colors = Colors.init(app);
+      });
+      it("sets the foreground color to a predetermined value", function() {
+        return expect(colors.currentColors.foreground).toEqualColor(new Color({
+          red: 172,
+          green: 85,
+          blue: 255
+        }));
+      });
+      it("sets the background color to a predetermined value", function() {
+        return expect(colors.currentColors.background).toEqualColor(new Color({
+          red: 255,
+          green: 38,
+          blue: 192
+        }));
       });
       return it("marks the foreground color sample as selected", function() {
         var $bg, $fg;
@@ -63,6 +117,7 @@
     });
     describe('when events have been added', function() {
       beforeEach(function() {
+        colors = Colors.init(app);
         return colors.addEvents();
       });
       describe('if X is pressed', function() {
@@ -125,6 +180,7 @@
     });
     describe('when events have been removed', function() {
       beforeEach(function() {
+        colors = Colors.init(app);
         colors.addEvents();
         return colors.removeEvents();
       });
@@ -190,6 +246,7 @@
       var color;
       color = null;
       beforeEach(function() {
+        colors = Colors.init(app);
         return color = colors.currentColors.foreground = new Color({
           red: 255,
           green: 0,
@@ -218,6 +275,7 @@
       var color;
       color = null;
       beforeEach(function() {
+        colors = Colors.init(app);
         return color = colors.currentColors.background = new Color({
           red: 255,
           green: 0,
@@ -243,52 +301,53 @@
       });
     });
     describe('on update', function() {
+      var color;
+      color = null;
+      beforeEach(function() {
+        colors = Colors.init(app);
+        return color = new Color({
+          red: 255,
+          green: 0,
+          blue: 0
+        });
+      });
       describe('when the foreground color is selected', function() {
         beforeEach(function() {
-          colors.currentColorType = "foreground";
-          return colors.update(new Color({
-            red: 255,
-            green: 0,
-            blue: 0
-          }));
+          return colors.currentColorType = "foreground";
         });
         it("sets the foreground color to the given color", function() {
-          return expect(colors.currentColors.foreground).toEqualColor(new Color({
-            red: 255,
-            green: 0,
-            blue: 0
-          }));
+          colors.update(color);
+          return expect(colors.currentColors.foreground).toBe(color);
         });
         return it("redraws the foreground color sample with the new color", function() {
           var $fg;
           $fg = colors.colorSampleDivs.foreground;
-          return expect($fg).toHaveCss("background-color", "rgb(255, 0, 0)");
+          spyOn($fg, "trigger");
+          colors.update(color);
+          return expect($fg.trigger).toHaveBeenCalledWith("render");
         });
       });
       return describe('when the background color is selected', function() {
         beforeEach(function() {
-          colors.currentColorType = "background";
-          return colors.update(new Color({
-            red: 255,
-            green: 0,
-            blue: 0
-          }));
+          return colors.currentColorType = "background";
         });
         it("sets the background color to the given color", function() {
-          return expect(colors.currentColors.background).toEqualColor(new Color({
-            red: 255,
-            green: 0,
-            blue: 0
-          }));
+          colors.update(color);
+          return expect(colors.currentColors.background).toBe(color);
         });
         return it("redraws the background color sample with the new color", function() {
           var $bg;
           $bg = colors.colorSampleDivs.background;
-          return expect($bg).toHaveCss("background-color", "rgb(255, 0, 0)");
+          spyOn($bg, "trigger");
+          colors.update(color);
+          return expect($bg.trigger).toHaveBeenCalledWith("render");
         });
       });
     });
     return describe('.currentColor', function() {
+      beforeEach(function() {
+        return colors = Colors.init(app);
+      });
       it("returns the foreground color when the foreground color is selected", function() {
         colors.currentColorType = "foreground";
         colors.currentColors.foreground = new Color({

@@ -4,9 +4,12 @@ Color    = SpriteEditor.Color
 
 describe 'Box.Colors', ->
   app = colors = null
+
   beforeEach ->
     app = {colorPicker: {}}
-    colors = Colors.init(app)
+  afterEach ->
+    Colors.destroy()
+    colors = null
 
   it "responds to _bindEvents and _unbindEvents", ->
     expect(Colors._bindEvents).toBeTypeOf("function")
@@ -14,9 +17,11 @@ describe 'Box.Colors', ->
 
   describe 'when initialized', ->
     it "sets @app to the given App instance", ->
+      colors = Colors.init(app)
       expect(colors.app).toBe(app)
 
     it "creates a container element for the box, with an h3 inside", ->
+      colors = Colors.init(app)
       $e = colors.$element
       $h = colors.$element.find("h3")
 
@@ -28,22 +33,61 @@ describe 'Box.Colors', ->
       expect($h.html()).toEqual("Colors")
 
     it "adds a div to the container for the foreground color sample, and stores it in colorSampleDivs", ->
+      colors = Colors.init(app)
       $e = colors.$element.find('div.color_sample:nth-of-type(1)')
       $e2 = colors.colorSampleDivs.foreground
       expect($e[0]).toBe($e2[0])
 
-    it "initializes the color of the foreground color sample to the foreground color", ->
+    it "renders the foreground color sample", ->
+      colors = Colors.init(app)
       $e = colors.colorSampleDivs.foreground
-      expect($e).toHaveCss("background-color", "rgb(172, 85, 255)")
+      expect($e.css('background-color')).not.toBeNull()
 
     it "adds a div to the container for the background color sample, and stores it in colorSampleDivs", ->
+      colors = Colors.init(app)
       $e = colors.$element.find('div.color_sample:nth-of-type(2)')
       $e2 = colors.colorSampleDivs.background
       expect($e[0]).toBe($e2[0])
 
-    it "initializes the color of the background color sample to the background color", ->
+    it "renders the background color sample", ->
+      colors = Colors.init(app)
       $e = colors.colorSampleDivs.background
-      expect($e).toHaveCss("background-color", "rgb(255, 38, 192)")
+      expect($e.css('background-color')).not.toBeNull()
+
+    it "resets the UI", ->
+      spyOn(Colors, 'reset')
+      colors = Colors.init(app)
+      expect(Colors.reset).toHaveBeenCalled()
+
+  describe 'when destroyed', ->
+    beforeEach ->
+      colors = Colors.init(app)
+
+    it "clears the container element variable", ->
+      colors.destroy()
+      expect(colors.element).toBeUndefined()
+
+    it "clears the color sample divs", ->
+      colors.destroy()
+      expect(colors.colorSampleDivs).toEqual({})
+
+    it "clears the current color type", ->
+      colors.destroy()
+      expect(colors.currentColorType).toBeNull()
+
+    it "clears the current colors", ->
+      colors.destroy()
+      expect(colors.currentColors).toEqual({})
+
+  describe 'when reset', ->
+    beforeEach ->
+      colors = Colors.init(app)
+
+    it "sets the foreground color to a predetermined value", ->
+      expect(colors.currentColors.foreground).toEqualColor(new Color(red: 172, green: 85, blue: 255))
+
+    it "sets the background color to a predetermined value", ->
+      expect(colors.currentColors.background).toEqualColor(new Color(red: 255, green: 38, blue: 192))
 
     it "marks the foreground color sample as selected", ->
       expect(colors.currentColorType).toEqual("foreground")
@@ -55,7 +99,9 @@ describe 'Box.Colors', ->
       expect($bg).not.toHaveClass("selected")
 
   describe 'when events have been added', ->
-    beforeEach -> colors.addEvents()
+    beforeEach ->
+      colors = Colors.init(app)
+      colors.addEvents()
 
     describe 'if X is pressed', ->
       beforeEach ->
@@ -103,6 +149,7 @@ describe 'Box.Colors', ->
 
   describe 'when events have been removed', ->
     beforeEach ->
+      colors = Colors.init(app)
       colors.addEvents()
       colors.removeEvents()
 
@@ -153,13 +200,16 @@ describe 'Box.Colors', ->
   describe 'the foreground color sample', ->
     color = null
     beforeEach ->
+      colors = Colors.init(app)
       color = colors.currentColors.foreground = new Color(red: 255, green: 0, blue: 0)
+
     describe 'on click', ->
       it "opens the color picker set to the current foreground color", ->
         app.colorPicker.open = jasmine.createSpy()
         $fg = colors.colorSampleDivs.foreground
         specHelpers.fireNativeEvent($fg[0], 'click')
         expect(app.colorPicker.open).toHaveBeenCalledWith(color, "foreground")
+
     describe 'on render', ->
       it "draws the foreground color sample with the current foreground color", ->
         $fg = colors.colorSampleDivs.foreground
@@ -169,13 +219,16 @@ describe 'Box.Colors', ->
   describe 'the background color sample', ->
     color = null
     beforeEach ->
+      colors = Colors.init(app)
       color = colors.currentColors.background = new Color(red: 255, green: 0, blue: 0)
+
     describe 'on click', ->
       it "opens the color picker set to the current background color", ->
         app.colorPicker.open = jasmine.createSpy()
         $bg = colors.colorSampleDivs.background
         specHelpers.fireNativeEvent($bg[0], 'click')
         expect(app.colorPicker.open).toHaveBeenCalledWith(color, "background")
+
     describe 'on render', ->
       it "draws the background color sample with the current background color", ->
         $bg = colors.colorSampleDivs.background
@@ -183,31 +236,44 @@ describe 'Box.Colors', ->
         expect($bg).toHaveCss("background-color", "rgb(255, 0, 0)")
 
   describe 'on update', ->
+    color = null
+
+    beforeEach ->
+      colors = Colors.init(app)
+      color = new Color(red: 255, green: 0, blue: 0)
+
     describe 'when the foreground color is selected', ->
       beforeEach ->
         colors.currentColorType = "foreground"
-        colors.update(new Color(red: 255, green: 0, blue: 0))
 
       it "sets the foreground color to the given color", ->
-        expect(colors.currentColors.foreground).toEqualColor(new Color(red: 255, green: 0, blue: 0))
+        colors.update(color)
+        expect(colors.currentColors.foreground).toBe(color)
 
       it "redraws the foreground color sample with the new color", ->
         $fg = colors.colorSampleDivs.foreground
-        expect($fg).toHaveCss("background-color", "rgb(255, 0, 0)")
+        spyOn($fg, "trigger")
+        colors.update(color)
+        expect($fg.trigger).toHaveBeenCalledWith("render")
 
     describe 'when the background color is selected', ->
       beforeEach ->
         colors.currentColorType = "background"
-        colors.update(new Color(red: 255, green: 0, blue: 0))
 
       it "sets the background color to the given color", ->
-        expect(colors.currentColors.background).toEqualColor(new Color(red: 255, green: 0, blue: 0))
+        colors.update(color)
+        expect(colors.currentColors.background).toBe(color)
 
       it "redraws the background color sample with the new color", ->
         $bg = colors.colorSampleDivs.background
-        expect($bg).toHaveCss("background-color", "rgb(255, 0, 0)")
+        spyOn($bg, "trigger")
+        colors.update(color)
+        expect($bg.trigger).toHaveBeenCalledWith("render")
 
   describe '.currentColor', ->
+    beforeEach ->
+      colors = Colors.init(app)
+
     it "returns the foreground color when the foreground color is selected", ->
       colors.currentColorType = "foreground"
       colors.currentColors.foreground = new Color(red: 255, green: 0, blue: 0)

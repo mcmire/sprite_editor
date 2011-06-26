@@ -1,8 +1,9 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $["export"]("SpriteEditor.Box.Colors", function(SpriteEditor) {
-    var Colors, Keyboard;
+    var Color, Colors, Keyboard;
     Keyboard = SpriteEditor.Keyboard;
+    Color = SpriteEditor.Color;
     Colors = {};
     SpriteEditor.DOMEventHelpers.mixin(Colors, "SpriteEditor_Box_Colors");
     $.extend(Colors, {
@@ -10,9 +11,8 @@
       header: "Colors",
       colorTypes: ["foreground", "background"],
       init: function(app) {
-        var type, _fn, _i, _len, _ref;
+        var $div, type, _fn, _i, _len, _ref, _ref2;
         SpriteEditor.Box.init.call(this, app);
-        this.reset();
         this.colorSampleDivs = {};
         _ref = this.colorTypes;
         _fn = function(self, type) {
@@ -26,7 +26,6 @@
               return $div.css("background-color", self.currentColors[type].toRGBAString());
             }
           });
-          $div.trigger("render");
           self.$element.append($div);
           return self.colorSampleDivs[type] = $div;
         };
@@ -34,27 +33,36 @@
           type = _ref[_i];
           _fn(this, type);
         }
-        this._selectColorType(this.currentColorType);
+        this.reset();
+        _ref2 = this.colorSampleDivs;
+        for (type in _ref2) {
+          $div = _ref2[type];
+          $div.trigger("render");
+        }
+        return this;
+      },
+      destroy: function() {
+        SpriteEditor.Box.destroy.call(this);
+        this.colorSampleDivs = {};
+        this.currentColorType = null;
+        this.currentColors = {};
         return this;
       },
       reset: function() {
-        this.colorSampleDivs = {
-          foreground: null,
-          background: null
-        };
         this.currentColorType = "foreground";
-        return this.currentColors = {
-          foreground: new SpriteEditor.Color({
+        this.currentColors = {
+          foreground: new Color({
             red: 172,
             green: 85,
             blue: 255
           }),
-          background: new SpriteEditor.Color({
+          background: new Color({
             red: 255,
             green: 38,
             blue: 192
           })
         };
+        return this._selectColorType(this.currentColorType);
       },
       addEvents: function() {
         return this._bindEvents(document, {
