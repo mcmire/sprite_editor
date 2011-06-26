@@ -1,16 +1,25 @@
+_ensureEnderObject = (obj) ->
+  unless '$' of obj
+    throw new Error("Actual doesn't seem to be an Ender instance!")
+
 window.specHelpers =
-  fireEvent: (element, type, fn) ->
-    evt = document.createEvent("HTMLEvents")
-    evt.initEvent(type, true, true)
+  fireEvent: (element, type, isNative, fn) ->
+    # I'm just going off the bean source here
+    evt = document.createEvent(if isNative then 'HTMLEvents' else 'UIEvents')
+    evt[if isNative then 'initEvent' else 'initUIEvent'](type, true, true, window, 1)
     fn?(evt)
     element.dispatchEvent(evt)
+  fireNativeEvent: (element, type, fn) ->
+    @fireEvent(element, type, true, fn)
+  fireCustomEvent: (element, type, fn) ->
+    @fireEvent(element, type, false, fn)
 
 beforeEach ->
   @addMatchers(
     toContainObject: (expected) ->
+      # $.v.every can't cope with objects, only arrays
       result = true
-      for key, val of expected
-        result &= @env.equals_(@actual[key], val)
+      result &= @env.equals_(@actual[key], expected[key]) for key, val of expected
       result
 
     toBeAnInstanceOf: (cons) ->
@@ -68,6 +77,25 @@ beforeEach ->
       ]
       result
 
+    toHaveClass: (cssClass) ->
+      _ensureEnderObject(@actual)
+      @actual.hasClass(cssClass)
+
+    toHaveCss: ->
+      _ensureEnderObject(@actual)
+      if arguments.length == 2
+        opts = {}
+        opts[arguments[0]] = arguments[1]
+      else
+        opts = arguments[0]
+      # $.v.every can't cope with objects, only arrays
+      actual = $.v.reduce($.v.keys(opts), ((h, k) => h[k] = @actual.css(k); h), {})
+      result = @env.equals_(actual, opts)
+      @message = -> [
+        "Expected #{jasmine.pp(actual)} to be equal to #{jasmine.pp(opts)}",
+        "Expected #{jasmine.pp(actual)} to not be equal to given object"
+      ]
+      result
   )
 
   # Add container element we can dump elements into

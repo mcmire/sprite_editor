@@ -9,30 +9,30 @@ describe 'Keyboard', ->
       expect(kb.pressedKeys).toEqual({})
 
     it "when a key is pressed, adds the pressed key to @pressedKeys", ->
-      specHelpers.fireEvent document, "keydown", (evt) -> evt.keyCode = 9
+      specHelpers.fireNativeEvent document, "keydown", (evt) -> evt.keyCode = 9
       expect(kb.pressedKeys).toHaveProperty(9)
 
     it "when a key is lifted, removes the pressed key from @pressedKeys", ->
-      specHelpers.fireEvent document, "keyup", (evt) -> evt.keyCode = 9
+      specHelpers.fireNativeEvent document, "keyup", (evt) -> evt.keyCode = 9
       expect(kb.pressedKeys).not.toHaveProperty(9)
 
     it "when the window loses focus, resets the pressedKeys hash", ->
-      specHelpers.fireEvent window, "blur"
+      specHelpers.fireNativeEvent window, "blur"
       expect(kb.pressedKeys).toEqual({})
 
   describe 'when destroyed', ->
     beforeEach -> kb.destroy()
 
     it "when a key is pressed, does nothing", ->
-      specHelpers.fireEvent document, "keydown", (evt) -> evt.keyCode = 9
+      specHelpers.fireNativeEvent document, "keydown", (evt) -> evt.keyCode = 9
       expect(kb.pressedKeys).toEqual({})
 
     it "when a key is lifted, does nothing", ->
-      specHelpers.fireEvent document, "keyup", (evt) -> evt.keyCode = 9
+      specHelpers.fireNativeEvent document, "keyup", (evt) -> evt.keyCode = 9
       expect(kb.pressedKeys).toEqual({})
 
     it "when the window loses focus, does nothing", ->
-      specHelpers.fireEvent window, "blur"
+      specHelpers.fireNativeEvent window, "blur"
       expect(kb.pressedKeys).toEqual({})
 
   describe '#modifierKeyPressed', ->

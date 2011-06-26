@@ -12,19 +12,19 @@
         return expect(kb.pressedKeys).toEqual({});
       });
       it("when a key is pressed, adds the pressed key to @pressedKeys", function() {
-        specHelpers.fireEvent(document, "keydown", function(evt) {
+        specHelpers.fireNativeEvent(document, "keydown", function(evt) {
           return evt.keyCode = 9;
         });
         return expect(kb.pressedKeys).toHaveProperty(9);
       });
       it("when a key is lifted, removes the pressed key from @pressedKeys", function() {
-        specHelpers.fireEvent(document, "keyup", function(evt) {
+        specHelpers.fireNativeEvent(document, "keyup", function(evt) {
           return evt.keyCode = 9;
         });
         return expect(kb.pressedKeys).not.toHaveProperty(9);
       });
       return it("when the window loses focus, resets the pressedKeys hash", function() {
-        specHelpers.fireEvent(window, "blur");
+        specHelpers.fireNativeEvent(window, "blur");
         return expect(kb.pressedKeys).toEqual({});
       });
     });
@@ -33,19 +33,19 @@
         return kb.destroy();
       });
       it("when a key is pressed, does nothing", function() {
-        specHelpers.fireEvent(document, "keydown", function(evt) {
+        specHelpers.fireNativeEvent(document, "keydown", function(evt) {
           return evt.keyCode = 9;
         });
         return expect(kb.pressedKeys).toEqual({});
       });
       it("when a key is lifted, does nothing", function() {
-        specHelpers.fireEvent(document, "keyup", function(evt) {
+        specHelpers.fireNativeEvent(document, "keyup", function(evt) {
           return evt.keyCode = 9;
         });
         return expect(kb.pressedKeys).toEqual({});
       });
       return it("when the window loses focus, does nothing", function() {
-        specHelpers.fireEvent(window, "blur");
+        specHelpers.fireNativeEvent(window, "blur");
         return expect(kb.pressedKeys).toEqual({});
       });
     });

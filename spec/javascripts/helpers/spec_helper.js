@@ -1,13 +1,26 @@
 (function() {
+  var _ensureEnderObject;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  _ensureEnderObject = function(obj) {
+    if (!('$' in obj)) {
+      throw new Error("Actual doesn't seem to be an Ender instance!");
+    }
+  };
   window.specHelpers = {
-    fireEvent: function(element, type, fn) {
+    fireEvent: function(element, type, isNative, fn) {
       var evt;
-      evt = document.createEvent("HTMLEvents");
-      evt.initEvent(type, true, true);
+      evt = document.createEvent(isNative ? 'HTMLEvents' : 'UIEvents');
+      evt[isNative ? 'initEvent' : 'initUIEvent'](type, true, true, window, 1);
       if (typeof fn === "function") {
         fn(evt);
       }
       return element.dispatchEvent(evt);
+    },
+    fireNativeEvent: function(element, type, fn) {
+      return this.fireEvent(element, type, true, fn);
+    },
+    fireCustomEvent: function(element, type, fn) {
+      return this.fireEvent(element, type, false, fn);
     }
   };
   beforeEach(function() {
@@ -17,7 +30,7 @@
         result = true;
         for (key in expected) {
           val = expected[key];
-          result &= this.env.equals_(this.actual[key], val);
+          result &= this.env.equals_(this.actual[key], expected[key]);
         }
         return result;
       },
@@ -83,6 +96,29 @@
         result = this.actual.eq(color);
         this.message = function() {
           return ["Expected " + (this.actual.inspect()) + " to be equal to " + (color.inspect()) + ", but it wasn't", "Expected " + (this.actual.inspect()) + " to not be equal to given color, but it was"];
+        };
+        return result;
+      },
+      toHaveClass: function(cssClass) {
+        _ensureEnderObject(this.actual);
+        return this.actual.hasClass(cssClass);
+      },
+      toHaveCss: function() {
+        var actual, opts, result;
+        _ensureEnderObject(this.actual);
+        if (arguments.length === 2) {
+          opts = {};
+          opts[arguments[0]] = arguments[1];
+        } else {
+          opts = arguments[0];
+        }
+        actual = $.v.reduce($.v.keys(opts), (__bind(function(h, k) {
+          h[k] = this.actual.css(k);
+          return h;
+        }, this)), {});
+        result = this.env.equals_(actual, opts);
+        this.message = function() {
+          return ["Expected " + (jasmine.pp(actual)) + " to be equal to " + (jasmine.pp(opts)), "Expected " + (jasmine.pp(actual)) + " to not be equal to given object"];
         };
         return result;
       }
