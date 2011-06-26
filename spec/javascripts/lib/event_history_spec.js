@@ -1,29 +1,56 @@
 (function() {
-  var EH;
-  EH = SpriteEditor.EventHistory;
+  var EventHistory;
+  EventHistory = SpriteEditor.EventHistory;
   describe("EventHistory", function() {
-    var history;
-    history = null;
+    var app, history;
+    app = history = null;
     beforeEach(function() {
-      return history = EH.init("app");
+      return app = "app";
     });
-    describe('.init', function() {
+    afterEach(function() {
+      EventHistory.destroy();
+      return history = null;
+    });
+    describe('when initialized', function() {
       it("stores the given App instance", function() {
-        return expect(history.app).toEqual("app");
+        history = EventHistory.init(app);
+        return expect(history.app).toEqual(app);
+      });
+      return it("resets key variables", function() {
+        spyOn(EventHistory, "reset");
+        history = EventHistory.init(app);
+        return expect(history.reset).toHaveBeenCalled();
+      });
+    });
+    describe('when destroyed', function() {
+      beforeEach(function() {
+        return history = EventHistory.init(app);
+      });
+      return it("resets key variables", function() {
+        spyOn(EventHistory, "reset");
+        history.destroy();
+        return expect(history.reset).toHaveBeenCalled();
+      });
+    });
+    describe('when reset', function() {
+      beforeEach(function() {
+        return history = EventHistory.init(app);
       });
       it("initializes events", function() {
+        history.reset();
         return expect(history.events).toEqual([]);
       });
-      it("initializes currentIndex", function() {
+      return it("initializes currentIndex", function() {
+        history.reset();
         return expect(history.currentIndex).toBe(-1);
-      });
-      return it("returns the EventHistory object", function() {
-        return expect(history).toBe(EH);
       });
     });
     describe('.recordEvent', function() {
       var action, addEvent, data, obj;
       data = action = obj = null;
+      beforeEach(function() {
+        return history = EventHistory.init(app);
+      });
       addEvent = function() {
         data = {
           zing: "zang"
@@ -79,6 +106,7 @@
       var action;
       action = null;
       beforeEach(function() {
+        history = EventHistory.init(app);
         action = {};
         action.undo = jasmine.createSpy();
         history.events = [
@@ -108,6 +136,7 @@
       var action;
       action = null;
       beforeEach(function() {
+        history = EventHistory.init(app);
         action = {};
         action.redo = jasmine.createSpy();
         history.events = [

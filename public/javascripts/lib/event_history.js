@@ -5,10 +5,14 @@
       this.reset();
       return this;
     },
+    destroy: function() {
+      return this.reset();
+    },
     reset: function() {
       this.events = [];
       this.currentEvent = null;
-      return this.currentIndex = -1;
+      this.currentIndex = -1;
+      return this;
     },
     recordEvent: function(obj, method) {
       var action, data;

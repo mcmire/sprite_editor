@@ -5,10 +5,14 @@ $.export "SpriteEditor.EventHistory",
     @reset()
     return this
 
+  destroy: ->
+    @reset()
+
   reset: ->
     @events = []
     @currentEvent = null
     @currentIndex = -1
+    return this
 
   recordEvent: (obj, method) ->
     action = obj.actions[method]
