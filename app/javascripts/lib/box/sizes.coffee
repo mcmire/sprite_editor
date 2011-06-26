@@ -10,7 +10,6 @@ $.export "SpriteEditor.Box.Sizes", (SpriteEditor) ->
     header: "Sizes"
 
     sizes: [1..4]
-    currentSize: null
 
     init: (app) ->
       SpriteEditor.Box.init.call(this, app)
@@ -27,6 +26,11 @@ $.export "SpriteEditor.Box.Sizes", (SpriteEditor) ->
       @reset()
 
       return this
+
+    destroy: ->
+      SpriteEditor.Box.destroy.call(this)
+      @currentSize = null
+      @removeEvents()
 
     reset: ->
       @select(@sizes[0])

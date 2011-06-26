@@ -9,7 +9,6 @@
       name: "Sizes",
       header: "Sizes",
       sizes: [1, 2, 3, 4],
-      currentSize: null,
       init: function(app) {
         var size, _fn, _i, _len, _ref;
         SpriteEditor.Box.init.call(this, app);
@@ -30,6 +29,11 @@
         }
         this.reset();
         return this;
+      },
+      destroy: function() {
+        SpriteEditor.Box.destroy.call(this);
+        this.currentSize = null;
+        return this.removeEvents();
       },
       reset: function() {
         return this.select(this.sizes[0]);

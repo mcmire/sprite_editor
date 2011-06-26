@@ -7,6 +7,10 @@
       $header = $("<h3/>").text(this.header);
       this.$element.append($header);
       return this;
+    },
+    destroy: function() {
+      this.$element = null;
+      return this;
     }
   });
 }).call(this);
