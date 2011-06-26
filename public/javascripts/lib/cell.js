@@ -15,6 +15,9 @@
           this.color = new SpriteEditor.Color();
         }
       }
+      Cell.prototype.isClear = function() {
+        return this.color.isClear();
+      };
       Cell.prototype.clear = function() {
         this.color = new SpriteEditor.Color();
         return this;

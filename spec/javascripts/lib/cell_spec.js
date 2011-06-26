@@ -52,6 +52,25 @@
         });
       });
     });
+    describe('#isClear', function() {
+      var cell;
+      cell = null;
+      beforeEach(function() {
+        return cell = new Cell("app", 2, 5);
+      });
+      it("returns true if the cell is clear", function() {
+        cell.clear();
+        return expect(cell.isClear()).toBeTruthy();
+      });
+      return it("returns false if the cell is not clear", function() {
+        cell.color = new Color({
+          red: 255,
+          green: 0,
+          blue: 0
+        });
+        return expect(cell.isClear()).toBeFalsy();
+      });
+    });
     describe('#clear', function() {
       var cell;
       cell = null;

@@ -33,6 +33,20 @@ describe 'Cell', ->
         expect(cell.color.green).toEqual(128)
         expect(cell.color.blue).toEqual(0)
 
+  describe '#isClear', ->
+    cell = null
+
+    beforeEach ->
+      cell = new Cell("app", 2, 5)
+
+    it "returns true if the cell is clear", ->
+      cell.clear()
+      expect(cell.isClear()).toBeTruthy()
+
+    it "returns false if the cell is not clear", ->
+      cell.color = new Color(red: 255, green: 0, blue: 0)
+      expect(cell.isClear()).toBeFalsy()
+
   describe '#clear', ->
     cell = null
     beforeEach ->

@@ -15,6 +15,9 @@ $.export "SpriteEditor.Cell", (SpriteEditor) ->
         @loc = new SpriteEditor.CellLocation(arguments[0], arguments[1], arguments[2])
         @color = new SpriteEditor.Color()
 
+    isClear: ->
+      @color.isClear()
+
     clear: ->
       @color = new SpriteEditor.Color()
       return this
