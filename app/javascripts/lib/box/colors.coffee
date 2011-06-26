@@ -37,6 +37,7 @@ $.export "SpriteEditor.Box.Colors", (SpriteEditor) ->
       @colorSampleDivs = {}
       @currentColorType = null
       @currentColors = {}
+      @removeEvents()
       return this
 
     reset: ->

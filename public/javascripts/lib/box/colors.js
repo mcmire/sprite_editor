@@ -46,6 +46,7 @@
         this.colorSampleDivs = {};
         this.currentColorType = null;
         this.currentColors = {};
+        this.removeEvents();
         return this;
       },
       reset: function() {

@@ -83,9 +83,14 @@
         colors.destroy();
         return expect(colors.currentColorType).toBeNull();
       });
-      return it("clears the current colors", function() {
+      it("clears the current colors", function() {
         colors.destroy();
         return expect(colors.currentColors).toEqual({});
+      });
+      return it("removes any events that may have been added", function() {
+        spyOn(colors, 'removeEvents');
+        colors.destroy();
+        return expect(colors.removeEvents).toHaveBeenCalled();
       });
     });
     describe('when reset', function() {

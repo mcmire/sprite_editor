@@ -79,6 +79,11 @@ describe 'Box.Colors', ->
       colors.destroy()
       expect(colors.currentColors).toEqual({})
 
+    it "removes any events that may have been added", ->
+      spyOn(colors, 'removeEvents')
+      colors.destroy()
+      expect(colors.removeEvents).toHaveBeenCalled()
+
   describe 'when reset', ->
     beforeEach ->
       colors = Colors.init(app)
