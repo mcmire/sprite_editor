@@ -32,29 +32,29 @@ $.export "SpriteEditor.Box.Tools", (SpriteEditor) ->
           $img.bind "click", -> self.select(name)
         )(this, name)
 
-      @select(@app.tools.toolNames[0])
+      @reset()
 
       return this
 
+    destroy: ->
+      SpriteEditor.Box.destroy.call(this)
+      @toolImages = {}
+      @currentToolName = null
+      @removeEvents()
+
+    reset: ->
+      @select(@app.tools.toolNames[0])
+
     addEvents: ->
+      self = this
       @_bindEvents document,
-        keydown: (event) =>
+        keydown: (event) ->
           key = event.keyCode
-          switch key
-            when Keyboard.E_KEY
-              @select("pencil")
-            when Keyboard.G_KEY
-              @select("bucket")
-            when Keyboard.S_KEY
-              @select("select")
-            when Keyboard.Q_KEY
-              @select("dropper")
+          if name = self.app.tools.toolShortcuts[key]
+            self.select(name)
 
     removeEvents: ->
       @_unbindEvents(document, "keydown")
-
-    currentTool: ->
-      @app.tools[@currentToolName]
 
     select: (name) ->
       return if name is @currentToolName
@@ -64,5 +64,8 @@ $.export "SpriteEditor.Box.Tools", (SpriteEditor) ->
       @currentToolName = name
       @toolImages[name].addClass("selected")
       @app.tools[name].select?()
+
+    currentTool: ->
+      @app.tools[@currentToolName]
 
   return Tools

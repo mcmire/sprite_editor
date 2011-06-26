@@ -1,5 +1,4 @@
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $["export"]("SpriteEditor.Box.Tools", function(SpriteEditor) {
     var Keyboard, Tools;
     Keyboard = SpriteEditor.Keyboard;
@@ -32,32 +31,33 @@
           name = _ref[_i];
           _fn(this, name);
         }
-        this.select(this.app.tools.toolNames[0]);
+        this.reset();
         return this;
       },
+      destroy: function() {
+        SpriteEditor.Box.destroy.call(this);
+        this.toolImages = {};
+        this.currentToolName = null;
+        return this.removeEvents();
+      },
+      reset: function() {
+        return this.select(this.app.tools.toolNames[0]);
+      },
       addEvents: function() {
+        var self;
+        self = this;
         return this._bindEvents(document, {
-          keydown: __bind(function(event) {
-            var key;
+          keydown: function(event) {
+            var key, name;
             key = event.keyCode;
-            switch (key) {
-              case Keyboard.E_KEY:
-                return this.select("pencil");
-              case Keyboard.G_KEY:
-                return this.select("bucket");
-              case Keyboard.S_KEY:
-                return this.select("select");
-              case Keyboard.Q_KEY:
-                return this.select("dropper");
+            if (name = self.app.tools.toolShortcuts[key]) {
+              return self.select(name);
             }
-          }, this)
+          }
         });
       },
       removeEvents: function() {
         return this._unbindEvents(document, "keydown");
-      },
-      currentTool: function() {
-        return this.app.tools[this.currentToolName];
       },
       select: function(name) {
         var _base, _base2;
@@ -73,6 +73,9 @@
         this.currentToolName = name;
         this.toolImages[name].addClass("selected");
         return typeof (_base2 = this.app.tools[name]).select === "function" ? _base2.select() : void 0;
+      },
+      currentTool: function() {
+        return this.app.tools[this.currentToolName];
       }
     });
     return Tools;

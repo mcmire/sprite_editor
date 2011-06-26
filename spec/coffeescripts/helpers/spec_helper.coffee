@@ -1,6 +1,6 @@
 _ensureEnderObject = (obj) ->
   unless '$' of obj
-    throw new Error("Actual doesn't seem to be an Ender instance!")
+    throw new Error("Object doesn't seem to be an Ender instance!")
 
 window.specHelpers =
   fireEvent: (element, type, isNative, fn) ->
@@ -77,25 +77,54 @@ beforeEach ->
       ]
       result
 
+    toBeElementOf: (nodeName) ->
+      _ensureEnderObject(@actual)
+      @actual[0].nodeName.toLowerCase() == nodeName.toLowerCase()
+
     toHaveClass: (cssClass) ->
       _ensureEnderObject(@actual)
       @actual.hasClass(cssClass)
 
+    toHaveAttr: ->
+      _ensureEnderObject(@actual)
+      if arguments.length == 2
+        props = {}
+        props[arguments[0]] = arguments[1]
+      else
+        props = arguments[0]
+      # $.v.every can't cope with objects, only arrays
+      actual = $.v.reduce($.v.keys(props), ((h, k) => h[k] = @actual.attr(k); h), {})
+      result = @env.equals_(actual, props)
+      @message = -> [
+        "Expected element to have attributes #{jasmine.pp(props)}, but its attributes were #{jasmine.pp(actual)}",
+        "Expected element to not have attributes #{jasmine.pp(actual)}"
+      ]
+      result
+
     toHaveCss: ->
       _ensureEnderObject(@actual)
       if arguments.length == 2
-        opts = {}
-        opts[arguments[0]] = arguments[1]
+        props = {}
+        props[arguments[0]] = arguments[1]
       else
-        opts = arguments[0]
+        props = arguments[0]
       # $.v.every can't cope with objects, only arrays
-      actual = $.v.reduce($.v.keys(opts), ((h, k) => h[k] = @actual.css(k); h), {})
-      result = @env.equals_(actual, opts)
+      actual = $.v.reduce($.v.keys(props), ((h, k) => h[k] = @actual.css(k); h), {})
+      result = @env.equals_(actual, props)
       @message = -> [
-        "Expected #{jasmine.pp(actual)} to be equal to #{jasmine.pp(opts)}",
-        "Expected #{jasmine.pp(actual)} to not be equal to given object"
+        "Expected element to have css #{jasmine.pp(props)}, but its css was #{jasmine.pp(actual)}",
+        "Expected element to not have css #{jasmine.pp(actual)}"
       ]
       result
+
+    toHaveContent: (html) ->
+      _ensureEnderObject(@actual)
+      @actual.html() == html
+
+    toBeElement: (other) ->
+      _ensureEnderObject(@actual)
+      _ensureEnderObject(other)
+      @actual[0] == other[0]
   )
 
   # Add container element we can dump elements into

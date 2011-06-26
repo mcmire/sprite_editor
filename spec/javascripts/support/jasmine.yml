@@ -22,14 +22,14 @@ src_files:
   - public/javascripts/lib/cell_location.js
   - public/javascripts/lib/cell.js
   - public/javascripts/lib/event_history.js
-  #- public/javascripts/lib/eventable.js
+  - public/javascripts/lib/eventable.js
   - public/javascripts/lib/box.js
-  #- public/javascripts/lib/box/tools.js
+  - public/javascripts/lib/box/tools.js
   - public/javascripts/lib/box/sizes.js
   - public/javascripts/lib/box/colors.js
   #- public/javascripts/lib/color_picker.js
   #- public/javascripts/lib/drawing_canvases.js
-  #- public/javascripts/lib/tools.js
+  - public/javascripts/lib/tools.js
   #- public/javascripts/lib/app.js
 
 # stylesheets

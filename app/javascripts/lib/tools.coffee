@@ -5,6 +5,12 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
 
   Tools =
     toolNames: [ "pencil", "bucket", "select", "dropper" ]
+    toolShortcuts: {
+      pencil: "E",
+      bucket: "G",
+      select: "S",
+      dropper: "Q"
+    }
 
     init: (app, canvases) ->
       for name in @toolNames

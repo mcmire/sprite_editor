@@ -6,6 +6,12 @@
     Toolbox = SpriteEditor.Box.Tools;
     Tools = {
       toolNames: ["pencil", "bucket", "select", "dropper"],
+      toolShortcuts: {
+        pencil: "E",
+        bucket: "G",
+        select: "S",
+        dropper: "Q"
+      },
       init: function(app, canvases) {
         var name, _i, _len, _ref;
         _ref = this.toolNames;
