@@ -501,10 +501,10 @@ describe "Color", ->
       color2 = color.clone()
       expect(color2).not.toBe(color)
 
-  describe '#toJSON', ->
+  describe '#asJSON', ->
     it "excludes the functions from the object representation", ->
       color = new Color(red: 90, green: 188, blue: 73, alpha: 0.4)
-      expect(color.toJSON()).toEqual('{"_s":true,"red":90,"green":188,"blue":73,"hue":111,"sat":46,"lum":51,"alpha":0.4}')
+      expect(color.asJSON()).toEqual(_s: true, red: 90, green: 188, blue: 73, hue: 111, sat: 46, lum: 51, alpha: 0.4)
 
   describe '#toRGBAString', ->
     it "returns a CSS-compatible string representing the RGBA color", ->

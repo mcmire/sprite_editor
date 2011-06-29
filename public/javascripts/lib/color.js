@@ -159,8 +159,8 @@
       Color.prototype.clone = function() {
         return new Color(this);
       };
-      Color.prototype.toJSON = function() {
-        return JSON.stringify({
+      Color.prototype.asJSON = function() {
+        return {
           _s: true,
           red: this.red,
           green: this.green,
@@ -169,7 +169,7 @@
           sat: this.sat,
           lum: this.lum,
           alpha: this.alpha
-        });
+        };
       };
       Color.prototype.toRGBAString = function() {
         var prop, values;

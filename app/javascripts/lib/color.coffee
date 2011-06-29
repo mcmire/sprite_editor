@@ -137,14 +137,12 @@ $.export "SpriteEditor.Color", (SpriteEditor) ->
     clone: ->
       new Color(this)
 
-    toJSON: ->
-      JSON.stringify(
-        # tells Color.new not to bomb since properties of both types are present
-        _s: true,
-        red: @red, green: @green, blue: @blue,
-        hue: @hue, sat: @sat, lum: @lum,
-        alpha: @alpha
-      )
+    asJSON: ->
+      # tells Color.new not to bomb since properties of both types are present
+      _s: true,
+      red: @red, green: @green, blue: @blue,
+      hue: @hue, sat: @sat, lum: @lum,
+      alpha: @alpha
 
     toRGBAString: ->
       values = (@[prop] ? "null" for prop in Color.propertiesByType.rgb)

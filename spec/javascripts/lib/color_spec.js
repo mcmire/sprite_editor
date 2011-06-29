@@ -1424,7 +1424,7 @@
         return expect(color2).not.toBe(color);
       });
     });
-    describe('#toJSON', function() {
+    describe('#asJSON', function() {
       return it("excludes the functions from the object representation", function() {
         var color;
         color = new Color({
@@ -1433,7 +1433,16 @@
           blue: 73,
           alpha: 0.4
         });
-        return expect(color.toJSON()).toEqual('{"_s":true,"red":90,"green":188,"blue":73,"hue":111,"sat":46,"lum":51,"alpha":0.4}');
+        return expect(color.asJSON()).toEqual({
+          _s: true,
+          red: 90,
+          green: 188,
+          blue: 73,
+          hue: 111,
+          sat: 46,
+          lum: 51,
+          alpha: 0.4
+        });
       });
     });
     describe('#toRGBAString', function() {
