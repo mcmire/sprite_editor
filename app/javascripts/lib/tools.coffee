@@ -3,33 +3,35 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
   Keyboard = SpriteEditor.Keyboard
   Toolbox  = SpriteEditor.Box.Tools
 
-  Tools =
-    toolNames: [ "pencil", "bucket", "select", "dropper" ]
-    toolShortcuts: {
-      pencil: "E",
-      bucket: "G",
-      select: "S",
-      dropper: "Q"
-    }
+  Toolset =
+    toolNames: []
+    toolShortcuts: {}
+    tools: {}
+
+    BaseTool: $.extend({}, SpriteEditor.Eventable, {
+      init: (app, canvases) ->
+        @app = app
+        @canvases = canvases
+
+      trigger: (name, args...) ->
+        @[name]?.apply(this, args)
+    })
 
     init: (app, canvases) ->
-      for name in @toolNames
-        @[name].init(app, canvases)
+      for name, tool in @tools
+        tool.init(app, canvases)
       return this
 
-  #-----------------------------------------------------------------------------
-
-  Tools.base = $.extend {}, SpriteEditor.Eventable,
-    init: (app, canvases) ->
-      @app = app
-      @canvases = canvases
-
-    trigger: (name, args...) ->
-      @[name]?.apply(this, args)
+    addTool: (name, shortcut, def) ->
+      tool = $.extend({}, @BaseTool)
+      def = def(tool) if typeof def is "function"
+      @tools[name] = $.extend(tool, def)
+      @toolNames = $.v.keys(@tools)
+      @toolShortcuts[name] = shortcut
 
   #-----------------------------------------------------------------------------
 
-  Tools.dropper = $.extend true, {}, Tools.base,
+  Toolset.addTool "dropper", "Q",
     select: ->
       @canvases.workingCanvas.$element.addClass("dropper")
 
@@ -41,7 +43,7 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
 
   #-----------------------------------------------------------------------------
 
-  Tools.pencil = $.tap $.extend(true, {}, Tools.base), (t) ->
+  Toolset.addTool "pencil", "E", (t) ->
     t.addAction "updateCells",
       do: ->
         event = canvases: {}
@@ -115,7 +117,7 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
 
   #-----------------------------------------------------------------------------
 
-  Tools.bucket = $.tap $.extend(true, {}, Tools.base), (t) ->
+  Toolset.addTool "bucket", "G", (t) ->
     t.addAction "fillFocusedCells",
       do: ->
         event = canvases: {}
@@ -193,7 +195,7 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
 
   #-----------------------------------------------------------------------------
 
-  Tools.select = $.tap $.extend(true, {}, Tools.base), (t) ->
+  Toolset.addTool "select", "S", (t) ->
     t.addAction "cutSelection",
       do: (event) ->
         event =
@@ -563,4 +565,4 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
 
   #-----------------------------------------------------------------------------
 
-  return Tools
+  return Toolset

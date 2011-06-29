@@ -1,39 +1,45 @@
 (function() {
   var __slice = Array.prototype.slice;
   $["export"]("SpriteEditor.Tools", function(SpriteEditor) {
-    var Keyboard, Toolbox, Tools;
+    var Keyboard, Toolbox, Toolset;
     Keyboard = SpriteEditor.Keyboard;
     Toolbox = SpriteEditor.Box.Tools;
-    Tools = {
-      toolNames: ["pencil", "bucket", "select", "dropper"],
-      toolShortcuts: {
-        pencil: "E",
-        bucket: "G",
-        select: "S",
-        dropper: "Q"
-      },
+    Toolset = {
+      toolNames: [],
+      toolShortcuts: {},
+      tools: {},
+      BaseTool: $.extend({}, SpriteEditor.Eventable, {
+        init: function(app, canvases) {
+          this.app = app;
+          return this.canvases = canvases;
+        },
+        trigger: function() {
+          var args, name, _ref;
+          name = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
+          return (_ref = this[name]) != null ? _ref.apply(this, args) : void 0;
+        }
+      }),
       init: function(app, canvases) {
-        var name, _i, _len, _ref;
-        _ref = this.toolNames;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          name = _ref[_i];
-          this[name].init(app, canvases);
+        var name, tool, _len, _ref;
+        _ref = this.tools;
+        for (tool = 0, _len = _ref.length; tool < _len; tool++) {
+          name = _ref[tool];
+          tool.init(app, canvases);
         }
         return this;
+      },
+      addTool: function(name, shortcut, def) {
+        var tool;
+        tool = $.extend({}, this.BaseTool);
+        if (typeof def === "function") {
+          def = def(tool);
+        }
+        this.tools[name] = $.extend(tool, def);
+        this.toolNames = $.v.keys(this.tools);
+        return this.toolShortcuts[name] = shortcut;
       }
     };
-    Tools.base = $.extend({}, SpriteEditor.Eventable, {
-      init: function(app, canvases) {
-        this.app = app;
-        return this.canvases = canvases;
-      },
-      trigger: function() {
-        var args, name, _ref;
-        name = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
-        return (_ref = this[name]) != null ? _ref.apply(this, args) : void 0;
-      }
-    });
-    Tools.dropper = $.extend(true, {}, Tools.base, {
+    Toolset.addTool("dropper", "Q", {
       select: function() {
         return this.canvases.workingCanvas.$element.addClass("dropper");
       },
@@ -44,7 +50,7 @@
         return this.app.boxes.colors.update(this.canvases.focusedCell.color.clone());
       }
     });
-    Tools.pencil = $.tap($.extend(true, {}, Tools.base), function(t) {
+    Toolset.addTool("pencil", "E", function(t) {
       t.addAction("updateCells", {
         "do": function() {
           var changedCells, event;
@@ -138,7 +144,7 @@
         }
       });
     });
-    Tools.bucket = $.tap($.extend(true, {}, Tools.base), function(t) {
+    Toolset.addTool("bucket", "G", function(t) {
       t.addAction("fillFocusedCells", {
         "do": function() {
           var changedCells, currentColor, event, focusedColor;
@@ -251,7 +257,7 @@
         }
       });
     });
-    Tools.select = $.tap($.extend(true, {}, Tools.base), function(t) {
+    Toolset.addTool("select", "S", function(t) {
       t.addAction("cutSelection", {
         "do": function(event) {
           var after, before, cell, changedCells, _i, _len, _ref;
@@ -622,6 +628,6 @@
         }
       });
     });
-    return Tools;
+    return Toolset;
   });
 }).call(this);
