@@ -34,7 +34,7 @@
         return clone;
       };
       Cell.prototype.coords = function() {
-        return [this.loc.j, this.loc.i].join(",");
+        return [this.loc.i, this.loc.j].join(",");
       };
       Cell.prototype.clone = function() {
         return new Cell(this);

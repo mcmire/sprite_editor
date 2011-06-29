@@ -86,7 +86,7 @@ describe 'Cell', ->
   describe '#coords', ->
     it "returns a string representation of the cell coordinates", ->
       cell = new Cell("app", 2, 5)
-      expect(cell.coords()).toEqual("5,2")
+      expect(cell.coords()).toEqual("2,5")
 
   describe '#clone', ->
     cell = null

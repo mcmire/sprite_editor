@@ -139,7 +139,7 @@
       return it("returns a string representation of the cell coordinates", function() {
         var cell;
         cell = new Cell("app", 2, 5);
-        return expect(cell.coords()).toEqual("5,2");
+        return expect(cell.coords()).toEqual("2,5");
       });
     });
     describe('#clone', function() {

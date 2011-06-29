@@ -30,7 +30,7 @@ $.export "SpriteEditor.Cell", (SpriteEditor) ->
       clone.color = color.clone() unless color.isClear()
       clone
 
-    coords: -> [ @loc.j, @loc.i ].join(",")
+    coords: -> [ @loc.i, @loc.j ].join(",")
 
     clone: -> new Cell(this)
 
