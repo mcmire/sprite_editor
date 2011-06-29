@@ -1,8 +1,6 @@
 # Sass
 guard 'shell' do
-  watch( %r{app/stylesheets/.*\.scss} ) do |m|
-    `compass compile`
-  end
+  watch( %r{app/stylesheets/.*\.scss} ) {|m| `compass compile` }
 end
 
 # CoffeeScript
@@ -11,6 +9,9 @@ guard 'coffeescript', :input => 'spec/coffeescripts', :output => 'spec/javascrip
 
 # Jasmine tests
 guard 'jasmine-headless-webkit' do
-  watch( %r{^app/javascripts/(.+)\.coffee$} ) {|m| "spec/coffeescripts/%s_spec.coffee" % m[1] }
+  watch( %r{^app/javascripts/(.+)\.coffee$} ) {|m|
+    path = "spec/coffeescripts/%s_spec.coffee" % m[1]
+    File.exists?(path) ? path : nil
+  }
   watch( %r{^spec/coffeescripts/(.+)_spec.coffee$} )
 end
