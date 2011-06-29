@@ -1,4 +1,4 @@
-$.export "SpriteEditor.Tools", (SpriteEditor) ->
+$.export "SpriteEditor.Toolset", (SpriteEditor) ->
 
   Keyboard = SpriteEditor.Keyboard
   Toolbox  = SpriteEditor.Box.Tools
@@ -22,8 +22,11 @@ $.export "SpriteEditor.Tools", (SpriteEditor) ->
         tool.init(app, canvases)
       return this
 
+    createTool: ->
+      $.extend({}, @BaseTool)
+
     addTool: (name, shortcut, def) ->
-      tool = $.extend({}, @BaseTool)
+      tool = createTool()
       def = def(tool) if typeof def is "function"
       @tools[name] = $.extend(tool, def)
       @toolNames = $.v.keys(@tools)

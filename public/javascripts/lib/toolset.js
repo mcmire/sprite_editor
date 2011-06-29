@@ -1,6 +1,6 @@
 (function() {
   var __slice = Array.prototype.slice;
-  $["export"]("SpriteEditor.Tools", function(SpriteEditor) {
+  $["export"]("SpriteEditor.Toolset", function(SpriteEditor) {
     var Keyboard, Toolbox, Toolset;
     Keyboard = SpriteEditor.Keyboard;
     Toolbox = SpriteEditor.Box.Tools;
@@ -28,9 +28,12 @@
         }
         return this;
       },
+      createTool: function() {
+        return $.extend({}, this.BaseTool);
+      },
       addTool: function(name, shortcut, def) {
         var tool;
-        tool = $.extend({}, this.BaseTool);
+        tool = createTool();
         if (typeof def === "function") {
           def = def(tool);
         }
