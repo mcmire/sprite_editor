@@ -287,7 +287,7 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
 
       if typeof arguments[0] == "string"
         if arguments[0] == "destroy"
-          ElementMouseTracker.remove(mouseTracker)
+          ElementMouseTracker.remove(mouseTracker) if mouseTracker
           @data("mouseTracker", null)
         else if arguments[0] == "__instance__"
           # HACK!!

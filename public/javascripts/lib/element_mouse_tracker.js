@@ -263,7 +263,9 @@
         }
         if (typeof arguments[0] === "string") {
           if (arguments[0] === "destroy") {
-            ElementMouseTracker.remove(mouseTracker);
+            if (mouseTracker) {
+              ElementMouseTracker.remove(mouseTracker);
+            }
             this.data("mouseTracker", null);
           } else if (arguments[0] === "__instance__") {
             return mouseTracker;
