@@ -44,17 +44,6 @@
         return this.toolShortcuts[shortcut] = name;
       }
     };
-    Toolset.addTool("dropper", "Q", {
-      select: function() {
-        return this.canvases.workingCanvas.$element.addClass("dropper");
-      },
-      unselect: function() {
-        return this.canvases.workingCanvas.$element.removeClass("dropper");
-      },
-      mousedown: function(event) {
-        return this.app.boxes.colors.update(this.canvases.focusedCell.color.clone());
-      }
-    });
     Toolset.addTool("pencil", "E", function(t) {
       t.addAction("updateCells", {
         "do": function() {
@@ -632,6 +621,17 @@
           }
         }
       });
+    });
+    Toolset.addTool("dropper", "Q", {
+      select: function() {
+        return this.canvases.workingCanvas.$element.addClass("dropper");
+      },
+      unselect: function() {
+        return this.canvases.workingCanvas.$element.removeClass("dropper");
+      },
+      mousedown: function(event) {
+        return this.app.boxes.colors.update(this.canvases.focusedCell.color.clone());
+      }
     });
     return Toolset;
   });

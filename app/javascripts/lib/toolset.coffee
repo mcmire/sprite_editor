@@ -32,18 +32,6 @@ $.export "SpriteEditor.Toolset", (SpriteEditor) ->
 
   #-----------------------------------------------------------------------------
 
-  Toolset.addTool "dropper", "Q",
-    select: ->
-      @canvases.workingCanvas.$element.addClass("dropper")
-
-    unselect: ->
-      @canvases.workingCanvas.$element.removeClass("dropper")
-
-    mousedown: (event) ->
-      @app.boxes.colors.update @canvases.focusedCell.color.clone()
-
-  #-----------------------------------------------------------------------------
-
   Toolset.addTool "pencil", "E", (t) ->
     t.addAction "updateCells",
       do: ->
@@ -563,6 +551,18 @@ $.export "SpriteEditor.Toolset", (SpriteEditor) ->
 
       _exitSelection: ->
         @recordEvent("resetSelection") if @selectionStart
+
+  #-----------------------------------------------------------------------------
+
+  Toolset.addTool "dropper", "Q",
+    select: ->
+      @canvases.workingCanvas.$element.addClass("dropper")
+
+    unselect: ->
+      @canvases.workingCanvas.$element.removeClass("dropper")
+
+    mousedown: (event) ->
+      @app.boxes.colors.update @canvases.focusedCell.color.clone()
 
   #-----------------------------------------------------------------------------
 
