@@ -12,16 +12,18 @@
     };
     beforeEach(function() {
       return app = {
-        tools: {
+        toolset: {
           toolNames: toolNames,
           toolShortcuts: toolShortcuts,
-          tool1: {
-            select: function() {},
-            unselect: function() {}
-          },
-          tool2: {
-            select: function() {},
-            unselect: function() {}
+          tools: {
+            tool1: {
+              select: function() {},
+              unselect: function() {}
+            },
+            tool2: {
+              select: function() {},
+              unselect: function() {}
+            }
           }
         }
       };
@@ -94,7 +96,7 @@
       return it("selects the first tool", function() {
         spyOn(tools, 'select');
         tools.reset();
-        return expect(tools.select).toHaveBeenCalledWith(app.tools.toolNames[0]);
+        return expect(tools.select).toHaveBeenCalledWith(app.toolset.toolNames[0]);
       });
     });
     describe('when events have been added', function() {
@@ -141,8 +143,8 @@
         var $img, name, _ref, _results;
         tools = Tools.init(app);
         tools.currentToolName = "tool1";
-        spyOn(app.tools.tool1, 'unselect');
-        spyOn(app.tools.tool2, 'select');
+        spyOn(app.toolset.tools.tool1, 'unselect');
+        spyOn(app.toolset.tools.tool2, 'select');
         _ref = tools.toolImages;
         _results = [];
         for (name in _ref) {
@@ -165,11 +167,11 @@
       });
       it("calls 'unselect' on the currently selected tool before changing it", function() {
         tools.select("tool2");
-        return expect(app.tools.tool1.unselect).toHaveBeenCalled();
+        return expect(app.toolset.tools.tool1.unselect).toHaveBeenCalled();
       });
       it("calls 'select' on the newly selected tool", function() {
         tools.select("tool2");
-        return expect(app.tools.tool2.select).toHaveBeenCalled();
+        return expect(app.toolset.tools.tool2.select).toHaveBeenCalled();
       });
       return it("does nothing if the given size is already selected", function() {
         var $img, name, _len, _ref, _results;
@@ -189,7 +191,7 @@
       });
       return it("returns the tool object corresponding to the current tool", function() {
         tools.currentToolName = "tool1";
-        return expect(tools.currentTool()).toEqual(app.tools.tool1);
+        return expect(tools.currentTool()).toEqual(app.toolset.tools.tool1);
       });
     });
   });

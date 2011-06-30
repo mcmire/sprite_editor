@@ -14,7 +14,7 @@
         $ul = $("<ul/>");
         this.$element.append($ul);
         this.toolImages = {};
-        _ref = this.app.tools.toolNames;
+        _ref = this.app.toolset.toolNames;
         _fn = function(self, name) {
           var $img, $li;
           $li = $("<li/>");
@@ -41,7 +41,7 @@
         return this.removeEvents();
       },
       reset: function() {
-        return this.select(this.app.tools.toolNames[0]);
+        return this.select(this.app.toolset.toolNames[0]);
       },
       addEvents: function() {
         var self;
@@ -50,7 +50,7 @@
           keydown: function(event) {
             var key, name;
             key = event.keyCode;
-            if (name = self.app.tools.toolShortcuts[key]) {
+            if (name = self.app.toolset.toolShortcuts[key]) {
               return self.select(name);
             }
           }
@@ -72,10 +72,10 @@
         }
         this.currentToolName = name;
         this.toolImages[name].addClass("selected");
-        return typeof (_base2 = this.app.tools[name]).select === "function" ? _base2.select() : void 0;
+        return typeof (_base2 = this.app.toolset.tools[name]).select === "function" ? _base2.select() : void 0;
       },
       currentTool: function() {
-        return this.app.tools[this.currentToolName];
+        return this.app.toolset.tools[this.currentToolName];
       }
     });
     return Tools;

@@ -9,16 +9,14 @@ $.export "SpriteEditor.Toolset", (SpriteEditor) ->
     tools: {}
 
     BaseTool: $.extend({}, SpriteEditor.Eventable, {
-      init: (app, canvases) ->
-        @app = app
-        @canvases = canvases
+      init: (@app, @canvases) ->
 
       trigger: (name, args...) ->
         @[name]?.apply(this, args)
     })
 
-    init: (app, canvases) ->
-      for name, tool in @tools
+    init: (@app, @canvases) ->
+      for name, tool of @tools
         tool.init(app, canvases)
       return this
 
@@ -26,11 +24,11 @@ $.export "SpriteEditor.Toolset", (SpriteEditor) ->
       $.extend({}, @BaseTool)
 
     addTool: (name, shortcut, def) ->
-      tool = createTool()
+      tool = @createTool()
       def = def(tool) if typeof def is "function"
       @tools[name] = $.extend(tool, def)
-      @toolNames = $.v.keys(@tools)
-      @toolShortcuts[name] = shortcut
+      @toolNames.push(name)
+      @toolShortcuts[shortcut] = name
 
   #-----------------------------------------------------------------------------
 

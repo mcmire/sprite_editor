@@ -11,16 +11,18 @@ describe 'Box.Tools', ->
 
   beforeEach ->
     app = {
-      tools: {
+      toolset: {
         toolNames: toolNames,
         toolShortcuts: toolShortcuts,
-        tool1: {
-          select: ->
-          unselect: ->
-        },
-        tool2: {
-          select: ->
-          unselect: ->
+        tools: {
+          tool1: {
+            select: ->
+            unselect: ->
+          },
+          tool2: {
+            select: ->
+            unselect: ->
+          }
         }
       }
     }
@@ -50,7 +52,7 @@ describe 'Box.Tools', ->
       expect($h).toBeElementOf("h3")
       expect($h).toHaveContent("Toolbox")
 
-    #for tool, i in app.tools.toolNames
+    #for tool, i in app.toolset.toolNames
     $.v.each toolNames, (tool, i) ->
       it "adds an element to the container for the #{tool} tool and stores it in @toolImages", ->
         tools = Tools.init(app)
@@ -91,7 +93,7 @@ describe 'Box.Tools', ->
     it "selects the first tool", ->
       spyOn(tools, 'select')
       tools.reset()
-      expect(tools.select).toHaveBeenCalledWith(app.tools.toolNames[0])
+      expect(tools.select).toHaveBeenCalledWith(app.toolset.toolNames[0])
 
   describe 'when events have been added', ->
     beforeEach ->
@@ -120,8 +122,8 @@ describe 'Box.Tools', ->
     beforeEach ->
       tools = Tools.init(app)
       tools.currentToolName = "tool1"
-      spyOn(app.tools.tool1, 'unselect')
-      spyOn(app.tools.tool2, 'select')
+      spyOn(app.toolset.tools.tool1, 'unselect')
+      spyOn(app.toolset.tools.tool2, 'select')
       $img.removeClass("selected") for name, $img of tools.toolImages
 
     it "marks the element corresponding to the given tool as selected", ->
@@ -135,11 +137,11 @@ describe 'Box.Tools', ->
 
     it "calls 'unselect' on the currently selected tool before changing it", ->
       tools.select("tool2")
-      expect(app.tools.tool1.unselect).toHaveBeenCalled()
+      expect(app.toolset.tools.tool1.unselect).toHaveBeenCalled()
 
     it "calls 'select' on the newly selected tool", ->
       tools.select("tool2")
-      expect(app.tools.tool2.select).toHaveBeenCalled()
+      expect(app.toolset.tools.tool2.select).toHaveBeenCalled()
 
     it "does nothing if the given size is already selected", ->
       tools.select("tool1")
@@ -152,4 +154,4 @@ describe 'Box.Tools', ->
 
     it "returns the tool object corresponding to the current tool", ->
       tools.currentToolName = "tool1"
-      expect(tools.currentTool()).toEqual(app.tools.tool1)
+      expect(tools.currentTool()).toEqual(app.toolset.tools.tool1)

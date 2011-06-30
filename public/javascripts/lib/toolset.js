@@ -11,7 +11,7 @@
       BaseTool: $.extend({}, SpriteEditor.Eventable, {
         init: function(app, canvases) {
           this.app = app;
-          return this.canvases = canvases;
+          this.canvases = canvases;
         },
         trigger: function() {
           var args, name, _ref;
@@ -20,10 +20,12 @@
         }
       }),
       init: function(app, canvases) {
-        var name, tool, _len, _ref;
+        var name, tool, _ref;
+        this.app = app;
+        this.canvases = canvases;
         _ref = this.tools;
-        for (tool = 0, _len = _ref.length; tool < _len; tool++) {
-          name = _ref[tool];
+        for (name in _ref) {
+          tool = _ref[name];
           tool.init(app, canvases);
         }
         return this;
@@ -33,13 +35,13 @@
       },
       addTool: function(name, shortcut, def) {
         var tool;
-        tool = createTool();
+        tool = this.createTool();
         if (typeof def === "function") {
           def = def(tool);
         }
         this.tools[name] = $.extend(tool, def);
-        this.toolNames = $.v.keys(this.tools);
-        return this.toolShortcuts[name] = shortcut;
+        this.toolNames.push(name);
+        return this.toolShortcuts[shortcut] = name;
       }
     };
     Toolset.addTool("dropper", "Q", {

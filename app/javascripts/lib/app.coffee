@@ -16,7 +16,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       Keyboard.init()
 
       @canvases = SpriteEditor.DrawingCanvases.init(this)
-      @tools = SpriteEditor.Tools.init(this, @canvases)
+      @toolset = SpriteEditor.Toolset.init(this, @canvases)
       @history = SpriteEditor.EventHistory.init(this)
 
       @$container = $("#main")

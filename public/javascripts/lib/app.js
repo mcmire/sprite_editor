@@ -14,7 +14,7 @@
       init: function() {
         Keyboard.init();
         this.canvases = SpriteEditor.DrawingCanvases.init(this);
-        this.tools = SpriteEditor.Tools.init(this, this.canvases);
+        this.toolset = SpriteEditor.Toolset.init(this, this.canvases);
         this.history = SpriteEditor.EventHistory.init(this);
         this.$container = $("#main");
         this._createMask();

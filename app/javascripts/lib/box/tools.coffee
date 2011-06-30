@@ -18,7 +18,7 @@ $.export "SpriteEditor.Box.Tools", (SpriteEditor) ->
       @$element.append($ul)
 
       @toolImages = {}
-      for name in @app.tools.toolNames
+      for name in @app.toolset.toolNames
         ((self, name) ->
           $li = $("<li/>")
           $img = $("<img/>")
@@ -43,14 +43,14 @@ $.export "SpriteEditor.Box.Tools", (SpriteEditor) ->
       @removeEvents()
 
     reset: ->
-      @select(@app.tools.toolNames[0])
+      @select(@app.toolset.toolNames[0])
 
     addEvents: ->
       self = this
       @_bindEvents document,
         keydown: (event) ->
           key = event.keyCode
-          if name = self.app.tools.toolShortcuts[key]
+          if name = self.app.toolset.toolShortcuts[key]
             self.select(name)
 
     removeEvents: ->
@@ -63,9 +63,9 @@ $.export "SpriteEditor.Box.Tools", (SpriteEditor) ->
         @toolImages[@currentToolName].removeClass("selected")
       @currentToolName = name
       @toolImages[name].addClass("selected")
-      @app.tools[name].select?()
+      @app.toolset.tools[name].select?()
 
     currentTool: ->
-      @app.tools[@currentToolName]
+      @app.toolset.tools[@currentToolName]
 
   return Tools
