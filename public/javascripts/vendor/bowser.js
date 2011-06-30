@@ -8,12 +8,6 @@
     * https://github.com/ded/bowser
     * MIT License
     */
-  /*!
-    * Bowser - a browser detector
-    * copyright Dustin Diaz 2011
-    * https://github.com/ded/bowser
-    * MIT License
-    */
   !function (context) {
     /**
       * navigator.userAgent =>
@@ -48,11 +42,10 @@
         };
       }
       if (safari) {
-        console.log("ua: " + ua)
         return {
           webkit: 1,
           safari: 1,
-          version: ua.match(/version\/(\d+(\.\d+)?)/i)[1]
+          version: ua.match(/(?:version|Qt)\/(\d+(\.\d+)?)/i)[1]
         };
       }
       if (opera) {
