@@ -1,19 +1,18 @@
 (function() {
   $.ender({
     simulate: function(type, options) {
-      return this.each(function() {
+      this.each(function() {
         var opt;
         opt = $.extend({}, $.simulate.defaults, options || {});
         return new $.simulate(this, type, opt);
       });
+      return this;
     }
   }, true);
   $.simulate = (function() {
     function simulate(el, type, options) {
-      this.target = el;
-      this.options = options;
-      if (/^drag$/.test(type)) {
-        this[type].apply(this, [this.target, options]);
+      if (type === "drag") {
+        this.simulateDragEvent(el, options);
       } else {
         this.simulateEvent(el, type, options);
       }
@@ -24,14 +23,42 @@
       this.dispatchEvent(el, type, evt, options);
       return evt;
     };
+    simulate.prototype.simulateDragEvent = function(el, options) {
+      var center, coord, dx, dy, self, x, y;
+      self = this;
+      center = this.findCenter(el);
+      x = Math.floor(center.x);
+      y = Math.floor(center.y);
+      dx = options.dx || 0;
+      dy = options.dy || 0;
+      coord = {
+        clientX: x,
+        clientY: y
+      };
+      this.simulateEvent(el, "mousedown", coord);
+      coord = {
+        clientX: x + 1,
+        clientY: y + 1
+      };
+      this.simulateEvent(document, "mousemove", coord);
+      coord = {
+        clientX: x + dx,
+        clientY: y + dy
+      };
+      this.simulateEvent(document, "mousemove", coord);
+      this.simulateEvent(document, "mousemove", coord);
+      return this.simulateEvent(el, "mouseup", coord);
+    };
     simulate.prototype.createEvent = function(type, options) {
       if (/^mouse(over|out|down|up|move)|(dbl)?click$/.test(type)) {
-        return this.mouseEvent(type, options);
+        return this.createMouseEvent(type, options);
       } else if (/^key(up|down|press)$/.test(type)) {
-        return this.keyboardEvent(type, options);
+        return this.createKeyboardEvent(type, options);
+      } else {
+        return this.createBasicEvent(type, options);
       }
     };
-    simulate.prototype.mouseEvent = function(type, options) {
+    simulate.prototype.createMouseEvent = function(type, options) {
       var e, evt, relatedTarget;
       e = $.extend({
         bubbles: true,
@@ -49,8 +76,8 @@
         button: 0,
         relatedTarget: void 0
       }, options);
-      relatedTarget = $(e.relatedTarget)[0];
-      if ($.isFunction(document.createEvent)) {
+      relatedTarget = e.relatedTarget && $(e.relatedTarget)[0];
+      if (typeof document.createEvent === "function") {
         evt = document.createEvent("MouseEvents");
         evt.initMouseEvent(type, e.bubbles, e.cancelable, e.view, e.detail, e.screenX, e.screenY, e.clientX, e.clientY, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey, e.button, e.relatedTarget || document.body.parentNode);
       } else if (document.createEventObject) {
@@ -64,7 +91,7 @@
       }
       return evt;
     };
-    simulate.prototype.keyboardEvent = function(type, options) {
+    simulate.prototype.createKeyboardEvent = function(type, options) {
       var e, evt;
       e = $.extend({
         bubbles: true,
@@ -77,7 +104,7 @@
         keyCode: 0,
         charCode: 0
       }, options);
-      if ($.isFunction(document.createEvent)) {
+      if (typeof document.createEvent === "function") {
         try {
           evt = document.createEvent("KeyEvents");
           evt.initKeyEvent(type, e.bubbles, e.cancelable, e.view, e.ctrlKey, e.altKey, e.shiftKey, e.metaKey, e.keyCode, e.charCode);
@@ -104,6 +131,25 @@
       }
       return evt;
     };
+    simulate.prototype.createBasicEvent = function(type, options) {
+      var e, evt;
+      e = $.extend({
+        bubbles: true,
+        cancelable: true,
+        view: window
+      }, options);
+      if (typeof document.createEvent === "function") {
+        evt = document.createEvent("Events");
+        evt.initEvent(type, e.bubbles, e.cancelable);
+        $.extend(evt, {
+          view: e.view
+        });
+      } else if (document.createEventObject) {
+        evt = document.createEventObject();
+        $.extend(evt, e);
+      }
+      return evt;
+    };
     simulate.prototype.dispatchEvent = function(el, type, evt) {
       if (el.dispatchEvent) {
         el.dispatchEvent(evt);
@@ -112,41 +158,12 @@
       }
       return evt;
     };
-    simulate.prototype.drag = function(el) {
-      var center, coord, dx, dy, options, self, target, x, y;
-      self = this;
-      center = this.findCenter(this.target);
-      options = this.options;
-      x = Math.floor(center.x);
-      y = Math.floor(center.y);
-      dx = options.dx || 0;
-      dy = options.dy || 0;
-      target = this.target;
-      coord = {
-        clientX: x,
-        clientY: y
-      };
-      this.simulateEvent(target, "mousedown", coord);
-      coord = {
-        clientX: x + 1,
-        clientY: y + 1
-      };
-      this.simulateEvent(document, "mousemove", coord);
-      coord = {
-        clientX: x + dx,
-        clientY: y + dy
-      };
-      this.simulateEvent(document, "mousemove", coord);
-      this.simulateEvent(document, "mousemove", coord);
-      return this.simulateEvent(target, "mouseup", coord);
-    };
     simulate.prototype.findCenter = function(el) {
       var o;
-      el = $(this.target);
-      o = el.offset();
+      o = $(el).offset();
       return {
-        x: o.left + el.outerWidth() / 2,
-        y: o.top + el.outerHeight() / 2
+        x: o.left + o.width / 2,
+        y: o.top + o.height / 2
       };
     };
     return simulate;
