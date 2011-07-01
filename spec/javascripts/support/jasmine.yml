@@ -12,12 +12,13 @@
 #
 src_files:
   - public/javascripts/vendor/ender.js
+  - public/javascripts/vendor/bowser.js
   - public/javascripts/lib/ender_ext.js
   - public/javascripts/lib/util.js
   - public/javascripts/lib/dom_event_helpers.js
   - public/javascripts/lib/canvas.js
   - public/javascripts/lib/color.js
-  #- public/javascripts/lib/element_mouse_tracker.js
+  - public/javascripts/lib/element_mouse_tracker.js
   - public/javascripts/lib/keyboard.js
   - public/javascripts/lib/cell_location.js
   - public/javascripts/lib/cell.js
@@ -27,10 +28,10 @@ src_files:
   - public/javascripts/lib/box/tools.js
   - public/javascripts/lib/box/sizes.js
   - public/javascripts/lib/box/colors.js
-  #- public/javascripts/lib/color_picker.js
-  #- public/javascripts/lib/drawing_canvases.js
-  - public/javascripts/lib/tools.js
-  #- public/javascripts/lib/app.js
+  - public/javascripts/lib/color_picker.js
+  - public/javascripts/lib/drawing_canvases.js
+  - public/javascripts/lib/toolset.js
+  - public/javascripts/lib/app.js
 
 # stylesheets
 #

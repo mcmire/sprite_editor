@@ -16,9 +16,6 @@
           mouseup: function(event) {
             var inst;
             if (inst = self.activeInstance.mouseDownWithin) {
-              if (inst.isDragging) {
-                inst.triggerHandler("mousedragstop");
-              }
               inst.triggerHandler("mouseup", event);
             }
             return event.preventDefault();
@@ -134,45 +131,52 @@
         return this._removeEvents();
       };
       instance.prototype.triggerHandler = function(eventName, event) {
-        var _ref, _ref2, _ref3, _ref4;
-        if (/(up|stop|leave)$/.test(eventName)) {
-          if ((_ref = this.customEvents[eventName]) != null) {
-            _ref.call(this, event);
-          }
-          return (_ref2 = this[eventName]) != null ? _ref2.call(this, event) : void 0;
-        } else {
-          if ((_ref3 = this[eventName]) != null) {
-            _ref3.call(this, event);
-          }
-          return (_ref4 = this.customEvents[eventName]) != null ? _ref4.call(this, event) : void 0;
+        if (eventName in this) {
+          return this[eventName].call(this, event);
+        } else if (eventName in this.customEvents) {
+          return this.customEvents[eventName].call(this, event);
         }
       };
       instance.prototype.mousemove = function(event) {
-        var dist;
+        var dist, wasDragging, _ref;
         this._setMousePosition();
+        if ((_ref = this.customEvents.mousemove) != null) {
+          _ref.call(this, event);
+        }
+        wasDragging = this.isDragging;
         if (this.isDown) {
           if (!this.isDragging) {
             dist = this._distance(this.downAt.abs, this.pos.abs);
             this.isDragging = dist >= this.options.draggingDistance;
-            this.triggerHandler("mousedragstart", event);
           }
-        } else {
-          this.isDragging = false;
-          this.triggerHandler("mouseglide", event);
+        }
+        if (!wasDragging && this.isDragging) {
+          this.triggerHandler("mousedragstart", event);
         }
         if (this.isDragging) {
           this.triggerHandler("mousedrag", event);
+        } else {
+          this.triggerHandler("mouseglide", event);
         }
         if (this.options.debug) {
           return ElementMouseTracker.debugDiv().html(String.format("abs: ({0}, {1})<br/>rel: ({2}, {3})", this.pos.abs.x, this.pos.abs.y, this.pos.rel.x, this.pos.rel.y));
         }
       };
       instance.prototype.mousedragstop = function(event) {
-        return this.isDragging = false;
+        var _ref;
+        this.isDragging = false;
+        return (_ref = this.customEvents.mousedragstop) != null ? _ref.call(this, event) : void 0;
       };
       instance.prototype.mouseup = function(event) {
+        var _ref;
         this.isDown = false;
         delete ElementMouseTracker.activeInstance.mouseDownWithin;
+        if (this.isDragging) {
+          this.triggerHandler("mousedragstop");
+        }
+        if ((_ref = this.customEvents.mouseup) != null) {
+          _ref.call(this, event);
+        }
         if (this.options.debug) {
           return ElementMouseTracker.debugDiv().hide();
         }

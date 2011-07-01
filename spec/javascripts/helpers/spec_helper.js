@@ -1,6 +1,7 @@
 (function() {
   var _ensureEnderObject;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  window.RUNNING_TESTS = true;
   _ensureEnderObject = function(obj) {
     if (!('$' in obj)) {
       throw new Error("Object doesn't seem to be an Ender instance!");
@@ -14,7 +15,8 @@
       if (typeof fn === "function") {
         fn(evt);
       }
-      return element.dispatchEvent(evt);
+      element.dispatchEvent(evt);
+      return evt;
     },
     fireNativeEvent: function(element, type, fn) {
       return this.fireEvent(element, type, true, fn);
@@ -85,17 +87,50 @@
       toBeTypeOf: function(type) {
         return typeof this.actual === type;
       },
+      toBe: function() {
+        if (arguments.length) {
+          return jasmine.Matchers.prototype.toBe.apply(this, arguments);
+        } else {
+          return this.actual != null;
+        }
+      },
+      toEqualCell: function(cell) {
+        var result;
+        if (!this.actual) {
+          throw new Error("Actual object is undefined.");
+        }
+        if (!(this.actual instanceof SpriteEditor.Cell)) {
+          throw new Error("Actual object isn't a Cell!");
+        }
+        if (!cell) {
+          throw new Error("Expected object is undefined.");
+        }
+        if (!(cell instanceof SpriteEditor.Cell)) {
+          throw new Error("Expected object isn't a Cell!");
+        }
+        result = (this.actual.loc.eq(cell.loc) || (!this.actual.loc && !cell.loc)) && (this.actual.color.eq(cell.color) || (!this.actual.color && !cell.color));
+        this.message = function() {
+          return ["Expected " + (this.actual.inspect()) + " to be equal to " + (cell.inspect()), "Expected " + (this.actual.inspect()) + " to not be equal to given color"];
+        };
+        return result;
+      },
       toEqualColor: function(color) {
         var result;
+        if (!this.actual) {
+          throw new Error("Actual object is undefined.");
+        }
         if (!(this.actual instanceof SpriteEditor.Color)) {
           throw new Error("Actual object isn't a Color!");
+        }
+        if (!color) {
+          throw new Error("Expected object is undefined.");
         }
         if (!(color instanceof SpriteEditor.Color)) {
           throw new Error("Expected object isn't a Color!");
         }
         result = this.actual.eq(color);
         this.message = function() {
-          return ["Expected " + (this.actual.inspect()) + " to be equal to " + (color.inspect()) + ", but it wasn't", "Expected " + (this.actual.inspect()) + " to not be equal to given color, but it was"];
+          return ["Expected " + (this.actual.inspect()) + " to be equal to " + (color.inspect()), "Expected " + (this.actual.inspect()) + " to not be equal to given color"];
         };
         return result;
       },

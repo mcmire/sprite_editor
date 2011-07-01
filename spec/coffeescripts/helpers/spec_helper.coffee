@@ -1,3 +1,5 @@
+window.RUNNING_TESTS = true
+
 _ensureEnderObject = (obj) ->
   unless '$' of obj
     throw new Error("Object doesn't seem to be an Ender instance!")
@@ -5,10 +7,14 @@ _ensureEnderObject = (obj) ->
 window.specHelpers =
   fireEvent: (element, type, isNative, fn) ->
     # I'm just going off the bean source here
+    # XXX: This doesn't work with mousemove....
+    #      Look into the jQuery simulate plugin:
+    #      <http://code.google.com/p/jqueryjs/source/browse/trunk/plugins/simulate/jquery.simulate.js?r=6163>
     evt = document.createEvent(if isNative then 'HTMLEvents' else 'UIEvents')
     evt[if isNative then 'initEvent' else 'initUIEvent'](type, true, true, window, 1)
     fn?(evt)
     element.dispatchEvent(evt)
+    evt
   fireNativeEvent: (element, type, fn) ->
     @fireEvent(element, type, true, fn)
   fireCustomEvent: (element, type, fn) ->
@@ -64,16 +70,48 @@ beforeEach ->
     toBeTypeOf: (type) ->
       typeof @actual == type
 
+    # Override Jasmine built-in matcher so that if passed no arguments, we
+    # simply check if the receiver is a real value
+    toBe: ->
+      if arguments.length
+        jasmine.Matchers.prototype.toBe.apply(this, arguments)
+      else
+        @actual?
+
+    toEqualCell: (cell) ->
+      unless @actual
+        throw new Error("Actual object is undefined.")
+      unless @actual instanceof SpriteEditor.Cell
+        throw new Error("Actual object isn't a Cell!")
+      unless cell
+        throw new Error("Expected object is undefined.")
+      unless cell instanceof SpriteEditor.Cell
+        throw new Error("Expected object isn't a Cell!")
+
+      result = (
+        (@actual.loc.eq(cell.loc) or (!@actual.loc and !cell.loc)) and
+        (@actual.color.eq(cell.color) or (!@actual.color and !cell.color))
+      )
+      @message = -> [
+        "Expected #{@actual.inspect()} to be equal to #{cell.inspect()}",
+        "Expected #{@actual.inspect()} to not be equal to given color"
+      ]
+      result
+
     toEqualColor: (color) ->
+      unless @actual
+        throw new Error("Actual object is undefined.")
       unless @actual instanceof SpriteEditor.Color
         throw new Error("Actual object isn't a Color!")
+      unless color
+        throw new Error("Expected object is undefined.")
       unless color instanceof SpriteEditor.Color
         throw new Error("Expected object isn't a Color!")
 
       result = @actual.eq(color)
       @message = -> [
-        "Expected #{@actual.inspect()} to be equal to #{color.inspect()}, but it wasn't",
-        "Expected #{@actual.inspect()} to not be equal to given color, but it was"
+        "Expected #{@actual.inspect()} to be equal to #{color.inspect()}",
+        "Expected #{@actual.inspect()} to not be equal to given color"
       ]
       result
 

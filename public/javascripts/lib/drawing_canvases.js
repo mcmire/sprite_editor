@@ -1,53 +1,66 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $["export"]("SpriteEditor.DrawingCanvases", function(SpriteEditor) {
-    var DrawingCanvases, Keyboard;
+    var Canvas, DrawingCanvases, Keyboard, defaults;
     Keyboard = SpriteEditor.Keyboard;
+    Canvas = SpriteEditor.Canvas;
     DrawingCanvases = {};
     SpriteEditor.DOMEventHelpers.mixin(DrawingCanvases, "SpriteEditor_DrawingCanvases");
     $.extend(DrawingCanvases, SpriteEditor.Eventable);
-    $.extend(DrawingCanvases, {
-      timer: null,
-      width: null,
-      height: null,
-      workingCanvas: null,
-      gridBgCanvas: null,
-      previewCanvas: null,
-      cells: [],
-      focusedCell: null,
-      focusedCells: null,
-      startDragAtCell: null,
-      clipboard: [],
+    defaults = {
       tickInterval: 80,
       widthInCells: 16,
       heightInCells: 16,
       cellSize: 30,
       showGrid: true,
-      init: function(app) {
+      patternSize: 9
+    };
+    $.extend(DrawingCanvases, {
+      init: function(app, options) {
+        if (options == null) {
+          options = {};
+        }
         this.app = app;
+        this.reset();
+        $.extend(this, defaults, options);
         this._initCells();
         if (this.showGrid) {
           this._createGridBgCanvas();
         }
         this._createWorkingCanvas();
         this._createPreviewCanvases();
-        this.autoSaveTimer = setInterval((__bind(function() {
-          return this.save();
-        }, this)), 30000);
         return this;
       },
       destroy: function() {
-        return this.removeEvents();
+        this.reset();
+        this.removeEvents();
+        localStorage.removeItem("sprite_editor.saved");
+        return localStorage.removeItem("sprite_editor.cells");
       },
-      start: function() {
+      reset: function() {
+        this.stopDrawing();
+        this.stopSaving();
+        this.width = null;
+        this.height = null;
+        this.workingCanvas = null;
+        this.gridBgCanvas = null;
+        this.previewCanvas = null;
+        this.cells = [];
+        this.focusedCell = null;
+        this.focusedCells = [];
+        this.startDragAtCell = null;
+        this.clipboard = [];
+        this.stateBeforeSuspend = null;
+        return this;
+      },
+      startDrawing: function() {
         var self;
         self = this;
-        if (this.timer) {
-          return;
+        if (!this.drawTimer) {
+          this.drawTimer = setInterval((function() {
+            return self.draw();
+          }), this.tickInterval);
         }
-        this.timer = setInterval((function() {
-          return self.draw();
-        }), this.tickInterval);
         return this;
       },
       draw: function() {
@@ -59,62 +72,74 @@
         if (typeof (_base = this.app.boxes.tools.currentTool()).draw === "function") {
           _base.draw();
         }
-        return this._updateTiledPreviewCanvas();
+        this._updateTiledPreviewCanvas();
+        return this;
       },
-      stop: function() {
-        if (!this.timer) {
-          return;
+      stopDrawing: function() {
+        if (this.drawTimer) {
+          clearInterval(this.drawTimer);
+          this.drawTimer = null;
         }
-        clearInterval(this.timer);
-        this.timer = null;
+        return this;
+      },
+      startSaving: function() {
+        var self;
+        self = this;
+        if (!this.autoSaveTimer) {
+          this.autoSaveTimer = setInterval((function() {
+            return self.save();
+          }), 30000);
+        }
         return this;
       },
       save: function() {
-        var cell, row, _i, _len, _ref, _results;
-        console.log("Saving...");
-        localStorage.setItem("pixel_editor.saved", "true");
+        var cell, cells, row, _i, _j, _len, _len2, _ref;
+        if (!window.RUNNING_TESTS) {
+          console.log("Saving...");
+        }
+        cells = {};
         _ref = this.cells;
-        _results = [];
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           row = _ref[_i];
-          _results.push((function() {
-            var _j, _len2, _results2;
-            _results2 = [];
-            for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
-              cell = row[_j];
-              _results2.push(localStorage.setItem("cells." + cell.coords(), cell.color.toJSON()));
-            }
-            return _results2;
-          })());
+          for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
+            cell = row[_j];
+            cells[cell.coords()] = cell.color.asJSON();
+          }
         }
-        return _results;
+        localStorage.setItem("sprite_editor.cells", JSON.stringify(cells));
+        return localStorage.setItem("sprite_editor.saved", "true");
       },
-      _initCells: function() {
-        var color, i, j, needsReload, row, _ref, _results;
-        needsReload = localStorage.getItem("pixel_editor.saved") === "true";
-        _results = [];
-        for (i = 0, _ref = this.heightInCells; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
-          row = this.cells[i] = [];
-          _results.push((function() {
-            var _ref2, _results2;
-            _results2 = [];
-            for (j = 0, _ref2 = this.widthInCells; 0 <= _ref2 ? j < _ref2 : j > _ref2; 0 <= _ref2 ? j++ : j--) {
-              row[j] = new SpriteEditor.Cell(this, i, j);
-              _results2.push(needsReload ? (color = JSON.parse(localStorage["cells." + j + "," + i]), row[j].color = new SpriteEditor.Color(color)) : void 0);
-            }
-            return _results2;
-          }).call(this));
+      stopSaving: function() {
+        if (this.autoSaveTimer) {
+          clearInterval(this.autoSaveTimer);
+          this.autoSaveTimer = null;
         }
-        return _results;
+        return this;
+      },
+      suspend: function() {
+        if (!this.stateBeforeSuspend) {
+          this.stateBeforeSuspend = {
+            wasDrawing: !!this.drawTimer,
+            wasSaving: !!this.autoSaveTimer
+          };
+          this.stopDrawing();
+          return this.stopSaving();
+        }
+      },
+      resume: function() {
+        if (this.stateBeforeSuspend) {
+          if (this.stateBeforeSuspend.wasDrawing) {
+            this.startDrawing();
+          }
+          if (this.stateBeforeSuspend.wasSaving) {
+            return this.startSaving();
+          }
+        }
       },
       addEvents: function() {
         var self;
         self = this;
         this.workingCanvas.$element.mouseTracker({
-          mouseout: function(event) {
-            self._unsetFocusedCells();
-            return self.draw();
-          },
           mousedown: function(event) {
             self.app.boxes.tools.currentTool().trigger("mousedown", event);
             return event.preventDefault();
@@ -125,6 +150,7 @@
           },
           mousemove: function(event) {
             var mouse;
+            self.app.boxes.tools.currentTool().trigger("mousemove", event);
             mouse = self.workingCanvas.$element.mouseTracker("pos");
             self._setFocusedCell(mouse);
             return self._setFocusedCells(mouse);
@@ -133,32 +159,41 @@
             self.startDragAtCell = self.focusedCell.clone();
             return self.app.boxes.tools.currentTool().trigger("mousedragstart", event);
           },
+          mousedrag: function(event) {
+            return self.app.boxes.tools.currentTool().trigger("mousedrag", event);
+          },
           mousedragstop: function(event) {
             self.startDragAtCell = null;
             return self.app.boxes.tools.currentTool().trigger("mousedragstop", event);
           },
-          mousedrag: function(event) {
-            return self.app.boxes.tools.currentTool().trigger("mousedrag", event);
-          },
           mouseglide: function(event) {
             return self.app.boxes.tools.currentTool().trigger("mouseglide", event);
+          },
+          mouseout: function(event) {
+            self.app.boxes.tools.currentTool().trigger("mouseout", event);
+            self._unsetFocusedCell();
+            self._unsetFocusedCells();
+            return self.draw();
           },
           draggingDistance: 3
         });
         this._bindEvents(window, {
           blur: function() {
-            return self.stop();
+            return self.suspend();
           },
           focus: function() {
-            return self.start();
+            return self.resume();
           }
         });
-        return this.start();
+        return this.startDrawing();
       },
       removeEvents: function() {
-        this.workingCanvas.$element.mouseTracker("destroy");
+        var _ref;
+        if ((_ref = this.workingCanvas) != null) {
+          _ref.$element.mouseTracker("destroy");
+        }
         this._unbindEvents(window, "blur", "focus");
-        return this.stop();
+        return this.stopDrawing();
       },
       drawCell: function(cell, opts) {
         this.drawWorkingCell(cell, opts);
@@ -194,8 +229,29 @@
         }
         return pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, 255);
       },
+      _initCells: function() {
+        var cell, cells, color, i, j, json, row, _ref, _results;
+        json = localStorage.getItem("sprite_editor.cells");
+        if (json) {
+          cells = JSON.parse(json);
+        }
+        _results = [];
+        for (i = 0, _ref = this.heightInCells; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+          row = this.cells[i] = [];
+          _results.push((function() {
+            var _ref2, _results2;
+            _results2 = [];
+            for (j = 0, _ref2 = this.widthInCells; 0 <= _ref2 ? j < _ref2 : j > _ref2; 0 <= _ref2 ? j++ : j--) {
+              cell = row[j] = new SpriteEditor.Cell(this, i, j);
+              _results2.push(cells ? (color = cells[cell.coords()], row[j].color = new SpriteEditor.Color(color)) : void 0);
+            }
+            return _results2;
+          }).call(this));
+        }
+        return _results;
+      },
       _createGridBgCanvas: function() {
-        return this.gridBgCanvas = SpriteEditor.Canvas.create(this.cellSize, this.cellSize, __bind(function(c) {
+        return this.gridBgCanvas = Canvas.create(this.cellSize, this.cellSize, __bind(function(c) {
           c.ctx.strokeStyle = "#eee";
           c.ctx.beginPath();
           c.ctx.moveTo(0.5, 0);
@@ -209,16 +265,16 @@
       _createWorkingCanvas: function() {
         this.width = this.widthInCells * this.cellSize;
         this.height = this.heightInCells * this.cellSize;
-        this.workingCanvas = SpriteEditor.Canvas.create(this.width, this.height);
+        this.workingCanvas = Canvas.create(this.width, this.height);
         this.workingCanvas.$element.attr("id", "working_canvas");
         if (this.showGrid) {
           return this.workingCanvas.$element.css("background-image", "url(" + this.gridBgCanvas.element.toDataURL("image/png") + ")");
         }
       },
       _createPreviewCanvases: function() {
-        this.previewCanvas = SpriteEditor.Canvas.create(this.widthInCells, this.heightInCells);
+        this.previewCanvas = Canvas.create(this.widthInCells, this.heightInCells);
         this.previewCanvas.element.id = "preview_canvas";
-        this.tiledPreviewCanvas = SpriteEditor.Canvas.create(this.widthInCells * 9, this.heightInCells * 9);
+        this.tiledPreviewCanvas = Canvas.create(this.widthInCells * this.patternSize, this.heightInCells * this.patternSize);
         return this.tiledPreviewCanvas.element.id = "tiled_preview_canvas";
       },
       _setFocusedCell: function(mouse) {
@@ -256,8 +312,11 @@
         }
         return this.focusedCells = focusedCells;
       },
+      _unsetFocusedCell: function() {
+        return this.focusedCell = null;
+      },
       _unsetFocusedCells: function() {
-        return this.focusedCells = null;
+        return this.focusedCells = [];
       },
       _clearWorkingCanvas: function() {
         var wc;

@@ -1,50 +1,63 @@
 $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
 
   Keyboard = SpriteEditor.Keyboard
+  Canvas   = SpriteEditor.Canvas
 
   DrawingCanvases = {}
   SpriteEditor.DOMEventHelpers.mixin(DrawingCanvases, "SpriteEditor_DrawingCanvases")
   $.extend(DrawingCanvases, SpriteEditor.Eventable)
 
-  $.extend DrawingCanvases,
-    timer: null
-    width: null
-    height: null
-    workingCanvas: null
-    gridBgCanvas: null
-    previewCanvas: null
-    cells: []
-    focusedCell: null
-    focusedCells: null
-    startDragAtCell: null
-    clipboard: []
-
+  defaults =
     tickInterval: 80    # ms/frame
     widthInCells: 16    # cells
     heightInCells: 16   # cells
     cellSize: 30        # pixels
     showGrid: true
+    patternSize: 9      # no. of times to repeat the actual image to form the preview
 
-    init: (app) ->
+  $.extend DrawingCanvases,
+    init: (app, options={}) ->
       @app = app
+      @reset()
+      $.extend(this, defaults, options)
 
       @_initCells()
       @_createGridBgCanvas() if @showGrid
       @_createWorkingCanvas()
       @_createPreviewCanvases()
-      @autoSaveTimer = setInterval((=> @save()), 30000)
+      #@startSaving
 
       return this
 
     destroy: ->
+      @reset()
       @removeEvents()
+      # Ensure that the localStorage values we are saving are cleared
+      localStorage.removeItem("sprite_editor.saved")
+      localStorage.removeItem("sprite_editor.cells")
 
-    start: ->
+    reset: ->
+      @stopDrawing()
+      @stopSaving()
+      @width = null
+      @height = null
+      @workingCanvas = null
+      @gridBgCanvas = null
+      @previewCanvas = null
+      @cells = []
+      @focusedCell = null
+      @focusedCells = []
+      @startDragAtCell = null
+      @clipboard = []
+      @stateBeforeSuspend = null
+      return this
+
+    startDrawing: ->
       self = this
-      return if @timer
-      # We don't use => here because that would be a double function call
-      # and thus (theoretically at least) slow down the draw by 50%
-      @timer = setInterval((-> self.draw()), @tickInterval)
+      unless @drawTimer
+        # We don't use => here because that would be a double function call
+        # and thus (theoretically at least) slow down the draw by 50%
+        @drawTimer = setInterval((-> self.draw()), @tickInterval)
       return this
 
     draw: ->
@@ -54,36 +67,48 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @_fillCells()
       @app.boxes.tools.currentTool().draw?()
       @_updateTiledPreviewCanvas()
+      return this
 
-    stop: ->
-      return unless @timer
-      clearInterval(@timer)
-      @timer = null
+    stopDrawing: ->
+      if @drawTimer
+        clearInterval(@drawTimer)
+        @drawTimer = null
+      return this
+
+    startSaving: ->
+      self = this
+      unless @autoSaveTimer
+        # We don't use => here simply for symmetry
+        @autoSaveTimer = setInterval((-> self.save()), 30000)
       return this
 
     save: ->
-      console.log "Saving..."
-      localStorage.setItem("pixel_editor.saved", "true")
-      for row in @cells
-        for cell in row
-          localStorage.setItem("cells."+cell.coords(), cell.color.toJSON())
+      console.log "Saving..." unless window.RUNNING_TESTS
+      cells = {}
+      cells[cell.coords()] = cell.color.asJSON() for cell in row for row in @cells
+      localStorage.setItem("sprite_editor.cells", JSON.stringify(cells))
+      localStorage.setItem("sprite_editor.saved", "true")
 
-    _initCells: ->
-      needsReload = (localStorage.getItem("pixel_editor.saved") == "true")
-      for i in [0...@heightInCells]
-        row = @cells[i] = []
-        for j in [0...@widthInCells]
-          row[j] = new SpriteEditor.Cell(this, i, j)
-          if needsReload
-            color = JSON.parse(localStorage["cells." + j + "," + i])
-            row[j].color = new SpriteEditor.Color(color)
+    stopSaving: ->
+      if @autoSaveTimer
+        clearInterval(@autoSaveTimer)
+        @autoSaveTimer = null
+      return this
+
+    suspend: ->
+      unless @stateBeforeSuspend
+        @stateBeforeSuspend = {wasDrawing: !!@drawTimer, wasSaving: !!@autoSaveTimer}
+        @stopDrawing()
+        @stopSaving()
+
+    resume: ->
+      if @stateBeforeSuspend
+        @startDrawing() if @stateBeforeSuspend.wasDrawing
+        @startSaving()  if @stateBeforeSuspend.wasSaving
 
     addEvents: ->
       self = this
       @workingCanvas.$element.mouseTracker
-        mouseout: (event) ->
-          self._unsetFocusedCells()
-          self.draw()
         mousedown: (event) ->
           self.app.boxes.tools.currentTool().trigger("mousedown", event)
           event.preventDefault()
@@ -91,33 +116,39 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
           self.app.boxes.tools.currentTool().trigger("mouseup", event)
           event.preventDefault()
         mousemove: (event) ->
+          self.app.boxes.tools.currentTool().trigger("mousemove", event)
           mouse = self.workingCanvas.$element.mouseTracker("pos")
           self._setFocusedCell(mouse)
           self._setFocusedCells(mouse)
         mousedragstart: (event) ->
           self.startDragAtCell = self.focusedCell.clone()
           self.app.boxes.tools.currentTool().trigger("mousedragstart", event)
+        mousedrag: (event) ->
+          self.app.boxes.tools.currentTool().trigger("mousedrag", event)
         mousedragstop: (event) ->
           self.startDragAtCell = null
           self.app.boxes.tools.currentTool().trigger("mousedragstop", event)
-        mousedrag: (event) ->
-          self.app.boxes.tools.currentTool().trigger("mousedrag", event)
         mouseglide: (event) ->
           self.app.boxes.tools.currentTool().trigger("mouseglide", event)
+        mouseout: (event) ->
+          self.app.boxes.tools.currentTool().trigger("mouseout", event)
+          self._unsetFocusedCell()
+          self._unsetFocusedCells()
+          self.draw()
         draggingDistance: 3
 
       @_bindEvents window,
         blur: ->
-          self.stop()
+          self.suspend()
         focus: ->
-          self.start()
+          self.resume()
 
-      @start()
+      @startDrawing()
 
     removeEvents: ->
-      @workingCanvas.$element.mouseTracker("destroy")
+      @workingCanvas?.$element.mouseTracker("destroy")
       @_unbindEvents(window, "blur", "focus")
-      @stop()
+      @stopDrawing()
 
     drawCell: (cell, opts) ->
       @drawWorkingCell(cell, opts)
@@ -142,8 +173,19 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       return if color.isClear()
       pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, 255)
 
+    _initCells: ->
+      json = localStorage.getItem("sprite_editor.cells")
+      cells = JSON.parse(json) if json
+      for i in [0...@heightInCells]
+        row = @cells[i] = []
+        for j in [0...@widthInCells]
+          cell = row[j] = new SpriteEditor.Cell(this, i, j)
+          if cells
+            color = cells[cell.coords()]
+            row[j].color = new SpriteEditor.Color(color)
+
     _createGridBgCanvas: ->
-      @gridBgCanvas = SpriteEditor.Canvas.create @cellSize, @cellSize, (c) =>
+      @gridBgCanvas = Canvas.create @cellSize, @cellSize, (c) =>
         c.ctx.strokeStyle = "#eee"
         c.ctx.beginPath()
         # Draw a vertical line on the left
@@ -160,15 +202,15 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
     _createWorkingCanvas: ->
       @width = @widthInCells * @cellSize
       @height = @heightInCells * @cellSize
-      @workingCanvas = SpriteEditor.Canvas.create(@width, @height)
+      @workingCanvas = Canvas.create(@width, @height)
       @workingCanvas.$element.attr("id", "working_canvas")
       if @showGrid
         @workingCanvas.$element.css("background-image", "url(" + @gridBgCanvas.element.toDataURL("image/png") + ")")
 
     _createPreviewCanvases: ->
-      @previewCanvas = SpriteEditor.Canvas.create(@widthInCells, @heightInCells)
+      @previewCanvas = Canvas.create(@widthInCells, @heightInCells)
       @previewCanvas.element.id = "preview_canvas"
-      @tiledPreviewCanvas = SpriteEditor.Canvas.create(@widthInCells * 9, @heightInCells * 9)
+      @tiledPreviewCanvas = Canvas.create(@widthInCells * @patternSize, @heightInCells * @patternSize)
       @tiledPreviewCanvas.element.id = "tiled_preview_canvas"
 
     _setFocusedCell: (mouse) ->
@@ -177,6 +219,8 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
 
       j = Math.floor(x / @cellSize)
       i = Math.floor(y / @cellSize)
+
+      #console.log("x: #{x}, y: #{y}, i: #{i}, j: #{j}, cellSize: #{@cellSize}")
 
       @focusedCell = @cells[i][j]
 
@@ -210,8 +254,11 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
           focusedCells[cell.coords()] = cell if cell
       @focusedCells = focusedCells
 
+    _unsetFocusedCell: ->
+      @focusedCell = null
+
     _unsetFocusedCells: ->
-      @focusedCells = null
+      @focusedCells = []
 
     _clearWorkingCanvas: ->
       wc = @workingCanvas

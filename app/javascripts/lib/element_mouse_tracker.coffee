@@ -23,7 +23,6 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
       @_bindEvents document,
         mouseup: (event) ->
           if inst = self.activeInstance.mouseDownWithin
-            inst.triggerHandler("mousedragstop") if inst.isDragging
             inst.triggerHandler("mouseup", event)  # clear mouseDownWithin
           #event.stopPropagation();
           event.preventDefault()
@@ -160,31 +159,35 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
       @_removeEvents()
 
     triggerHandler: (eventName, event) ->
-      if /(up|stop|leave)$/.test(eventName)
-        # Invoke the callback which was given in the options
-        @customEvents[eventName]?.call(this, event)
-        # Invoke the callback which is a method on this instance
-        @[eventName]?.call(this, event)
-      else
-        # Invoke the callback which is a method on this instance
-        @[eventName]?.call(this, event)
-        # Invoke the callback which was given in the options
-        @customEvents[eventName]?.call(this, event)
+      # If we have a method below that has the same name as the event,
+      # use it; it will be responsible for calling the callback for the event
+      # in @customEvents (if one is present).
+      if eventName of this
+        @[eventName].call(this, event)
+      # Otherwise, call the callback in @customEvents.
+      else if eventName of @customEvents
+        @customEvents[eventName].call(this, event)
 
     mousemove: (event) ->
       @_setMousePosition()
+      @customEvents.mousemove?.call(this, event)
 
-      # If dragging isn't set yet, set it until the mouse is lifted off
+      wasDragging = @isDragging
+
+      # The mouse is dragging while it is down and moving, until it is lifted up
       if @isDown
         if !@isDragging
           dist = @_distance(@downAt.abs, @pos.abs)
           @isDragging = (dist >= @options.draggingDistance)
-          @triggerHandler("mousedragstart", event)
-      else
-        @isDragging = false
-        @triggerHandler("mouseglide", event)
+      #else
+      #  @isDragging = false
 
-      @triggerHandler("mousedrag", event) if @isDragging
+      if !wasDragging and @isDragging
+        @triggerHandler("mousedragstart", event)
+      if @isDragging
+        @triggerHandler("mousedrag", event)
+      else
+        @triggerHandler("mouseglide", event)
 
       if @options.debug
         ElementMouseTracker.debugDiv().html(
@@ -193,10 +196,15 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
 
     mousedragstop: (event) ->
       @isDragging = false
+      @customEvents.mousedragstop?.call(this, event)
 
     mouseup: (event) ->
       @isDown = false
       delete ElementMouseTracker.activeInstance.mouseDownWithin
+
+      @triggerHandler("mousedragstop") if @isDragging
+
+      @customEvents.mouseup?.call(this, event)
 
       ElementMouseTracker.debugDiv().hide() if @options.debug
 
