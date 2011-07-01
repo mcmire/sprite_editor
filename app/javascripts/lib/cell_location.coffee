@@ -46,6 +46,10 @@ $.export "SpriteEditor.CellLocation", (SpriteEditor) ->
     minus: (offset) ->
       @clone().subtract(offset)
 
+    # TODO: Test
+    eq: (other) ->
+      @i == other.i and @j == other.j
+
     gt: (other) ->
       (@i > other.i or @j > other.j)
 

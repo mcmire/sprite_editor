@@ -64,6 +64,9 @@
       CellLocation.prototype.minus = function(offset) {
         return this.clone().subtract(offset);
       };
+      CellLocation.prototype.eq = function(other) {
+        return this.i === other.i && this.j === other.j;
+      };
       CellLocation.prototype.gt = function(other) {
         return this.i > other.i || this.j > other.j;
       };
