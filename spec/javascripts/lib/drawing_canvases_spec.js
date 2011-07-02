@@ -36,7 +36,7 @@
       });
       it("sets default properties", function() {
         canvases = DrawingCanvases.init(app);
-        expect(canvases.tickInterval).toBe();
+        expect(canvases.drawInterval).toBe();
         expect(canvases.widthInCells).toBe();
         expect(canvases.heightInCells).toBe();
         expect(canvases.cellSize).toBe();
@@ -219,16 +219,29 @@
       beforeEach(function() {
         return canvases = DrawingCanvases.init(app);
       });
-      it("starts the draw loop", function() {
-        canvases.startDrawing();
-        return expect(canvases.drawTimer).toBe();
+      describe("if the draw loop isn't started yet", function() {
+        beforeEach(function() {
+          return canvases.isDrawing = false;
+        });
+        it("starts the draw loop", function() {
+          spyOn(canvases, 'draw');
+          canvases.startDrawing();
+          return expect(canvases.draw).toHaveBeenCalled();
+        });
+        return it("sets the state of the canvases to drawing", function() {
+          canvases.startDrawing();
+          return expect(canvases.isDrawing).toBeTruthy();
+        });
       });
-      return it("doesn't do anything if the draw loop is already running", function() {
-        var timer;
-        canvases.startDrawing();
-        timer = canvases.drawTimer;
-        canvases.startDrawing();
-        return expect(canvases.drawTimer).toBe(timer);
+      return describe("if the draw loop is already started", function() {
+        beforeEach(function() {
+          return canvases.isDrawing = true;
+        });
+        return it("doesn't re-start the draw loop", function() {
+          spyOn(canvases, 'draw');
+          canvases.startDrawing();
+          return expect(canvases.draw).not.toHaveBeenCalled();
+        });
       });
     });
     describe('#draw', function() {
@@ -258,33 +271,41 @@
     });
     describe('#stopDrawing', function() {
       beforeEach(function() {
-        return canvases = DrawingCanvases.init(app);
+        canvases = DrawingCanvases.init(app);
+        return canvases.startDrawing();
       });
-      it("stops the draw loop", function() {
-        canvases.startDrawing();
+      return it("sets the state of the canvases to not-drawing", function() {
         canvases.stopDrawing();
-        return expect(canvases.drawTimer).not.toBe();
-      });
-      return it("doesn't bomb if the draw loop is not running", function() {
-        return expect(function() {
-          return canvases.stopDrawing();
-        }).not.toThrowAnything();
+        return expect(canvases.isDrawing).toBeFalsy();
       });
     });
     describe('#startSaving', function() {
       beforeEach(function() {
         return canvases = DrawingCanvases.init(app);
       });
-      it("starts the auto-save loop", function() {
-        canvases.startSaving();
-        return expect(canvases.autoSaveTimer).toBe();
+      describe("if the draw loop isn't started yet", function() {
+        beforeEach(function() {
+          return canvases.isSaving = false;
+        });
+        it("starts the save loop", function() {
+          spyOn(canvases, 'save');
+          canvases.startSaving();
+          return expect(canvases.save).toHaveBeenCalled();
+        });
+        return it("sets the state of the canvases to drawing", function() {
+          canvases.startSaving();
+          return expect(canvases.isSaving).toBeTruthy();
+        });
       });
-      return it("doesn't do anything if the auto-save loop is already running", function() {
-        var timer;
-        canvases.startSaving();
-        timer = canvases.autoSaveTimer;
-        canvases.startSaving();
-        return expect(canvases.autoSaveTimer).toBe(timer);
+      return describe("if the draw loop is already started", function() {
+        beforeEach(function() {
+          return canvases.isSaving = true;
+        });
+        return it("doesn't re-start the draw loop", function() {
+          spyOn(canvases, 'save');
+          canvases.startSaving();
+          return expect(canvases.save).not.toHaveBeenCalled();
+        });
       });
     });
     describe('#save', function() {
@@ -297,9 +318,9 @@
       return it("stores the cells in local storage", function() {
         var json;
         canvases.cells[0][0] = new Cell({
-          app: app,
+          canvases: canvases,
           loc: new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 0,
             j: 0
           }),
@@ -310,9 +331,9 @@
           })
         });
         canvases.cells[0][1] = new Cell({
-          app: app,
+          canvases: canvases,
           loc: new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 0,
             j: 1
           }),
@@ -323,9 +344,9 @@
           })
         });
         canvases.cells[1][0] = new Cell({
-          app: app,
+          canvases: canvases,
           loc: new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 1,
             j: 0
           }),
@@ -336,9 +357,9 @@
           })
         });
         canvases.cells[1][1] = new Cell({
-          app: app,
+          canvases: canvases,
           loc: new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 1,
             j: 1
           }),
@@ -394,19 +415,14 @@
         });
       });
     });
-    describe('#stopSaving', function() {
+    describe('#stopDrawing', function() {
       beforeEach(function() {
-        return canvases = DrawingCanvases.init(app);
+        canvases = DrawingCanvases.init(app);
+        return canvases.startSaving();
       });
-      it("stops the auto-save loop", function() {
-        canvases.startSaving();
+      return it("sets the state of the canvases to not-saving", function() {
         canvases.stopSaving();
-        return expect(canvases.autoSaveTimer).not.toBe();
-      });
-      return it("doesn't bomb if the auto-save loop is not running", function() {
-        return expect(function() {
-          return canvases.stopSaving();
-        }).not.toThrowAnything();
+        return expect(canvases.isSaving).toBeFalsy();
       });
     });
     describe('#suspend', function() {
@@ -415,12 +431,12 @@
       });
       describe('if not suspended yet', function() {
         it("stores the state of the draw loop", function() {
-          canvases.drawTimer = "something";
+          canvases.isDrawing = true;
           canvases.suspend();
           return expect(canvases.stateBeforeSuspend.wasDrawing).toBeTruthy();
         });
         it("stores the state of the auto-save loop", function() {
-          canvases.autoSaveTimer = null;
+          canvases.isSaving = false;
           canvases.suspend();
           return expect(canvases.stateBeforeSuspend.wasSaving).toBeFalsy();
         });
@@ -429,7 +445,7 @@
           canvases.suspend();
           return expect(canvases.stopDrawing).toHaveBeenCalled();
         });
-        return it("stops the auto-save loop", function() {
+        return it("stops the save loop", function() {
           spyOn(canvases, 'stopSaving');
           canvases.suspend();
           return expect(canvases.stopSaving).toHaveBeenCalled();
@@ -500,7 +516,7 @@
         });
       });
     });
-    return describe('when events have been added', function() {
+    describe('when events have been added', function() {
       var $canvas, o;
       $canvas = o = null;
       beforeEach(function() {
@@ -513,15 +529,17 @@
           heightInCells: 10
         });
         $canvas = canvases.workingCanvas.$element.appendTo('#sandbox');
-        o = $canvas.offset();
-        return canvases.addEvents();
+        return o = $canvas.offset();
       });
       it("starts the draw loop", function() {
-        return expect(canvases.drawTimer).toBe();
+        spyOn(canvases, 'startDrawing');
+        canvases.addEvents();
+        return expect(canvases.startDrawing).toHaveBeenCalled();
       });
       describe('when the mouse is down over the element', function() {
         return it("triggers a possible mousedown event on the current tool", function() {
           currentTool.mousedown = jasmine.createSpy();
+          canvases.addEvents();
           $canvas.simulate("mousedown", {
             clientX: o.left + 1,
             clientY: o.top + 1
@@ -532,6 +550,11 @@
       describe('when the mouse is lifted', function() {
         return it("triggers a possible mouseup event on the current tool", function() {
           currentTool.mouseup = jasmine.createSpy();
+          canvases.addEvents();
+          $canvas.simulate("mousedown", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
           $(document).simulate("mouseup");
           return expect(currentTool.mouseup).toHaveBeenCalled();
         });
@@ -545,6 +568,7 @@
           if (dy == null) {
             dy = 1;
           }
+          canvases.addEvents();
           $canvas.simulate("mouseover", {
             clientX: o.left + 1,
             clientY: o.top + 1
@@ -561,21 +585,21 @@
         });
         it("stores the cell that has focus", function() {
           var cell;
-          cell = new Cell(app, 3, 6);
+          cell = new Cell(canvases, 3, 6);
           canvases.cells[3][6] = cell;
           simulateEvent(65, 35);
           return expect(canvases.focusedCell).toEqual(cell);
         });
-        return it("stores the cells that has focus (considering the brush size)", function() {
+        return it("stores the cells that have focus (considering the brush size)", function() {
           var cell, cells, i, _len, _ref, _results;
           app.boxes.sizes = {
             currentSize: 4
           };
           cells = [];
-          cells[0] = new Cell(app, 2, 5);
-          cells[1] = new Cell(app, 2, 6);
-          cells[2] = new Cell(app, 3, 5);
-          cells[3] = new Cell(app, 3, 6);
+          cells[0] = new Cell(canvases, 2, 5);
+          cells[1] = new Cell(canvases, 2, 6);
+          cells[2] = new Cell(canvases, 3, 5);
+          cells[3] = new Cell(canvases, 3, 6);
           canvases.cells[2][5] = cells[0];
           canvases.cells[2][6] = cells[1];
           canvases.cells[3][5] = cells[2];
@@ -594,10 +618,11 @@
         var cell, simulateEvent;
         cell = null;
         beforeEach(function() {
-          cell = new Cell(app, 0, 0);
+          cell = new Cell(canvases, 0, 0);
           return canvases.cells[0][0] = cell;
         });
         simulateEvent = function() {
+          canvases.addEvents();
           $canvas.simulate("mouseover", {
             clientX: o.left + 1,
             clientY: o.top + 1
@@ -618,6 +643,7 @@
         });
         return it("triggers a possible mousedragstart event on the current tool", function() {
           currentTool.mousedragstart = jasmine.createSpy();
+          canvases.addEvents();
           simulateEvent();
           return expect(currentTool.mousedragstart).toHaveBeenCalled();
         });
@@ -625,6 +651,7 @@
       describe('when the mouse is being dragged', function() {
         var simulateEvent;
         simulateEvent = function() {
+          canvases.addEvents();
           $canvas.simulate("mouseover", {
             clientX: o.left + 1,
             clientY: o.top + 1
@@ -647,6 +674,7 @@
       describe('when the mouse drag ends', function() {
         var simulateEvent;
         simulateEvent = function() {
+          canvases.addEvents();
           $canvas.simulate("mouseover", {
             clientX: o.left + 1,
             clientY: o.top + 1
@@ -673,6 +701,7 @@
       describe('when the mouse is moved over the element but not being dragged', function() {
         var simulateEvent;
         simulateEvent = function() {
+          canvases.addEvents();
           $canvas.simulate("mouseover", {
             clientX: o.left + 1,
             clientY: o.top + 1
@@ -695,6 +724,7 @@
           return canvases.focusedCells = "blah blah";
         });
         simulateEvent = function() {
+          canvases.addEvents();
           return $canvas.simulate("mouseout", {
             clientX: o.left - 1,
             clientY: o.top - 1
@@ -722,6 +752,7 @@
       describe('when the window loses focus', function() {
         var simulateEvent;
         simulateEvent = function() {
+          canvases.addEvents();
           return $(window).simulate("blur");
         };
         return it("suspends the draw and auto-save loop", function() {
@@ -733,12 +764,410 @@
       return describe('when the window gains focus again', function() {
         var simulateEvent;
         simulateEvent = function() {
+          canvases.addEvents();
           return $(window).simulate("focus");
         };
         return it("resumes the draw and auto-save loop (if they were running before suspension)", function() {
           spyOn(canvases, 'resume');
           simulateEvent();
           return expect(canvases.resume).toHaveBeenCalled();
+        });
+      });
+    });
+    describe('when events have been removed', function() {
+      var $canvas, o;
+      $canvas = o = null;
+      beforeEach(function() {
+        app.boxes.sizes = {
+          currentSize: 1
+        };
+        canvases = DrawingCanvases.init(app, {
+          cellSize: 10,
+          widthInCells: 10,
+          heightInCells: 10
+        });
+        $canvas = canvases.workingCanvas.$element.appendTo('#sandbox');
+        o = $canvas.offset();
+        return canvases.addEvents();
+      });
+      it("stops the draw loop", function() {
+        spyOn(canvases, 'stopDrawing');
+        canvases.removeEvents();
+        return expect(canvases.stopDrawing).toHaveBeenCalled();
+      });
+      describe('when the mouse is down over the element', function() {
+        return it("does not trigger a possible mousedown event on the current tool", function() {
+          currentTool.mousedown = jasmine.createSpy();
+          canvases.removeEvents();
+          $canvas.simulate("mousedown", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          return expect(currentTool.mousedown).not.toHaveBeenCalled();
+        });
+      });
+      describe('when the mouse is lifted', function() {
+        return it("does not trigger a possible mouseup event on the current tool", function() {
+          currentTool.mouseup = jasmine.createSpy();
+          canvases.removeEvents();
+          $canvas.simulate("mousedown", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          $(document).simulate("mouseup");
+          return expect(currentTool.mouseup).not.toHaveBeenCalled();
+        });
+      });
+      describe('when the mouse is moved', function() {
+        var simulateEvent;
+        simulateEvent = function(dx, dy) {
+          if (dx == null) {
+            dx = 1;
+          }
+          if (dy == null) {
+            dy = 1;
+          }
+          canvases.removeEvents();
+          $canvas.simulate("mouseover", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          return $(document).simulate("mousemove", {
+            clientX: o.left + dx,
+            clientY: o.top + dy
+          });
+        };
+        it("does not trigger a possible mousemove event on the current tool", function() {
+          currentTool.mousemove = jasmine.createSpy();
+          simulateEvent();
+          return expect(currentTool.mousemove).not.toHaveBeenCalled();
+        });
+        it("does not store the cell that has focus", function() {
+          var cell;
+          cell = new Cell(canvases, 3, 6);
+          canvases.cells[3][6] = cell;
+          simulateEvent(65, 35);
+          return expect(canvases.focusedCell).not.toBe();
+        });
+        return it("does not store the cells that have focus (considering the brush size)", function() {
+          var cells;
+          app.boxes.sizes = {
+            currentSize: 4
+          };
+          cells = [];
+          cells[0] = new Cell(canvases, 2, 5);
+          cells[1] = new Cell(canvases, 2, 6);
+          cells[2] = new Cell(canvases, 3, 5);
+          cells[3] = new Cell(canvases, 3, 6);
+          canvases.cells[2][5] = cells[0];
+          canvases.cells[2][6] = cells[1];
+          canvases.cells[3][5] = cells[2];
+          canvases.cells[3][6] = cells[3];
+          simulateEvent(65, 35);
+          return expect(canvases.focusedCells).toEqual([]);
+        });
+      });
+      describe('when the mouse starts to be dragged while over the element', function() {
+        var cell, simulateEvent;
+        cell = null;
+        beforeEach(function() {
+          cell = new Cell(canvases, 0, 0);
+          return canvases.cells[0][0] = cell;
+        });
+        simulateEvent = function() {
+          canvases.removeEvents();
+          $canvas.simulate("mouseover", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          $canvas.simulate("mousedown", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          return $(document).simulate("mousemove", {
+            clientX: o.left + 5,
+            clientY: o.top + 5
+          });
+        };
+        it("does not set startDragAtCell to a clone of the cell that has focus", function() {
+          simulateEvent();
+          return expect(canvases.startDragAtCell).not.toBe();
+        });
+        return it("does not trigger a possible mousedragstart event on the current tool", function() {
+          currentTool.mousedragstart = jasmine.createSpy();
+          simulateEvent();
+          return expect(currentTool.mousedragstart).not.toHaveBeenCalled();
+        });
+      });
+      describe('when the mouse is being dragged', function() {
+        var simulateEvent;
+        simulateEvent = function() {
+          canvases.removeEvents();
+          $canvas.simulate("mouseover", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          $canvas.simulate("mousedown", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          return $(document).simulate("mousemove", {
+            clientX: o.left + 5,
+            clientY: o.top + 5
+          });
+        };
+        return it("does not trigger a possible mousedrag event on the current tool", function() {
+          currentTool.mousedrag = jasmine.createSpy();
+          simulateEvent();
+          return expect(currentTool.mousedrag).not.toHaveBeenCalled();
+        });
+      });
+      describe('when the mouse drag ends', function() {
+        var simulateEvent;
+        simulateEvent = function() {
+          canvases.removeEvents();
+          $canvas.simulate("mouseover", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          $canvas.simulate("mousedown", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          $(document).simulate("mousemove", {
+            clientX: o.left + 5,
+            clientY: o.top + 5
+          });
+          return $(document).simulate("mouseup", {
+            clientX: o.left + 5,
+            clientY: o.top + 5
+          });
+        };
+        return it("does not trigger a possible mousedrag event on the current tool", function() {
+          currentTool.mousedragstop = jasmine.createSpy();
+          simulateEvent();
+          return expect(currentTool.mousedragstop).not.toHaveBeenCalled();
+        });
+      });
+      describe('when the mouse is moved over the element but not being dragged', function() {
+        var simulateEvent;
+        simulateEvent = function() {
+          canvases.removeEvents();
+          $canvas.simulate("mouseover", {
+            clientX: o.left + 1,
+            clientY: o.top + 1
+          });
+          return $(document).simulate("mousemove", {
+            clientX: o.left + 5,
+            clientY: o.top + 5
+          });
+        };
+        return it("does not trigger a possible mousedrag event on the current tool", function() {
+          currentTool.mouseglide = jasmine.createSpy();
+          simulateEvent();
+          return expect(currentTool.mouseglide).not.toHaveBeenCalled();
+        });
+      });
+      describe('when the mouse leaves the element', function() {
+        var simulateEvent;
+        beforeEach(function() {
+          canvases.focusedCell = "whatever";
+          return canvases.focusedCells = "blah blah";
+        });
+        simulateEvent = function() {
+          canvases.removeEvents();
+          return $canvas.simulate("mouseout", {
+            clientX: o.left - 1,
+            clientY: o.top - 1
+          });
+        };
+        it("does not trigger a possible mouseout event on the current tool", function() {
+          currentTool.mouseout = jasmine.createSpy();
+          simulateEvent();
+          return expect(currentTool.mouseout).not.toHaveBeenCalled();
+        });
+        it("does not clear the cell that has focus", function() {
+          simulateEvent();
+          return expect(canvases.focusedCell).toEqual("whatever");
+        });
+        it("does not clear the cells that have focus (considering the brush size)", function() {
+          simulateEvent();
+          return expect(canvases.focusedCells).toEqual("blah blah");
+        });
+        return it("does not redraw the canvas", function() {
+          spyOn(canvases, 'draw');
+          simulateEvent();
+          return expect(canvases.draw).not.toHaveBeenCalled();
+        });
+      });
+      describe('when the window loses focus', function() {
+        var simulateEvent;
+        simulateEvent = function() {
+          canvases.removeEvents();
+          return $(window).simulate("blur");
+        };
+        return it("does not suspend the draw and auto-save loop", function() {
+          spyOn(canvases, 'suspend');
+          simulateEvent();
+          return expect(canvases.suspend).not.toHaveBeenCalled();
+        });
+      });
+      return describe('when the window gains focus again', function() {
+        var simulateEvent;
+        simulateEvent = function() {
+          canvases.removeEvents();
+          return $(window).simulate("focus");
+        };
+        return it("does not resume the draw and auto-save loop", function() {
+          spyOn(canvases, 'resume');
+          simulateEvent();
+          return expect(canvases.resume).not.toHaveBeenCalled();
+        });
+      });
+    });
+    describe('#drawCell', function() {
+      beforeEach(function() {
+        spyOn(canvases, 'drawWorkingCell');
+        return spyOn(canvases, 'drawPreviewCell');
+      });
+      it("draws the cell to the working canvas", function() {
+        canvases.drawCell("cell", {
+          foo: "bar"
+        });
+        return expect(canvases.drawWorkingCell).toHaveBeenCalledWith("cell", {
+          foo: "bar"
+        });
+      });
+      return it("draws the cell to the preview canvas", function() {
+        canvases.drawCell("cell", {
+          foo: "bar"
+        });
+        return expect(canvases.drawPreviewCell).toHaveBeenCalledWith("cell");
+      });
+    });
+    return describe('#drawWorkingCell', function() {
+      var cell, ctx, prepare;
+      cell = ctx = null;
+      prepare = function() {
+        cell = new Cell({
+          canvases: canvases,
+          loc: new CellLocation(canvases, 5, 3),
+          color: new Color({
+            red: 255,
+            green: 0,
+            blue: 0
+          })
+        });
+        ctx = canvases.workingCanvas.ctx;
+        return spyOn(ctx, 'fillRect');
+      };
+      beforeEach(function() {
+        return canvases = DrawingCanvases.init(app, {
+          cellSize: 10
+        });
+      });
+      describe('when showGrid is true', function() {
+        beforeEach(function() {
+          canvases.showGrid = true;
+          return prepare();
+        });
+        describe('when just given a cell', function() {
+          it("fills in a section of the working canvas with the color of the cell", function() {
+            canvases.drawWorkingCell(cell);
+            return expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)");
+          });
+          return it("separates each cell with a border", function() {
+            canvases.drawWorkingCell(cell);
+            return expect(ctx.fillRect).toHaveBeenCalledWith(31, 51, 9, 9);
+          });
+        });
+        describe('when given a cell + a color', function() {
+          it("fills in a section of the working canvas with the given color", function() {
+            canvases.drawWorkingCell(cell, {
+              color: new Color({
+                red: 0,
+                green: 255,
+                blue: 0
+              })
+            });
+            return expect(ctx.fillStyle).toEqual("rgba(0, 255, 0, 1)");
+          });
+          return it("separates each cell with a border", function() {
+            canvases.drawWorkingCell(cell, {
+              color: new Color({
+                red: 0,
+                green: 255,
+                blue: 0
+              })
+            });
+            return expect(ctx.fillRect).toHaveBeenCalledWith(31, 51, 9, 9);
+          });
+        });
+        return describe('when given a cell + a location', function() {
+          it("fills in a section of the working canvas with the given color", function() {
+            canvases.drawWorkingCell(cell, {
+              loc: new CellLocation(canvases, 10, 2)
+            });
+            return expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)");
+          });
+          return it("separates each cell with a border", function() {
+            canvases.drawWorkingCell(cell, {
+              loc: new CellLocation(canvases, 10, 2)
+            });
+            return expect(ctx.fillRect).toHaveBeenCalledWith(21, 101, 9, 9);
+          });
+        });
+      });
+      return describe('when showGrid is false', function() {
+        beforeEach(function() {
+          canvases.showGrid = false;
+          return prepare();
+        });
+        describe('when just given a cell', function() {
+          it("fills in a section of the working canvas with the color of the cell", function() {
+            canvases.drawWorkingCell(cell);
+            return expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)");
+          });
+          return it("separates each cell with a border", function() {
+            canvases.drawWorkingCell(cell);
+            return expect(ctx.fillRect).toHaveBeenCalledWith(30, 50, 10, 10);
+          });
+        });
+        describe('when given a cell + a color', function() {
+          it("fills in a section of the working canvas with the given color", function() {
+            canvases.drawWorkingCell(cell, {
+              color: new Color({
+                red: 0,
+                green: 255,
+                blue: 0
+              })
+            });
+            return expect(ctx.fillStyle).toEqual("rgba(0, 255, 0, 1)");
+          });
+          return it("separates each cell with a border", function() {
+            canvases.drawWorkingCell(cell, {
+              color: new Color({
+                red: 0,
+                green: 255,
+                blue: 0
+              })
+            });
+            return expect(ctx.fillRect).toHaveBeenCalledWith(30, 50, 10, 10);
+          });
+        });
+        return describe('when given a cell + a location', function() {
+          it("fills in a section of the working canvas with the given color", function() {
+            canvases.drawWorkingCell(cell, {
+              loc: new CellLocation(canvases, 10, 2)
+            });
+            return expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)");
+          });
+          return it("separates each cell with a border", function() {
+            canvases.drawWorkingCell(cell, {
+              loc: new CellLocation(canvases, 10, 2)
+            });
+            return expect(ctx.fillRect).toHaveBeenCalledWith(20, 100, 10, 10);
+          });
         });
       });
     });

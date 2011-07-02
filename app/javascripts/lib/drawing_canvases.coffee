@@ -8,7 +8,8 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
   $.extend(DrawingCanvases, SpriteEditor.Eventable)
 
   defaults =
-    tickInterval: 80    # ms/frame
+    drawInterval: 80    # ms/frame
+    saveInterval: 3000  # ms
     widthInCells: 16    # cells
     heightInCells: 16   # cells
     cellSize: 30        # pixels
@@ -30,8 +31,8 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       return this
 
     destroy: ->
-      @reset()
       @removeEvents()
+      @reset()
       # Ensure that the localStorage values we are saving are cleared
       localStorage.removeItem("sprite_editor.saved")
       localStorage.removeItem("sprite_editor.cells")
@@ -54,13 +55,15 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
 
     startDrawing: ->
       self = this
-      unless @drawTimer
-        # We don't use => here because that would be a double function call
-        # and thus (theoretically at least) slow down the draw by 50%
-        @drawTimer = setInterval((-> self.draw()), @tickInterval)
+      unless @isDrawing
+        @isDrawing = true
+        @_keepDrawing()
       return this
 
     draw: ->
+      # Somehow variables are getting reset in our tests while the draw loop is
+      # still active, so check for that
+      return unless @workingCanvas
       @_clearWorkingCanvas()
       @_clearPreviewCanvas()
       @_clearTiledPreviewCanvas()
@@ -69,17 +72,22 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @_updateTiledPreviewCanvas()
       return this
 
+    _keepDrawing: ->
+      self = this
+      @draw()
+      # Use setTimeout here instead of setInterval so we can guarantee that
+      # we can stop the loop (say, in tests)
+      setTimeout((-> self._keepDrawing()), @drawInterval) if @isDrawing
+
     stopDrawing: ->
-      if @drawTimer
-        clearInterval(@drawTimer)
-        @drawTimer = null
+      @isDrawing = false
       return this
 
     startSaving: ->
       self = this
-      unless @autoSaveTimer
-        # We don't use => here simply for symmetry
-        @autoSaveTimer = setInterval((-> self.save()), 30000)
+      unless @isSaving
+        @isSaving = true
+        @_keepSaving()
       return this
 
     save: ->
@@ -89,15 +97,21 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       localStorage.setItem("sprite_editor.cells", JSON.stringify(cells))
       localStorage.setItem("sprite_editor.saved", "true")
 
+    _keepSaving: ->
+      @save()
+      # Use setTimeout here instead of setInterval so we can guarantee that
+      # we can stop the loop (say, in tests)
+      setTimeout((-> self._keepSaving()), @saveInterval) if @isSaving
+
     stopSaving: ->
-      if @autoSaveTimer
-        clearInterval(@autoSaveTimer)
-        @autoSaveTimer = null
+      if @isSaving
+        clearInterval(@isSaving)
+        @isSaving = null
       return this
 
     suspend: ->
       unless @stateBeforeSuspend
-        @stateBeforeSuspend = {wasDrawing: !!@drawTimer, wasSaving: !!@autoSaveTimer}
+        @stateBeforeSuspend = {wasDrawing: !!@isDrawing, wasSaving: !!@isSaving}
         @stopDrawing()
         @stopSaving()
 
@@ -108,6 +122,9 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
 
     addEvents: ->
       self = this
+
+      @startDrawing()
+
       @workingCanvas.$element.mouseTracker
         mousedown: (event) ->
           self.app.boxes.tools.currentTool().trigger("mousedown", event)
@@ -143,12 +160,10 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
         focus: ->
           self.resume()
 
-      @startDrawing()
-
     removeEvents: ->
+      @stopDrawing()
       @workingCanvas?.$element.mouseTracker("destroy")
       @_unbindEvents(window, "blur", "focus")
-      @stopDrawing()
 
     drawCell: (cell, opts) ->
       @drawWorkingCell(cell, opts)
