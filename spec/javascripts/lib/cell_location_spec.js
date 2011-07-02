@@ -2,16 +2,16 @@
   var CellLocation;
   CellLocation = SpriteEditor.CellLocation;
   describe("CellLocation", function() {
-    var app;
-    app = {
+    var canvases;
+    canvases = {
       cellSize: 10
     };
     $.v.each(['plus', 'add'], function(meth) {
       return describe("." + meth, function() {
         return it("assumes that both arguments are CellLocations and returns a new CellLocation from adding them together", function() {
           var loc1, loc2, loc3;
-          loc1 = new CellLocation(app, 8, 7);
-          loc2 = new CellLocation(app, 3, 1);
+          loc1 = new CellLocation(canvases, 8, 7);
+          loc2 = new CellLocation(canvases, 3, 1);
           loc3 = CellLocation[meth](loc1, loc2);
           expect(loc3).toBeAnInstanceOf(CellLocation);
           expect(loc3.i).toEqual(11);
@@ -25,8 +25,8 @@
       return describe("." + meth, function() {
         return it("assumes that both arguments are CellLocations and returns a new CellLocation from subtracting them", function() {
           var loc1, loc2, loc3;
-          loc1 = new CellLocation(app, 8, 7);
-          loc2 = new CellLocation(app, 3, 1);
+          loc1 = new CellLocation(canvases, 8, 7);
+          loc2 = new CellLocation(canvases, 3, 1);
           loc3 = CellLocation[meth](loc1, loc2);
           expect(loc3).toBeAnInstanceOf(CellLocation);
           expect(loc3.i).toEqual(5);
@@ -38,16 +38,16 @@
     });
     describe('.new', function() {
       describe('given three arguments', function() {
-        it("accepts an app instance and the coordinates within the cells array", function() {
+        it("accepts an canvases instance and the coordinates within the cells array", function() {
           var loc;
-          loc = new CellLocation(app, 8, 7);
-          expect(loc.app).toBe(app);
+          loc = new CellLocation(canvases, 8, 7);
+          expect(loc.canvases).toBe(canvases);
           expect(loc.i).toEqual(8);
           return expect(loc.j).toEqual(7);
         });
-        return it("converts i to y and j to x based on the app's cell size", function() {
+        return it("converts i to y and j to x based on the canvases's cell size", function() {
           var loc;
-          loc = new CellLocation(app, 8, 7);
+          loc = new CellLocation(canvases, 8, 7);
           expect(loc.x).toEqual(70);
           return expect(loc.y).toEqual(80);
         });
@@ -56,16 +56,16 @@
         describe('given a full object', function() {
           it("simply copies the properties over from an existing CellLocation object", function() {
             var loc, loc2;
-            loc = new CellLocation(app, 8, 7);
+            loc = new CellLocation(canvases, 8, 7);
             loc2 = new CellLocation(loc);
-            expect(loc2.app).toBe(app);
+            expect(loc2.canvases).toBe(canvases);
             expect(loc2.i).toEqual(8);
             return expect(loc2.j).toEqual(7);
           });
           return it("simply copies the properties over from a plain object", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7,
               x: 10,
@@ -78,20 +78,20 @@
           });
         });
         return describe('given a partial object', function() {
-          it("uses the app's cell size to calculate x from j and y from i", function() {
+          it("uses the canvases's cell size to calculate x from j and y from i", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7
             });
             expect(loc.x).toEqual(70);
             return expect(loc.y).toEqual(80);
           });
-          it("uses the app's cell size to calculate j from x and i from y", function() {
+          it("uses the canvases's cell size to calculate j from x and i from y", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               x: 70,
               y: 80
             });
@@ -101,14 +101,14 @@
           it("bails if the coordinates are mixed", function() {
             expect(function() {
               return new CellLocation({
-                app: app,
+                canvases: canvases,
                 x: 70,
                 j: 7
               });
             }).toThrow("CellLocation accepts an object containing either i and j or x and y, but not a mixture!");
             return expect(function() {
               return new CellLocation({
-                app: app,
+                canvases: canvases,
                 y: 80,
                 i: 8
               });
@@ -117,7 +117,7 @@
           return it("bails if no coordinates are given", function() {
             return expect(function() {
               return new CellLocation({
-                app: app
+                canvases: canvases
               });
             }).toThrow("An object passed to CellLocation must contain i and j and/or x and y!");
           });
@@ -129,12 +129,12 @@
         return it("adds all the coordinates within to the current object", function() {
           var loc, loc2;
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 8,
             j: 7
           });
           loc2 = new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 3,
             j: 1
           });
@@ -150,7 +150,7 @@
           it("adds the given coordinates to the current object", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7
             });
@@ -161,10 +161,10 @@
             expect(loc.i).toEqual(11);
             return expect(loc.j).toEqual(8);
           });
-          return it("converts i to y and j to x based on the app's cell size", function() {
+          return it("converts i to y and j to x based on the canvases's cell size", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7
             });
@@ -180,7 +180,7 @@
           it("adds the given coordinates to the current object", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               x: 70,
               y: 80
             });
@@ -191,10 +191,10 @@
             expect(loc.x).toEqual(80);
             return expect(loc.y).toEqual(110);
           });
-          return it("converts x to j and y to i based on the app's cell size", function() {
+          return it("converts x to j and y to i based on the canvases's cell size", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               x: 70,
               y: 80
             });
@@ -209,7 +209,7 @@
         return it("allows mixed coordinates", function() {
           var loc;
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             x: 70,
             y: 80
           });
@@ -222,7 +222,7 @@
           expect(loc.x).toEqual(80);
           expect(loc.y).toEqual(110);
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             x: 70,
             y: 80
           });
@@ -242,12 +242,12 @@
         return it("returns a clone of the current object with all the coordinates in the given object added to it", function() {
           var loc, loc2, loc3;
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 8,
             j: 7
           });
           loc2 = new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 3,
             j: 1
           });
@@ -263,7 +263,7 @@
           it("makes a clone and adds the coordinates to it", function() {
             var loc, loc2;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7
             });
@@ -274,10 +274,10 @@
             expect(loc2.i).toEqual(11);
             return expect(loc2.j).toEqual(8);
           });
-          return it("converts i to y and j to x based on the app's cell size", function() {
+          return it("converts i to y and j to x based on the canvases's cell size", function() {
             var loc, loc2;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7
             });
@@ -293,7 +293,7 @@
           it("makes a clone and adds the given coordinates to it", function() {
             var loc, loc2;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               x: 70,
               y: 80
             });
@@ -304,10 +304,10 @@
             expect(loc2.x).toEqual(80);
             return expect(loc2.y).toEqual(110);
           });
-          return it("converts x to j and y to i based on the app's cell size", function() {
+          return it("converts x to j and y to i based on the canvases's cell size", function() {
             var loc, loc2;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               x: 70,
               y: 80
             });
@@ -322,7 +322,7 @@
         return it("allows mixed coordinates", function() {
           var loc, loc2;
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             x: 70,
             y: 80
           });
@@ -335,7 +335,7 @@
           expect(loc2.x).toEqual(80);
           expect(loc2.y).toEqual(110);
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             x: 70,
             y: 80
           });
@@ -355,12 +355,12 @@
         return it("subtracts all the coordinates within from the current object", function() {
           var loc, loc2;
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 8,
             j: 7
           });
           loc2 = new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 3,
             j: 1
           });
@@ -376,7 +376,7 @@
           it("subtracts the given coordinates from the current object", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7
             });
@@ -387,10 +387,10 @@
             expect(loc.i).toEqual(5);
             return expect(loc.j).toEqual(6);
           });
-          return it("converts i to y and j to x based on the app's cell size", function() {
+          return it("converts i to y and j to x based on the canvases's cell size", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7
             });
@@ -406,7 +406,7 @@
           it("subtracts the given coordinates from the current object", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               x: 70,
               y: 80
             });
@@ -417,10 +417,10 @@
             expect(loc.x).toEqual(60);
             return expect(loc.y).toEqual(50);
           });
-          return it("converts x to j and y to i based on the app's cell size", function() {
+          return it("converts x to j and y to i based on the canvases's cell size", function() {
             var loc;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               x: 70,
               y: 80
             });
@@ -435,7 +435,7 @@
         return it("allows mixed coordinates", function() {
           var loc;
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             x: 70,
             y: 80
           });
@@ -448,7 +448,7 @@
           expect(loc.x).toEqual(60);
           expect(loc.y).toEqual(50);
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             x: 70,
             y: 80
           });
@@ -468,12 +468,12 @@
         return it("returns a clone of the current object with all the coordinates in the given object subtracted from it", function() {
           var loc, loc2, loc3;
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 8,
             j: 7
           });
           loc2 = new CellLocation({
-            app: app,
+            canvases: canvases,
             i: 3,
             j: 1
           });
@@ -489,7 +489,7 @@
           it("makes a clone and subtracts the coordinates from it", function() {
             var loc, loc2;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7
             });
@@ -500,10 +500,10 @@
             expect(loc2.i).toEqual(5);
             return expect(loc2.j).toEqual(6);
           });
-          return it("converts i to y and j to x based on the app's cell size", function() {
+          return it("converts i to y and j to x based on the canvases's cell size", function() {
             var loc, loc2;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               i: 8,
               j: 7
             });
@@ -519,7 +519,7 @@
           it("makes a clone and subtracts the coordinates from it", function() {
             var loc, loc2;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               x: 70,
               y: 80
             });
@@ -530,10 +530,10 @@
             expect(loc2.x).toEqual(60);
             return expect(loc2.y).toEqual(50);
           });
-          return it("converts x to j and y to i based on the app's cell size", function() {
+          return it("converts x to j and y to i based on the canvases's cell size", function() {
             var loc, loc2;
             loc = new CellLocation({
-              app: app,
+              canvases: canvases,
               x: 70,
               y: 80
             });
@@ -548,7 +548,7 @@
         return it("allows mixed coordinates", function() {
           var loc, loc2;
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             x: 70,
             y: 80
           });
@@ -561,7 +561,7 @@
           expect(loc2.x).toEqual(60);
           expect(loc2.y).toEqual(50);
           loc = new CellLocation({
-            app: app,
+            canvases: canvases,
             x: 70,
             y: 80
           });
@@ -580,12 +580,12 @@
       it("returns true if this.i > other.i", function() {
         var loc, loc2;
         loc = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 20,
           j: 10
         });
         loc2 = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 10,
           j: 10
         });
@@ -594,12 +594,12 @@
       it("returns true if this.j > other.j", function() {
         var loc, loc2;
         loc = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 10,
           j: 20
         });
         loc2 = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 10,
           j: 10
         });
@@ -608,12 +608,12 @@
       it("returns false if this.i == other.i and this.j == other.j", function() {
         var loc, loc2;
         loc = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 10,
           j: 10
         });
         loc2 = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 10,
           j: 10
         });
@@ -622,12 +622,12 @@
       it("returns false if this.i < other.i", function() {
         var loc, loc2;
         loc = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 5,
           j: 10
         });
         loc2 = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 10,
           j: 10
         });
@@ -636,12 +636,12 @@
       return it("returns false if this.j < other.j", function() {
         var loc, loc2;
         loc = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 10,
           j: 5
         });
         loc2 = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 10,
           j: 10
         });
@@ -652,7 +652,7 @@
       return it("copies the coordinates of the current CellLocation to a new one", function() {
         var loc, loc2;
         loc = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 20,
           j: 10
         });
@@ -668,7 +668,7 @@
       return it("returns a JSON-friendly version of the CellLocation", function() {
         var loc;
         loc = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 20,
           j: 10
         });
@@ -679,7 +679,7 @@
       return it("returns a debug-friendly version of the CellLocation", function() {
         var loc;
         loc = new CellLocation({
-          app: app,
+          canvases: canvases,
           i: 20,
           j: 10
         });

@@ -1,7 +1,7 @@
 $.export "SpriteEditor.CellLocation", (SpriteEditor) ->
 
-  # new CellLocation(app, i, j)
-  # new CellLocation(obj)
+  # new CellLocation(canvases, i, j)
+  # new CellLocation(canvases)
   #
   # Represents the location of a cell.
   #
@@ -17,11 +17,11 @@ $.export "SpriteEditor.CellLocation", (SpriteEditor) ->
     constructor: ->
       if arguments.length == 1 and $.v.is.obj(arguments[0])
         obj = arguments[0]
-        @app = obj.app
+        @canvases = obj.canvases
         obj = @_handleCoordsObject(obj, 'CellLocation')
         {@i, @j, @x, @y} = obj
       else
-        [@app, @i, @j] = arguments
+        [@canvases, @i, @j] = arguments
         $.extend @_fillOutCoords(this)
 
     add: (offset) ->
@@ -79,8 +79,8 @@ $.export "SpriteEditor.CellLocation", (SpriteEditor) ->
 
     _fillOutCoords: (obj) ->
       obj = $.extend(obj)
-      obj.x = obj.j * @app.cellSize if obj.j? && !obj.x?
-      obj.y = obj.i * @app.cellSize if obj.i? && !obj.y?
-      obj.i = obj.y / @app.cellSize if obj.y? && !obj.i?
-      obj.j = obj.x / @app.cellSize if obj.x? && !obj.j?
+      obj.x = obj.j * @canvases.cellSize if obj.j? && !obj.x?
+      obj.y = obj.i * @canvases.cellSize if obj.i? && !obj.y?
+      obj.i = obj.y / @canvases.cellSize if obj.y? && !obj.i?
+      obj.j = obj.x / @canvases.cellSize if obj.x? && !obj.j?
       obj

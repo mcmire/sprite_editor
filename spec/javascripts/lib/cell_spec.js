@@ -8,10 +8,10 @@
         var cell;
         cell = null;
         beforeEach(function() {
-          return cell = new Cell("app", 2, 5);
+          return cell = new Cell("canvases", 2, 5);
         });
         it("accepts the SpriteEditor.App object", function() {
-          return expect(cell.app).toEqual("app");
+          return expect(cell.canvases).toEqual("canvases");
         });
         it("accepts coordinates which are dumped into a CellLocation", function() {
           return expect(cell.loc).toContainObject({
@@ -28,7 +28,7 @@
         var cell, existingCell;
         existingCell = cell = null;
         beforeEach(function() {
-          existingCell = new Cell("app", 2, 5);
+          existingCell = new Cell("canvases", 2, 5);
           existingCell.color = new Color({
             red: 255,
             green: 128,
@@ -36,8 +36,8 @@
           });
           return cell = new Cell(existingCell);
         });
-        it("uses its app property", function() {
-          return expect(cell.app).toEqual("app");
+        it("uses its canvases property", function() {
+          return expect(cell.canvases).toEqual("canvases");
         });
         it("clones the loc property", function() {
           expect(cell.loc).not.toBe(existingCell.loc);
@@ -56,7 +56,7 @@
       var cell;
       cell = null;
       beforeEach(function() {
-        return cell = new Cell("app", 2, 5);
+        return cell = new Cell("canvases", 2, 5);
       });
       it("returns true if the cell is clear", function() {
         cell.clear();
@@ -75,7 +75,7 @@
       var cell;
       cell = null;
       beforeEach(function() {
-        cell = new Cell("app", 2, 5);
+        cell = new Cell("canvases", 2, 5);
         return cell.color = new Color({
           red: 255,
           green: 128,
@@ -94,7 +94,7 @@
       var cell;
       cell = null;
       beforeEach(function() {
-        cell = new Cell("app", 2, 5);
+        cell = new Cell("canvases", 2, 5);
         return cell.color = new Color({
           red: 255,
           green: 128,
@@ -116,7 +116,7 @@
       var cell, color;
       cell = color = null;
       beforeEach(function() {
-        cell = new Cell("app", 2, 5);
+        cell = new Cell("canvases", 2, 5);
         return color = new Color({
           red: 255,
           green: 128,
@@ -138,7 +138,7 @@
     describe('#coords', function() {
       return it("returns a string representation of the cell coordinates", function() {
         var cell;
-        cell = new Cell("app", 2, 5);
+        cell = new Cell("canvases", 2, 5);
         return expect(cell.coords()).toEqual("2,5");
       });
     });
@@ -146,7 +146,7 @@
       var cell;
       cell = null;
       beforeEach(function() {
-        cell = new Cell("app", 2, 5);
+        cell = new Cell("canvases", 2, 5);
         return cell.color = new Color({
           red: 255,
           green: 128,
@@ -172,7 +172,7 @@
     return describe('#inspect', function() {
       return it("returns a debug-friendly representation of the Cell", function() {
         var cell;
-        cell = new Cell("app", 2, 5);
+        cell = new Cell("canvases", 2, 5);
         cell.color = new Color({
           red: 255,
           green: 128,

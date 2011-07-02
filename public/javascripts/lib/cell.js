@@ -6,11 +6,11 @@
         var obj, _ref, _ref2;
         if (arguments.length === 1 && $.v.is.obj(arguments[0])) {
           obj = arguments[0];
-          this.app = obj.app;
+          this.canvases = obj.canvases;
           this.loc = (_ref = obj.loc) != null ? _ref.clone() : void 0;
           this.color = (_ref2 = obj.color) != null ? _ref2.clone() : void 0;
         } else {
-          this.app = arguments[0];
+          this.canvases = arguments[0];
           this.loc = new SpriteEditor.CellLocation(arguments[0], arguments[1], arguments[2]);
           this.color = new SpriteEditor.Color();
         }

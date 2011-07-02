@@ -18,11 +18,11 @@
         var obj;
         if (arguments.length === 1 && $.v.is.obj(arguments[0])) {
           obj = arguments[0];
-          this.app = obj.app;
+          this.canvases = obj.canvases;
           obj = this._handleCoordsObject(obj, 'CellLocation');
           this.i = obj.i, this.j = obj.j, this.x = obj.x, this.y = obj.y;
         } else {
-          this.app = arguments[0], this.i = arguments[1], this.j = arguments[2];
+          this.canvases = arguments[0], this.i = arguments[1], this.j = arguments[2];
           $.extend(this._fillOutCoords(this));
         }
       }
@@ -116,16 +116,16 @@
       CellLocation.prototype._fillOutCoords = function(obj) {
         obj = $.extend(obj);
         if ((obj.j != null) && !(obj.x != null)) {
-          obj.x = obj.j * this.app.cellSize;
+          obj.x = obj.j * this.canvases.cellSize;
         }
         if ((obj.i != null) && !(obj.y != null)) {
-          obj.y = obj.i * this.app.cellSize;
+          obj.y = obj.i * this.canvases.cellSize;
         }
         if ((obj.y != null) && !(obj.i != null)) {
-          obj.i = obj.y / this.app.cellSize;
+          obj.i = obj.y / this.canvases.cellSize;
         }
         if ((obj.x != null) && !(obj.j != null)) {
-          obj.j = obj.x / this.app.cellSize;
+          obj.j = obj.x / this.canvases.cellSize;
         }
         return obj;
       };
