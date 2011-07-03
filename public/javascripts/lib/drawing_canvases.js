@@ -34,13 +34,13 @@
       },
       destroy: function() {
         this.removeEvents();
-        this.reset();
-        localStorage.removeItem("sprite_editor.saved");
-        return localStorage.removeItem("sprite_editor.cells");
+        return this.reset();
       },
       reset: function() {
         this.stopDrawing();
         this.stopSaving();
+        localStorage.removeItem("sprite_editor.saved");
+        localStorage.removeItem("sprite_editor.cells");
         this.width = null;
         this.height = null;
         this.workingCanvas = null;

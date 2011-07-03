@@ -128,17 +128,10 @@
         canvases.destroy();
         return expect(canvases.reset).toHaveBeenCalled();
       });
-      it("removes any events that may have been added", function() {
+      return it("removes any events that may have been added", function() {
         spyOn(canvases, 'removeEvents');
         canvases.destroy();
         return expect(canvases.removeEvents).toHaveBeenCalled();
-      });
-      return it("removes any local storage keys that may be present", function() {
-        localStorage.setItem("sprite_editor.saved", "true");
-        localStorage.setItem("sprite_editor.cells", "something");
-        canvases.destroy();
-        expect(localStorage.getItem("sprite_editor.saved")).not.toBe();
-        return expect(localStorage.getItem("sprite_editor.cells")).not.toBe();
       });
     });
     describe('when reset', function() {
@@ -154,6 +147,13 @@
         spyOn(canvases, 'stopSaving');
         canvases.reset();
         return expect(canvases.stopSaving).toHaveBeenCalled();
+      });
+      it("removes any local storage keys that may be present", function() {
+        localStorage.setItem("sprite_editor.saved", "true");
+        localStorage.setItem("sprite_editor.cells", "something");
+        canvases.reset();
+        expect(localStorage.getItem("sprite_editor.saved")).not.toBe();
+        return expect(localStorage.getItem("sprite_editor.cells")).not.toBe();
       });
       it("clears @width", function() {
         canvases.width = "whatever";

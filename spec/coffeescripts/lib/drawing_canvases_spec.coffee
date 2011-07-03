@@ -104,13 +104,6 @@ describe 'DrawingCanvases', ->
       canvases.destroy()
       expect(canvases.removeEvents).toHaveBeenCalled()
 
-    it "removes any local storage keys that may be present", ->
-      localStorage.setItem("sprite_editor.saved", "true")
-      localStorage.setItem("sprite_editor.cells", "something")
-      canvases.destroy()
-      expect(localStorage.getItem("sprite_editor.saved")).not.toBe()
-      expect(localStorage.getItem("sprite_editor.cells")).not.toBe()
-
   describe 'when reset', ->
     beforeEach ->
       canvases = DrawingCanvases.init(app)
@@ -124,6 +117,13 @@ describe 'DrawingCanvases', ->
       spyOn(canvases, 'stopSaving')
       canvases.reset()
       expect(canvases.stopSaving).toHaveBeenCalled()
+
+    it "removes any local storage keys that may be present", ->
+      localStorage.setItem("sprite_editor.saved", "true")
+      localStorage.setItem("sprite_editor.cells", "something")
+      canvases.reset()
+      expect(localStorage.getItem("sprite_editor.saved")).not.toBe()
+      expect(localStorage.getItem("sprite_editor.cells")).not.toBe()
 
     it "clears @width", ->
       canvases.width = "whatever"
@@ -262,8 +262,6 @@ describe 'DrawingCanvases', ->
       expect(tpc.ctx.createPattern).toHaveBeenCalledWith(canvases.previewCanvas.element, "repeat")
       expect(tpc.ctx.fillStyle).toEqual('#ff0000')
       expect(tpc.ctx.fillRect).toHaveBeenCalledWith(0, 0, 100, 100)
-
-    # ---- TODO Add more tests ----
 
   describe '#stopDrawing', ->
     beforeEach ->

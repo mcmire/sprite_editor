@@ -27,19 +27,18 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @_createWorkingCanvas()
       @_createPreviewCanvases()
       #@startSaving
-
       return this
 
     destroy: ->
       @removeEvents()
       @reset()
-      # Ensure that the localStorage values we are saving are cleared
-      localStorage.removeItem("sprite_editor.saved")
-      localStorage.removeItem("sprite_editor.cells")
 
     reset: ->
       @stopDrawing()
       @stopSaving()
+      # Ensure that the localStorage values we are saving are cleared
+      localStorage.removeItem("sprite_editor.saved")
+      localStorage.removeItem("sprite_editor.cells")
       @width = null
       @height = null
       @workingCanvas = null
