@@ -1,13 +1,13 @@
 GIT
   remote: http://github.com/guard/guard
-  revision: 59b1ea2c96197cb41dabaea9517940b61bfa2f53
+  revision: 649920b7f0c88ed1e161826f75eda204d5f3ad83
   specs:
-    guard (0.4.2)
+    guard (0.5.0)
       thor (~> 0.14.6)
 
 GIT
   remote: http://github.com/johnbintz/guard-jasmine-headless-webkit
-  revision: 8b65ee4ed3d233efa06000fc4b94543ef51c4ae0
+  revision: 245eeba2609e4021375208178bd8f26c3ee03a08
   specs:
     guard-jasmine-headless-webkit (0.2.0)
       guard (>= 0.4.0)
@@ -15,11 +15,11 @@ GIT
 
 GIT
   remote: http://github.com/johnbintz/jasmine-headless-webkit
-  revision: cc370aac0b59ef28ead43df22f26e84cd52f6f42
+  revision: 6454c329faaa6255dde1ae162f5650613ff6f5b2
   specs:
-    jasmine-headless-webkit (0.4.2)
+    jasmine-headless-webkit (0.4.3)
       coffee-script (>= 2.2)
-      jasmine
+      jasmine (~> 1.1.beta)
       rainbow
 
 GEM
@@ -45,11 +45,12 @@ GEM
       guard (>= 0.4)
     guard-shell (0.1.1)
       guard (>= 0.2.0)
-    jasmine (1.0.2.1)
-      json_pure (>= 1.4.3)
+    jasmine (1.1.0.rc2)
+      jasmine-core (>= 1.1.0.rc2)
       rack (>= 1.1)
       rspec (>= 1.3.1)
       selenium-webdriver (>= 0.1.3)
+    jasmine-core (1.1.0.rc2)
     json_pure (1.5.3)
     multi_json (1.0.3)
     rack (1.3.0)
