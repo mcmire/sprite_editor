@@ -44,6 +44,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @workingCanvas = null
       @gridBgCanvas = null
       @previewCanvas = null
+      @tiledPreviewCanvas = null
       @cells = []
       @focusedCell = null
       @focusedCells = []

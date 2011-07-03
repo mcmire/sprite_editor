@@ -46,6 +46,7 @@
         this.workingCanvas = null;
         this.gridBgCanvas = null;
         this.previewCanvas = null;
+        this.tiledPreviewCanvas = null;
         this.cells = [];
         this.focusedCell = null;
         this.focusedCells = [];

@@ -12,8 +12,8 @@
       return DrawingCanvases.destroy();
     });
     it("responds to _bindEvents and _unbindEvents", function() {
-      expect(Keyboard._bindEvents).toBeTypeOf("function");
-      return expect(Keyboard._unbindEvents).toBeTypeOf("function");
+      expect(DrawingCanvases._bindEvents).toBeTypeOf("function");
+      return expect(DrawingCanvases._unbindEvents).toBeTypeOf("function");
     });
     it("also responds to recordEvent and addAction", function() {
       expect(DrawingCanvases.recordEvent).toBeTypeOf("function");
@@ -457,7 +457,7 @@
         });
       });
     });
-    describe('#stopDrawing', function() {
+    describe('#stopSaving', function() {
       beforeEach(function() {
         canvases = DrawingCanvases.init(app);
         return canvases.startSaving();
@@ -511,14 +511,15 @@
     });
     describe('#resume', function() {
       beforeEach(function() {
-        return canvases = DrawingCanvases.init(app);
+        canvases = DrawingCanvases.init(app);
+        spyOn(canvases, 'startDrawing');
+        return spyOn(canvases, 'startSaving');
       });
       describe('if not resumed yet', function() {
         it("starts the draw loop if it had been running prior to suspension", function() {
           canvases.stateBeforeSuspend = {
             wasDrawing: true
           };
-          spyOn(canvases, 'startDrawing');
           canvases.resume();
           return expect(canvases.startDrawing).toHaveBeenCalled();
         });
@@ -526,7 +527,6 @@
           canvases.stateBeforeSuspend = {
             wasDrawing: false
           };
-          spyOn(canvases, 'startDrawing');
           canvases.resume();
           return expect(canvases.startDrawing).not.toHaveBeenCalled();
         });
@@ -534,7 +534,6 @@
           canvases.stateBeforeSuspend = {
             wasSaving: true
           };
-          spyOn(canvases, 'startSaving');
           canvases.resume();
           return expect(canvases.startSaving).toHaveBeenCalled();
         });
@@ -542,7 +541,6 @@
           canvases.stateBeforeSuspend = {
             wasSaving: false
           };
-          spyOn(canvases, 'startSaving');
           canvases.resume();
           return expect(canvases.startSaving).not.toHaveBeenCalled();
         });
@@ -584,7 +582,8 @@
           heightInCells: 10
         });
         $canvas = canvases.workingCanvas.$element.appendTo('#sandbox');
-        return o = $canvas.offset();
+        o = $canvas.offset();
+        return spyOn(canvases, 'draw');
       });
       it("starts the draw loop", function() {
         spyOn(canvases, 'startDrawing');
@@ -799,7 +798,6 @@
           return expect(canvases.focusedCells).toEqual([]);
         });
         return it("redraws the canvas", function() {
-          spyOn(canvases, 'draw');
           simulateEvent();
           return expect(canvases.draw).toHaveBeenCalled();
         });
@@ -851,7 +849,8 @@
         });
         $canvas = canvases.workingCanvas.$element.appendTo('#sandbox');
         o = $canvas.offset();
-        return canvases.addEvents();
+        canvases.addEvents();
+        return spyOn(canvases, 'draw');
       });
       it("stops the draw loop", function() {
         spyOn(canvases, 'stopDrawing');
@@ -1058,7 +1057,6 @@
           return expect(canvases.focusedCells).toEqual("blah blah");
         });
         return it("does not redraw the canvas", function() {
-          spyOn(canvases, 'draw');
           simulateEvent();
           return expect(canvases.draw).not.toHaveBeenCalled();
         });

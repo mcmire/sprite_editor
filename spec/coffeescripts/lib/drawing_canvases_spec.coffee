@@ -11,8 +11,8 @@ describe 'DrawingCanvases', ->
     DrawingCanvases.destroy()
 
   it "responds to _bindEvents and _unbindEvents", ->
-    expect(Keyboard._bindEvents).toBeTypeOf("function")
-    expect(Keyboard._unbindEvents).toBeTypeOf("function")
+    expect(DrawingCanvases._bindEvents).toBeTypeOf("function")
+    expect(DrawingCanvases._unbindEvents).toBeTypeOf("function")
 
   it "also responds to recordEvent and addAction", ->
     expect(DrawingCanvases.recordEvent).toBeTypeOf("function")
@@ -266,7 +266,7 @@ describe 'DrawingCanvases', ->
   describe '#stopDrawing', ->
     beforeEach ->
       canvases = DrawingCanvases.init(app)
-      spyOn(canvases, 'draw')
+      spyOn(canvases, 'draw')  # stub this as there's no need to actually call this method
       canvases.startDrawing()
 
     it "sets the state of the canvases to not-drawing", ->
@@ -332,7 +332,7 @@ describe 'DrawingCanvases', ->
         "1,1": {_s: true, red: 255, green: 255, blue: 255, hue: 0, sat: 100, lum: 100, alpha: 1}
       )
 
-  describe '#stopDrawing', ->
+  describe '#stopSaving', ->
     beforeEach ->
       canvases = DrawingCanvases.init(app)
       canvases.startSaving()
@@ -383,29 +383,27 @@ describe 'DrawingCanvases', ->
   describe '#resume', ->
     beforeEach ->
       canvases = DrawingCanvases.init(app)
+      spyOn(canvases, 'startDrawing')
+      spyOn(canvases, 'startSaving')
 
     describe 'if not resumed yet', ->
       it "starts the draw loop if it had been running prior to suspension", ->
         canvases.stateBeforeSuspend = {wasDrawing: true}
-        spyOn(canvases, 'startDrawing')
         canvases.resume()
         expect(canvases.startDrawing).toHaveBeenCalled()
 
       it "doesn't start the draw loop if it had not been running prior to suspension", ->
         canvases.stateBeforeSuspend = {wasDrawing: false}
-        spyOn(canvases, 'startDrawing')
         canvases.resume()
         expect(canvases.startDrawing).not.toHaveBeenCalled()
 
       it "starts the save loop if it had been running prior to suspension", ->
         canvases.stateBeforeSuspend = {wasSaving: true}
-        spyOn(canvases, 'startSaving')
         canvases.resume()
         expect(canvases.startSaving).toHaveBeenCalled()
 
       it "doesn't start the save loop if it had not been running prior to suspension", ->
         canvases.stateBeforeSuspend = {wasSaving: false}
-        spyOn(canvases, 'startSaving')
         canvases.resume()
         expect(canvases.startSaving).not.toHaveBeenCalled()
 
@@ -434,6 +432,7 @@ describe 'DrawingCanvases', ->
       # as it is subtracted from the canvas offset
       $canvas = canvases.workingCanvas.$element.appendTo('#sandbox')
       o = $canvas.offset()
+      spyOn(canvases, 'draw')
 
     it "starts the draw loop", ->
       spyOn(canvases, 'startDrawing')
@@ -571,7 +570,6 @@ describe 'DrawingCanvases', ->
         expect(canvases.focusedCells).toEqual([])
 
       it "redraws the canvas", ->
-        spyOn(canvases, 'draw')
         simulateEvent()
         expect(canvases.draw).toHaveBeenCalled()
 
@@ -609,6 +607,7 @@ describe 'DrawingCanvases', ->
       $canvas = canvases.workingCanvas.$element.appendTo('#sandbox')
       o = $canvas.offset()
       canvases.addEvents()
+      spyOn(canvases, 'draw')
 
     it "stops the draw loop", ->
       spyOn(canvases, 'stopDrawing')
@@ -743,7 +742,6 @@ describe 'DrawingCanvases', ->
         expect(canvases.focusedCells).toEqual("blah blah")
 
       it "does not redraw the canvas", ->
-        spyOn(canvases, 'draw')
         simulateEvent()
         expect(canvases.draw).not.toHaveBeenCalled()
 
