@@ -2,20 +2,11 @@
   var Cell, CellLocation, Color, DrawingCanvases, Keyboard, Toolset;
   DrawingCanvases = SpriteEditor.DrawingCanvases, Keyboard = SpriteEditor.Keyboard, Cell = SpriteEditor.Cell, CellLocation = SpriteEditor.CellLocation, Color = SpriteEditor.Color, Toolset = SpriteEditor.Toolset;
   describe('DrawingCanvases', function() {
-    var app, canvases, currentTool;
-    currentTool = app = canvases = null;
+    var app, canvases;
+    app = canvases = null;
     beforeEach(function() {
       localStorage.clear();
-      currentTool = Toolset.createTool();
-      return app = {
-        boxes: {
-          tools: {
-            currentTool: function() {
-              return currentTool;
-            }
-          }
-        }
-      };
+      return app = {};
     });
     afterEach(function() {
       return DrawingCanvases.destroy();
@@ -217,14 +208,14 @@
     });
     describe('#startDrawing', function() {
       beforeEach(function() {
-        return canvases = DrawingCanvases.init(app);
+        canvases = DrawingCanvases.init(app);
+        return spyOn(canvases, 'draw');
       });
       describe("if the draw loop isn't started yet", function() {
         beforeEach(function() {
           return canvases.isDrawing = false;
         });
         it("starts the draw loop", function() {
-          spyOn(canvases, 'draw');
           canvases.startDrawing();
           return expect(canvases.draw).toHaveBeenCalled();
         });
@@ -238,15 +229,24 @@
           return canvases.isDrawing = true;
         });
         return it("doesn't re-start the draw loop", function() {
-          spyOn(canvases, 'draw');
           canvases.startDrawing();
           return expect(canvases.draw).not.toHaveBeenCalled();
         });
       });
     });
     describe('#draw', function() {
+      var currentTool;
+      currentTool = null;
       beforeEach(function() {
-        return canvases = DrawingCanvases.init(app);
+        canvases = DrawingCanvases.init(app);
+        currentTool = Toolset.createTool();
+        return app.boxes = {
+          tools: {
+            currentTool: function() {
+              return currentTool;
+            }
+          }
+        };
       });
       it("clears the working canvas");
       it("clears the preview canvas");
@@ -272,6 +272,7 @@
     describe('#stopDrawing', function() {
       beforeEach(function() {
         canvases = DrawingCanvases.init(app);
+        spyOn(canvases, 'draw');
         return canvases.startDrawing();
       });
       return it("sets the state of the canvases to not-drawing", function() {
@@ -281,14 +282,14 @@
     });
     describe('#startSaving', function() {
       beforeEach(function() {
-        return canvases = DrawingCanvases.init(app);
+        canvases = DrawingCanvases.init(app);
+        return spyOn(canvases, 'save');
       });
       describe("if the draw loop isn't started yet", function() {
         beforeEach(function() {
           return canvases.isSaving = false;
         });
         it("starts the save loop", function() {
-          spyOn(canvases, 'save');
           canvases.startSaving();
           return expect(canvases.save).toHaveBeenCalled();
         });
@@ -302,7 +303,6 @@
           return canvases.isSaving = true;
         });
         return it("doesn't re-start the draw loop", function() {
-          spyOn(canvases, 'save');
           canvases.startSaving();
           return expect(canvases.save).not.toHaveBeenCalled();
         });
@@ -496,13 +496,18 @@
           canvases.resume();
           return expect(canvases.startSaving).toHaveBeenCalled();
         });
-        return it("doesn't start the save loop if it had not been running prior to suspension", function() {
+        it("doesn't start the save loop if it had not been running prior to suspension", function() {
           canvases.stateBeforeSuspend = {
             wasSaving: false
           };
           spyOn(canvases, 'startSaving');
           canvases.resume();
           return expect(canvases.startSaving).not.toHaveBeenCalled();
+        });
+        return it("clears stateBeforeSuspend", function() {
+          canvases.stateBeforeSuspend = {};
+          canvases.resume();
+          return expect(canvases.stateBeforeSuspend).not.toBe();
         });
       });
       return describe('if already resumed', function() {
@@ -517,11 +522,19 @@
       });
     });
     describe('when events have been added', function() {
-      var $canvas, o;
-      $canvas = o = null;
+      var $canvas, currentTool, o;
+      currentTool = $canvas = o = null;
       beforeEach(function() {
-        app.boxes.sizes = {
-          currentSize: 1
+        currentTool = Toolset.createTool();
+        app.boxes = {
+          tools: {
+            currentTool: function() {
+              return currentTool;
+            }
+          },
+          sizes: {
+            currentSize: 1
+          }
         };
         canvases = DrawingCanvases.init(app, {
           cellSize: 10,
@@ -775,11 +788,19 @@
       });
     });
     describe('when events have been removed', function() {
-      var $canvas, o;
-      $canvas = o = null;
+      var $canvas, currentTool, o;
+      currentTool = $canvas = o = null;
       beforeEach(function() {
-        app.boxes.sizes = {
-          currentSize: 1
+        currentTool = Toolset.createTool();
+        app.boxes = {
+          tools: {
+            currentTool: function() {
+              return currentTool;
+            }
+          },
+          sizes: {
+            currentSize: 1
+          }
         };
         canvases = DrawingCanvases.init(app, {
           cellSize: 10,
@@ -1073,8 +1094,10 @@
         });
         describe('when just given a cell', function() {
           it("fills in a section of the working canvas with the color of the cell", function() {
+            var fillStyle;
             canvases.drawWorkingCell(cell);
-            return expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)");
+            fillStyle = typeof JHW !== "undefined" && JHW !== null ? 'rgba(255, 0, 0, 1)' : '#ff0000';
+            return expect(ctx.fillStyle).toEqual(fillStyle);
           });
           return it("separates each cell with a border", function() {
             canvases.drawWorkingCell(cell);
@@ -1083,6 +1106,7 @@
         });
         describe('when given a cell + a color', function() {
           it("fills in a section of the working canvas with the given color", function() {
+            var fillStyle;
             canvases.drawWorkingCell(cell, {
               color: new Color({
                 red: 0,
@@ -1090,7 +1114,8 @@
                 blue: 0
               })
             });
-            return expect(ctx.fillStyle).toEqual("rgba(0, 255, 0, 1)");
+            fillStyle = typeof JHW !== "undefined" && JHW !== null ? 'rgba(0, 255, 0, 1)' : '#00ff00';
+            return expect(ctx.fillStyle).toEqual(fillStyle);
           });
           return it("separates each cell with a border", function() {
             canvases.drawWorkingCell(cell, {
@@ -1105,10 +1130,12 @@
         });
         return describe('when given a cell + a location', function() {
           it("fills in a section of the working canvas with the given color", function() {
+            var fillStyle;
             canvases.drawWorkingCell(cell, {
               loc: new CellLocation(canvases, 10, 2)
             });
-            return expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)");
+            fillStyle = typeof JHW !== "undefined" && JHW !== null ? 'rgba(255, 0, 0, 1)' : '#ff0000';
+            return expect(ctx.fillStyle).toEqual(fillStyle);
           });
           return it("separates each cell with a border", function() {
             canvases.drawWorkingCell(cell, {
@@ -1125,8 +1152,10 @@
         });
         describe('when just given a cell', function() {
           it("fills in a section of the working canvas with the color of the cell", function() {
+            var fillStyle;
             canvases.drawWorkingCell(cell);
-            return expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)");
+            fillStyle = typeof JHW !== "undefined" && JHW !== null ? 'rgba(255, 0, 0, 1)' : '#ff0000';
+            return expect(ctx.fillStyle).toEqual(fillStyle);
           });
           return it("separates each cell with a border", function() {
             canvases.drawWorkingCell(cell);
@@ -1135,6 +1164,7 @@
         });
         describe('when given a cell + a color', function() {
           it("fills in a section of the working canvas with the given color", function() {
+            var fillStyle;
             canvases.drawWorkingCell(cell, {
               color: new Color({
                 red: 0,
@@ -1142,7 +1172,8 @@
                 blue: 0
               })
             });
-            return expect(ctx.fillStyle).toEqual("rgba(0, 255, 0, 1)");
+            fillStyle = typeof JHW !== "undefined" && JHW !== null ? 'rgba(0, 255, 0, 1)' : '#00ff00';
+            return expect(ctx.fillStyle).toEqual(fillStyle);
           });
           return it("separates each cell with a border", function() {
             canvases.drawWorkingCell(cell, {
@@ -1157,10 +1188,12 @@
         });
         return describe('when given a cell + a location', function() {
           it("fills in a section of the working canvas with the given color", function() {
+            var fillStyle;
             canvases.drawWorkingCell(cell, {
               loc: new CellLocation(canvases, 10, 2)
             });
-            return expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)");
+            fillStyle = typeof JHW !== "undefined" && JHW !== null ? 'rgba(255, 0, 0, 1)' : '#ff0000';
+            return expect(ctx.fillStyle).toEqual(fillStyle);
           });
           return it("separates each cell with a border", function() {
             canvases.drawWorkingCell(cell, {

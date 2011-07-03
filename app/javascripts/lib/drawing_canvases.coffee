@@ -98,6 +98,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       localStorage.setItem("sprite_editor.saved", "true")
 
     _keepSaving: ->
+      self = this
       @save()
       # Use setTimeout here instead of setInterval so we can guarantee that
       # we can stop the loop (say, in tests)
@@ -119,6 +120,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       if @stateBeforeSuspend
         @startDrawing() if @stateBeforeSuspend.wasDrawing
         @startSaving()  if @stateBeforeSuspend.wasSaving
+        @stateBeforeSuspend = null
 
     addEvents: ->
       self = this
@@ -296,6 +298,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       for row in @cells
         for cell in row
           # Allow custom cell options -- this is used by the pencil tool
+          throw new Error("app.boxes is not defined!") unless @app.boxes?
           opts = @app.boxes.tools.currentTool().trigger("cellOptions", cell) || {}
           @drawCell(cell, opts)
       wc.ctx.restore()

@@ -119,6 +119,8 @@
         return localStorage.setItem("sprite_editor.saved", "true");
       },
       _keepSaving: function() {
+        var self;
+        self = this;
         this.save();
         if (this.isSaving) {
           return setTimeout((function() {
@@ -149,8 +151,9 @@
             this.startDrawing();
           }
           if (this.stateBeforeSuspend.wasSaving) {
-            return this.startSaving();
+            this.startSaving();
           }
+          return this.stateBeforeSuspend = null;
         }
       },
       addEvents: function() {
@@ -360,6 +363,9 @@
           row = _ref2[_i];
           for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
             cell = row[_j];
+            if (this.app.boxes == null) {
+              throw new Error("app.boxes is not defined!");
+            }
             opts = this.app.boxes.tools.currentTool().trigger("cellOptions", cell) || {};
             this.drawCell(cell, opts);
           }

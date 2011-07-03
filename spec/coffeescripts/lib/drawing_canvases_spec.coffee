@@ -1,16 +1,11 @@
 {DrawingCanvases, Keyboard, Cell, CellLocation, Color, Toolset} = SpriteEditor
 
 describe 'DrawingCanvases', ->
-  currentTool = app = canvases = null
+  app = canvases = null
 
   beforeEach ->
     localStorage.clear()
-    currentTool = Toolset.createTool()
-    app = {
-      boxes: {
-        tools: { currentTool: -> currentTool }
-      }
-    }
+    app = {}
 
   afterEach ->
     DrawingCanvases.destroy()
@@ -183,13 +178,13 @@ describe 'DrawingCanvases', ->
   describe '#startDrawing', ->
     beforeEach ->
       canvases = DrawingCanvases.init(app)
+      spyOn(canvases, 'draw')
 
     describe "if the draw loop isn't started yet", ->
       beforeEach ->
         canvases.isDrawing = false
 
       it "starts the draw loop", ->
-        spyOn(canvases, 'draw')
         canvases.startDrawing()
         expect(canvases.draw).toHaveBeenCalled()
 
@@ -202,13 +197,17 @@ describe 'DrawingCanvases', ->
         canvases.isDrawing = true
 
       it "doesn't re-start the draw loop", ->
-        spyOn(canvases, 'draw')
         canvases.startDrawing()
         expect(canvases.draw).not.toHaveBeenCalled()
 
   describe '#draw', ->
+    currentTool = null
     beforeEach ->
       canvases = DrawingCanvases.init(app)
+      currentTool = Toolset.createTool()
+      app.boxes = {
+        tools: {currentTool: -> currentTool}
+      }
 
     it "clears the working canvas"  # not sure how to test this?
 
@@ -233,6 +232,7 @@ describe 'DrawingCanvases', ->
   describe '#stopDrawing', ->
     beforeEach ->
       canvases = DrawingCanvases.init(app)
+      spyOn(canvases, 'draw')
       canvases.startDrawing()
 
     it "sets the state of the canvases to not-drawing", ->
@@ -242,13 +242,13 @@ describe 'DrawingCanvases', ->
   describe '#startSaving', ->
     beforeEach ->
       canvases = DrawingCanvases.init(app)
+      spyOn(canvases, 'save')
 
     describe "if the draw loop isn't started yet", ->
       beforeEach ->
         canvases.isSaving = false
 
       it "starts the save loop", ->
-        spyOn(canvases, 'save')
         canvases.startSaving()
         expect(canvases.save).toHaveBeenCalled()
 
@@ -261,7 +261,6 @@ describe 'DrawingCanvases', ->
         canvases.isSaving = true
 
       it "doesn't re-start the draw loop", ->
-        spyOn(canvases, 'save')
         canvases.startSaving()
         expect(canvases.save).not.toHaveBeenCalled()
 
@@ -376,6 +375,11 @@ describe 'DrawingCanvases', ->
         canvases.resume()
         expect(canvases.startSaving).not.toHaveBeenCalled()
 
+      it "clears stateBeforeSuspend", ->
+        canvases.stateBeforeSuspend = {}
+        canvases.resume()
+        expect(canvases.stateBeforeSuspend).not.toBe()
+
     describe 'if already resumed', ->
       beforeEach ->
         canvases.stateBeforeSuspend = null
@@ -384,9 +388,13 @@ describe 'DrawingCanvases', ->
         expect(-> canvases.resume()).not.toThrowAnything()
 
   describe 'when events have been added', ->
-    $canvas = o = null
+    currentTool = $canvas = o = null
     beforeEach ->
-      app.boxes.sizes = {currentSize: 1}
+      currentTool = Toolset.createTool()
+      app.boxes = {
+        tools: {currentTool: -> currentTool},
+        sizes: {currentSize: 1}
+      }
       canvases = DrawingCanvases.init app, {cellSize: 10, widthInCells: 10, heightInCells: 10}
       # this has to be here so that the mouse position is correct
       # as it is subtracted from the canvas offset
@@ -554,9 +562,13 @@ describe 'DrawingCanvases', ->
         expect(canvases.resume).toHaveBeenCalled()
 
   describe 'when events have been removed', ->
-    $canvas = o = null
+    currentTool = $canvas = o = null
     beforeEach ->
-      app.boxes.sizes = {currentSize: 1}
+      currentTool = Toolset.createTool()
+      app.boxes = {
+        tools: {currentTool: -> currentTool},
+        sizes: {currentSize: 1}
+      }
       canvases = DrawingCanvases.init app, {cellSize: 10, widthInCells: 10, heightInCells: 10}
       # this has to be here so that the mouse position is correct
       # as it is subtracted from the canvas offset
@@ -756,7 +768,8 @@ describe 'DrawingCanvases', ->
       describe 'when just given a cell', ->
         it "fills in a section of the working canvas with the color of the cell", ->
           canvases.drawWorkingCell(cell)
-          expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)")
+          fillStyle = if JHW? then 'rgba(255, 0, 0, 1)' else '#ff0000'
+          expect(ctx.fillStyle).toEqual(fillStyle)
 
         it "separates each cell with a border", ->
           canvases.drawWorkingCell(cell)
@@ -765,7 +778,8 @@ describe 'DrawingCanvases', ->
       describe 'when given a cell + a color', ->
         it "fills in a section of the working canvas with the given color", ->
           canvases.drawWorkingCell(cell, color: new Color(red: 0, green: 255, blue: 0))
-          expect(ctx.fillStyle).toEqual("rgba(0, 255, 0, 1)")
+          fillStyle = if JHW? then 'rgba(0, 255, 0, 1)' else '#00ff00'
+          expect(ctx.fillStyle).toEqual(fillStyle)
 
         it "separates each cell with a border", ->
           canvases.drawWorkingCell(cell, color: new Color(red: 0, green: 255, blue: 0))
@@ -774,7 +788,8 @@ describe 'DrawingCanvases', ->
       describe 'when given a cell + a location', ->
         it "fills in a section of the working canvas with the given color", ->
           canvases.drawWorkingCell(cell, loc: new CellLocation(canvases, 10, 2))
-          expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)")
+          fillStyle = if JHW? then 'rgba(255, 0, 0, 1)' else '#ff0000'
+          expect(ctx.fillStyle).toEqual(fillStyle)
 
         it "separates each cell with a border", ->
           canvases.drawWorkingCell(cell, loc: new CellLocation(canvases, 10, 2))
@@ -788,7 +803,8 @@ describe 'DrawingCanvases', ->
       describe 'when just given a cell', ->
         it "fills in a section of the working canvas with the color of the cell", ->
           canvases.drawWorkingCell(cell)
-          expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)")
+          fillStyle = if JHW? then 'rgba(255, 0, 0, 1)' else '#ff0000'
+          expect(ctx.fillStyle).toEqual(fillStyle)
 
         it "separates each cell with a border", ->
           canvases.drawWorkingCell(cell)
@@ -797,7 +813,8 @@ describe 'DrawingCanvases', ->
       describe 'when given a cell + a color', ->
         it "fills in a section of the working canvas with the given color", ->
           canvases.drawWorkingCell(cell, color: new Color(red: 0, green: 255, blue: 0))
-          expect(ctx.fillStyle).toEqual("rgba(0, 255, 0, 1)")
+          fillStyle = if JHW? then 'rgba(0, 255, 0, 1)' else '#00ff00'
+          expect(ctx.fillStyle).toEqual(fillStyle)
 
         it "separates each cell with a border", ->
           canvases.drawWorkingCell(cell, color: new Color(red: 0, green: 255, blue: 0))
@@ -806,7 +823,8 @@ describe 'DrawingCanvases', ->
       describe 'when given a cell + a location', ->
         it "fills in a section of the working canvas with the given color", ->
           canvases.drawWorkingCell(cell, loc: new CellLocation(canvases, 10, 2))
-          expect(ctx.fillStyle).toEqual("rgba(255, 0, 0, 1)")
+          fillStyle = if JHW? then 'rgba(255, 0, 0, 1)' else '#ff0000'
+          expect(ctx.fillStyle).toEqual(fillStyle)
 
         it "separates each cell with a border", ->
           canvases.drawWorkingCell(cell, loc: new CellLocation(canvases, 10, 2))
