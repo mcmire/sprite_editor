@@ -30,11 +30,16 @@
         }
         this._createWorkingCanvas();
         this._createPreviewCanvases();
+        this.isInitialized = true;
         return this;
       },
       destroy: function() {
+        if (!this.isInitialized) {
+          return;
+        }
         this.removeEvents();
-        return this.reset();
+        this.reset();
+        return this.isInitialized = false;
       },
       reset: function() {
         this.stopDrawing();
@@ -66,7 +71,13 @@
       },
       draw: function() {
         var _base;
-        if (!this.workingCanvas) {
+        if (!this.isInitialized) {
+          return;
+        }
+        if (!this.app.isInitialized) {
+          return;
+        }
+        if (this.workingCanvas == null) {
           return;
         }
         this._clearWorkingCanvas();

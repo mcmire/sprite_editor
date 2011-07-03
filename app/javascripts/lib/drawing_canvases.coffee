@@ -26,12 +26,17 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @_createGridBgCanvas() if @showGrid
       @_createWorkingCanvas()
       @_createPreviewCanvases()
+
+      @isInitialized = true
+
       #@startSaving
       return this
 
     destroy: ->
+      return unless @isInitialized
       @removeEvents()
       @reset()
+      @isInitialized = false
 
     reset: ->
       @stopDrawing()
@@ -61,15 +66,23 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       return this
 
     draw: ->
+      # If this singleton is destroyed, then no point in drawing (note: this
+      # will only apply during tests)
+      return unless @isInitialized
+      # No point in drawing if the App is destroyed, either (again, this
+      # only applies during tests)
+      return unless @app.isInitialized
       # Somehow variables are getting reset in our tests while the draw loop is
-      # still active, so check for that
-      return unless @workingCanvas
+      # still active, so check for that too
+      return unless @workingCanvas?
+
       @_clearWorkingCanvas()
       @_clearPreviewCanvas()
       @_clearTiledPreviewCanvas()
       @_fillCells()
       @app.boxes.tools.currentTool().draw?()
       @_updateTiledPreviewCanvas()
+
       return this
 
     _keepDrawing: ->

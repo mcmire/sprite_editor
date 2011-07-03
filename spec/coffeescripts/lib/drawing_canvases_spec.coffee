@@ -5,7 +5,7 @@ describe 'DrawingCanvases', ->
 
   beforeEach ->
     localStorage.clear()
-    app = {}
+    app = {isInitialized: true}
 
   afterEach ->
     DrawingCanvases.destroy()
@@ -20,7 +20,7 @@ describe 'DrawingCanvases', ->
 
   describe 'when initialized', ->
     it "resets key variables", ->
-      spyOn(DrawingCanvases, 'reset')
+      spyOn(DrawingCanvases, 'reset').andCallThrough()
       canvases = DrawingCanvases.init(app)
       expect(DrawingCanvases.reset).toHaveBeenCalled()
 
@@ -90,19 +90,39 @@ describe 'DrawingCanvases', ->
     #  canvases = DrawingCanvases.init(app)
     #  expect(DrawingCanvases.startSaving).toHaveBeenCalled()
 
-  describe 'when destroyed', ->
-    beforeEach ->
+    it 'sets @isInitialized to true', ->
       canvases = DrawingCanvases.init(app)
+      expect(canvases.isInitialized).toBeTruthy()
 
-    it "resets key variables", ->
-      spyOn(canvases, 'reset')
-      canvases.destroy()
-      expect(canvases.reset).toHaveBeenCalled()
+  describe 'when destroyed', ->
+    describe 'if initialized', ->
+      beforeEach ->
+        canvases = DrawingCanvases.init(app)
 
-    it "removes any events that may have been added", ->
-      spyOn(canvases, 'removeEvents')
-      canvases.destroy()
-      expect(canvases.removeEvents).toHaveBeenCalled()
+      it "resets key variables", ->
+        spyOn(canvases, 'reset')
+        canvases.destroy()
+        expect(canvases.reset).toHaveBeenCalled()
+
+      it "removes any events that may have been added", ->
+        spyOn(canvases, 'removeEvents')
+        canvases.destroy()
+        expect(canvases.removeEvents).toHaveBeenCalled()
+
+      it 'sets @isInitialized to false', ->
+        canvases.destroy()
+        expect(canvases.isInitialized).toBeFalsy()
+
+    describe 'if not initialized', ->
+      it "does not try to reset key variables", ->
+        spyOn(DrawingCanvases, 'reset')
+        DrawingCanvases.destroy()
+        expect(DrawingCanvases.reset).not.toHaveBeenCalled()
+
+      it "does not try to remove events", ->
+        spyOn(DrawingCanvases, 'removeEvents')
+        DrawingCanvases.destroy()
+        expect(DrawingCanvases.removeEvents).not.toHaveBeenCalled()
 
   describe 'when reset', ->
     beforeEach ->

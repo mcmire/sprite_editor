@@ -6,7 +6,9 @@
     app = canvases = null;
     beforeEach(function() {
       localStorage.clear();
-      return app = {};
+      return app = {
+        isInitialized: true
+      };
     });
     afterEach(function() {
       return DrawingCanvases.destroy();
@@ -21,7 +23,7 @@
     });
     describe('when initialized', function() {
       it("resets key variables", function() {
-        spyOn(DrawingCanvases, 'reset');
+        spyOn(DrawingCanvases, 'reset').andCallThrough();
         canvases = DrawingCanvases.init(app);
         return expect(DrawingCanvases.reset).toHaveBeenCalled();
       });
@@ -103,7 +105,7 @@
         expect(c.width).toBe(2);
         return expect(c.height).toBe(2);
       });
-      return it("creates the canvas element where the preview gets tiled", function() {
+      it("creates the canvas element where the preview gets tiled", function() {
         var c;
         canvases = DrawingCanvases.init(app, {
           widthInCells: 2,
@@ -118,20 +120,42 @@
         expect(c.width).toBe(8);
         return expect(c.height).toBe(8);
       });
+      return it('sets @isInitialized to true', function() {
+        canvases = DrawingCanvases.init(app);
+        return expect(canvases.isInitialized).toBeTruthy();
+      });
     });
     describe('when destroyed', function() {
-      beforeEach(function() {
-        return canvases = DrawingCanvases.init(app);
+      describe('if initialized', function() {
+        beforeEach(function() {
+          return canvases = DrawingCanvases.init(app);
+        });
+        it("resets key variables", function() {
+          spyOn(canvases, 'reset');
+          canvases.destroy();
+          return expect(canvases.reset).toHaveBeenCalled();
+        });
+        it("removes any events that may have been added", function() {
+          spyOn(canvases, 'removeEvents');
+          canvases.destroy();
+          return expect(canvases.removeEvents).toHaveBeenCalled();
+        });
+        return it('sets @isInitialized to false', function() {
+          canvases.destroy();
+          return expect(canvases.isInitialized).toBeFalsy();
+        });
       });
-      it("resets key variables", function() {
-        spyOn(canvases, 'reset');
-        canvases.destroy();
-        return expect(canvases.reset).toHaveBeenCalled();
-      });
-      return it("removes any events that may have been added", function() {
-        spyOn(canvases, 'removeEvents');
-        canvases.destroy();
-        return expect(canvases.removeEvents).toHaveBeenCalled();
+      return describe('if not initialized', function() {
+        it("does not try to reset key variables", function() {
+          spyOn(DrawingCanvases, 'reset');
+          DrawingCanvases.destroy();
+          return expect(DrawingCanvases.reset).not.toHaveBeenCalled();
+        });
+        return it("does not try to remove events", function() {
+          spyOn(DrawingCanvases, 'removeEvents');
+          DrawingCanvases.destroy();
+          return expect(DrawingCanvases.removeEvents).not.toHaveBeenCalled();
+        });
       });
     });
     describe('when reset', function() {
