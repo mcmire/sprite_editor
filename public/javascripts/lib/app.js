@@ -6,12 +6,8 @@
     App = {};
     SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App");
     $.extend(App, {
-      $container: null,
-      $leftPane: null,
-      $centerPane: null,
-      $rightPane: null,
-      boxes: [],
       init: function() {
+        this.reset();
         Keyboard.init();
         this.canvases = SpriteEditor.DrawingCanvases.init(this);
         this.toolset = SpriteEditor.Toolset.init(this, this.canvases);
@@ -26,7 +22,28 @@
         this._createColorPicker();
         this._createPreviewBox();
         this.addEvents();
-        this.canvases.draw();
+        this.isInitialized = true;
+        return this;
+      },
+      destroy: function() {
+        if (!this.isInitialized) {
+          return;
+        }
+        Keyboard.destroy();
+        this.removeEvents();
+        this.reset();
+        this.isInitialized = false;
+        return this;
+      },
+      reset: function() {
+        this.canvases = null;
+        this.toolset = null;
+        this.history = null;
+        this.$container = null;
+        this.$leftPane = null;
+        this.$centerPane = null;
+        this.$rightPane = null;
+        this.boxes = {};
         return this;
       },
       addEvents: function() {
@@ -34,7 +51,7 @@
         this.boxes.tools.addEvents();
         this.boxes.sizes.addEvents();
         this.boxes.colors.addEvents();
-        return this._bindEvents(document, {
+        this._bindEvents(document, {
           keydown: __bind(function(event) {
             var key;
             key = event.keyCode;
@@ -55,13 +72,15 @@
             return this.boxes.tools.currentTool().trigger("keyup", event);
           }, this)
         });
+        return this;
       },
       removeEvents: function() {
         this.canvases.removeEvents();
         this.boxes.tools.removeEvents();
         this.boxes.sizes.removeEvents();
         this.boxes.colors.removeEvents();
-        return this._unbindEvents(document, "keydown", "keyup");
+        this._unbindEvents(document, "keydown", "keyup");
+        return this;
       },
       _createWrapperDivs: function() {
         this.$leftPane = $("<div/>");

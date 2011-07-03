@@ -6,13 +6,9 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
   SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App")
 
   $.extend App,
-    $container: null
-    $leftPane: null
-    $centerPane: null
-    $rightPane: null
-    boxes: []
-
     init: ->
+      @reset()
+
       Keyboard.init()
 
       @canvases = SpriteEditor.DrawingCanvases.init(this)
@@ -31,12 +27,31 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
       @addEvents()
 
-      @canvases.draw()
+      @isInitialized = true
 
       return this
 
+    destroy: ->
+      return unless @isInitialized
+      Keyboard.destroy()
+      @removeEvents()
+      @reset()
+      @isInitialized = false
+      return this
+
+    reset: ->
+      @canvases = null
+      @toolset = null
+      @history = null
+      @$container = null
+      @$leftPane = null
+      @$centerPane = null
+      @$rightPane = null
+      @boxes = {}
+      return this
+
     addEvents: ->
-      @canvases.addEvents()
+      @canvases.addEvents()   # will start the draw loop
       @boxes.tools.addEvents()
       @boxes.sizes.addEvents()
       @boxes.colors.addEvents()
@@ -56,13 +71,15 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
         keyup: (event) =>
           @boxes.tools.currentTool().trigger("keyup", event)
 
+      return this
+
     removeEvents: ->
       @canvases.removeEvents()
       @boxes.tools.removeEvents()
       @boxes.sizes.removeEvents()
       @boxes.colors.removeEvents()
-
       @_unbindEvents(document, "keydown", "keyup")
+      return this
 
     _createWrapperDivs: ->
       @$leftPane = $("<div/>")

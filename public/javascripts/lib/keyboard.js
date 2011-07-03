@@ -22,9 +22,26 @@
       Z_KEY: 90,
       modifierKeys: [16, 17, 18, 91],
       init: function() {
+        if (!this.isInitialized) {
+          this.reset();
+          this.isInitialized = true;
+        }
+        return this;
+      },
+      reset: function() {
+        this.pressedKeys = {};
+        return this;
+      },
+      destroy: function() {
+        if (this.isInitialized) {
+          this.removeEvents();
+          this.isInitialized = false;
+        }
+        return this;
+      },
+      addEvents: function() {
         var self;
         self = this;
-        this.reset();
         this._bindEvents(document, {
           keydown: function(event) {
             return self.pressedKeys[event.keyCode] = 1;
@@ -40,12 +57,10 @@
         });
         return this;
       },
-      reset: function() {
-        return this.pressedKeys = {};
-      },
-      destroy: function() {
+      removeEvents: function() {
         this._unbindEvents(document, "keydown", "keyup");
-        return this._unbindEvents(window, "blur");
+        this._unbindEvents(window, "blur");
+        return this;
       },
       modifierKeyPressed: function(event) {
         return event.shiftKey || event.ctrlKey || event.altKey || event.metaKey;

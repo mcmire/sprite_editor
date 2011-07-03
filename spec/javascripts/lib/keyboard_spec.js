@@ -12,51 +12,122 @@
       return expect(Keyboard._unbindEvents).toBeTypeOf("function");
     });
     describe('when initialized', function() {
-      it("initializes @pressedKeys", function() {
-        kb = Keyboard.init();
-        return expect(kb.pressedKeys).toEqual({});
-      });
-      it("when a key is pressed, adds the pressed key to @pressedKeys", function() {
-        kb = Keyboard.init();
-        specHelpers.fireNativeEvent(document, "keydown", function(evt) {
-          return evt.keyCode = 9;
+      describe('if not initialized yet', function() {
+        it("resets key variables", function() {
+          spyOn(Keyboard, 'reset');
+          Keyboard.init();
+          return expect(Keyboard.reset).toHaveBeenCalled();
         });
-        return expect(kb.pressedKeys).toHaveProperty(9);
-      });
-      it("when a key is lifted, removes the pressed key from @pressedKeys", function() {
-        kb = Keyboard.init();
-        specHelpers.fireNativeEvent(document, "keyup", function(evt) {
-          return evt.keyCode = 9;
+        return it("sets @isInitialized to true", function() {
+          kb = Keyboard.init();
+          return expect(kb.isInitialized).toBeTruthy();
         });
-        return expect(kb.pressedKeys).not.toHaveProperty(9);
       });
-      return it("when the window loses focus, resets the pressedKeys hash", function() {
-        kb = Keyboard.init();
-        specHelpers.fireNativeEvent(window, "blur");
-        return expect(kb.pressedKeys).toEqual({});
+      return describe('if already initialized', function() {
+        beforeEach(function() {
+          return Keyboard.init();
+        });
+        return it("resets key variables", function() {
+          spyOn(Keyboard, 'reset');
+          Keyboard.init();
+          return expect(Keyboard.reset).not.toHaveBeenCalled();
+        });
       });
     });
     describe('when destroyed', function() {
       beforeEach(function() {
         return kb = Keyboard.init();
       });
-      it("when a key is pressed, does nothing", function() {
-        kb.destroy();
-        specHelpers.fireNativeEvent(document, "keydown", function(evt) {
-          return evt.keyCode = 9;
+      describe('if not destroyed yet', function() {
+        it("removes any events that may have been added", function() {
+          spyOn(kb, 'removeEvents');
+          kb.destroy();
+          return expect(kb.removeEvents).toHaveBeenCalled();
         });
-        return expect(kb.pressedKeys).toEqual({});
-      });
-      it("when a key is lifted, does nothing", function() {
-        kb.destroy();
-        specHelpers.fireNativeEvent(document, "keyup", function(evt) {
-          return evt.keyCode = 9;
+        return it("sets @isInitialized to false", function() {
+          kb.destroy();
+          return expect(kb.isInitialized).toBeFalsy();
         });
-        return expect(kb.pressedKeys).toEqual({});
       });
-      return it("when the window loses focus, does nothing", function() {
-        kb.destroy();
-        specHelpers.fireNativeEvent(window, "blur");
+      return describe('if already destroyed', function() {
+        beforeEach(function() {
+          return Keyboard.destroy();
+        });
+        return it("does not try to remove events", function() {
+          spyOn(kb, 'removeEvents');
+          kb.destroy();
+          return expect(kb.removeEvents).not.toHaveBeenCalled();
+        });
+      });
+    });
+    describe('when events have been added', function() {
+      beforeEach(function() {
+        return kb = Keyboard.init();
+      });
+      describe('when a key is pressed', function() {
+        return it("adds the pressed key to @pressedKeys", function() {
+          kb.addEvents();
+          $(document).simulate("keydown", {
+            keyCode: 9
+          });
+          return expect(kb.pressedKeys).toHaveProperty(9);
+        });
+      });
+      describe('when a key is lifted', function() {
+        return it("removes the pressed key from @pressedKeys", function() {
+          kb.addEvents();
+          $(document).simulate("keyup", {
+            keyCode: 9
+          });
+          return expect(kb.pressedKeys).not.toHaveProperty(9);
+        });
+      });
+      return describe('when the window loses focus', function() {
+        return it("resets the pressedKeys hash", function() {
+          kb.addEvents();
+          $(window).simulate("blur");
+          return expect(kb.pressedKeys).toEqual({});
+        });
+      });
+    });
+    describe('when events have been removed', function() {
+      beforeEach(function() {
+        kb = Keyboard.init();
+        return kb.addEvents();
+      });
+      describe('when a key is pressed', function() {
+        return it("does nothing", function() {
+          kb.removeEvents();
+          $(document).simulate("keydown", {
+            keyCode: 9
+          });
+          return expect(kb.pressedKeys).toEqual({});
+        });
+      });
+      describe('when a key is lifted', function() {
+        return it("does nothing", function() {
+          kb.removeEvents();
+          $(document).simulate("keyup", {
+            keyCode: 9
+          });
+          return expect(kb.pressedKeys).toEqual({});
+        });
+      });
+      return describe('when the window loses focus', function() {
+        return it("does nothing", function() {
+          kb.removeEvents();
+          $(window).simulate("blur");
+          return expect(kb.pressedKeys).toEqual({});
+        });
+      });
+    });
+    describe('when reset', function() {
+      beforeEach(function() {
+        return kb = Keyboard.init();
+      });
+      return it("resets @pressedKeys", function() {
+        kb.pressedKeys = "something";
+        kb.reset();
         return expect(kb.pressedKeys).toEqual({});
       });
     });
