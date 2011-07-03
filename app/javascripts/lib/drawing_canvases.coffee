@@ -188,7 +188,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       pc = @previewCanvas
       color = cell.color
       return if color.isClear()
-      pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, 255)
+      pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, Math.floor(color.alpha * 255))
 
     _initCells: ->
       json = localStorage.getItem("sprite_editor.cells")
@@ -286,6 +286,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       # clearRect() won't clear image data set using createImageData(),
       # so this is another way to clear the canvas that works
       pc.element.width = pc.width
+      # TODO: Is there a way to prevent doing this on every draw?
       pc.imageData = pc.ctx.createImageData(@widthInCells, @heightInCells)
 
     _clearTiledPreviewCanvas: ->
@@ -298,7 +299,6 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       for row in @cells
         for cell in row
           # Allow custom cell options -- this is used by the pencil tool
-          throw new Error("app.boxes is not defined!") unless @app.boxes?
           opts = @app.boxes.tools.currentTool().trigger("cellOptions", cell) || {}
           @drawCell(cell, opts)
       wc.ctx.restore()
@@ -307,9 +307,9 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
     _updateTiledPreviewCanvas: ->
       tpc = @tiledPreviewCanvas
       pattern = tpc.ctx.createPattern(@previewCanvas.element, "repeat")
-      tpc.ctx.save()
+      #tpc.ctx.save()
       tpc.ctx.fillStyle = pattern
       tpc.ctx.fillRect(0, 0, tpc.width, tpc.height)
-      tpc.ctx.restore()
+      #tpc.ctx.restore()
 
   return DrawingCanvases

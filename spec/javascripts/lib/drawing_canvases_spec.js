@@ -248,15 +248,31 @@
           }
         };
       });
-      it("clears the working canvas");
+      it("clears the working canvas", function() {
+        var wc;
+        wc = canvases.workingCanvas;
+        wc.width = 100;
+        wc.height = 100;
+        spyOn(wc.ctx, 'clearRect');
+        canvases.draw();
+        return expect(wc.ctx.clearRect).toHaveBeenCalledWith(0, 0, 100, 100);
+      });
       it("clears the preview canvas");
-      it("clears the tiled preview canvas");
-      it("draws each cell", function() {
+      it("clears the tiled preview canvas", function() {
+        var tpc;
+        tpc = canvases.tiledPreviewCanvas;
+        tpc.width = 100;
+        tpc.height = 100;
+        spyOn(tpc.ctx, 'clearRect');
+        canvases.draw();
+        return expect(tpc.ctx.clearRect).toHaveBeenCalledWith(0, 0, 100, 100);
+      });
+      it("draws each cell onto the working canvas", function() {
         spyOn(canvases, 'drawCell');
         canvases.draw();
         return expect(canvases.drawCell).toHaveBeenCalledWith(jasmine.any(Cell), {});
       });
-      return it("uses the current tool to draw the cell if it provides cell options", function() {
+      it("uses the current tool to draw the cell onto the working canvas if it provides cell options", function() {
         var opts;
         opts = {
           foo: "bar"
@@ -267,6 +283,32 @@
         spyOn(canvases, 'drawCell');
         canvases.draw();
         return expect(canvases.drawCell).toHaveBeenCalledWith(jasmine.any(Cell), opts);
+      });
+      it("writes the changes to the preview canvas", function() {
+        var pc;
+        pc = canvases.previewCanvas;
+        pc.imageData = "imageData";
+        spyOn(canvases, '_clearPreviewCanvas');
+        spyOn(pc.ctx, 'putImageData');
+        canvases.draw();
+        return expect(pc.ctx.putImageData).toHaveBeenCalledWith("imageData", 0, 0);
+      });
+      it("triggers a possible draw event on the current tool", function() {
+        currentTool.draw = jasmine.createSpy();
+        canvases.draw();
+        return expect(currentTool.draw).toHaveBeenCalled();
+      });
+      return it("applies the preview canvas to the tiled preview canvas (tiling it, of course)", function() {
+        var tpc;
+        tpc = canvases.tiledPreviewCanvas;
+        tpc.width = 100;
+        tpc.height = 100;
+        spyOn(tpc.ctx, 'createPattern').andReturn('#ff0000');
+        spyOn(tpc.ctx, 'fillRect');
+        canvases.draw();
+        expect(tpc.ctx.createPattern).toHaveBeenCalledWith(canvases.previewCanvas.element, "repeat");
+        expect(tpc.ctx.fillStyle).toEqual('#ff0000');
+        return expect(tpc.ctx.fillRect).toHaveBeenCalledWith(0, 0, 100, 100);
       });
     });
     describe('#stopDrawing', function() {
@@ -1066,7 +1108,7 @@
         return expect(canvases.drawPreviewCell).toHaveBeenCalledWith("cell");
       });
     });
-    return describe('#drawWorkingCell', function() {
+    describe('#drawWorkingCell', function() {
       var cell, ctx, prepare;
       cell = ctx = null;
       prepare = function() {
@@ -1117,7 +1159,13 @@
             fillStyle = typeof JHW !== "undefined" && JHW !== null ? 'rgba(0, 255, 0, 1)' : '#00ff00';
             return expect(ctx.fillStyle).toEqual(fillStyle);
           });
-          return it("separates each cell with a border", function() {
+          it("also accepts color as a string", function() {
+            canvases.drawWorkingCell(cell, {
+              color: '#00ff00'
+            });
+            return expect(ctx.fillStyle).toEqual('#00ff00');
+          });
+          it("separates each cell with a border", function() {
             canvases.drawWorkingCell(cell, {
               color: new Color({
                 red: 0,
@@ -1126,6 +1174,12 @@
               })
             });
             return expect(ctx.fillRect).toHaveBeenCalledWith(31, 51, 9, 9);
+          });
+          return it("does nothing if given a clear color", function() {
+            canvases.drawWorkingCell(cell, {
+              color: new Color()
+            });
+            return expect(ctx.fillRect).not.toHaveBeenCalled();
           });
         });
         return describe('when given a cell + a location', function() {
@@ -1175,7 +1229,13 @@
             fillStyle = typeof JHW !== "undefined" && JHW !== null ? 'rgba(0, 255, 0, 1)' : '#00ff00';
             return expect(ctx.fillStyle).toEqual(fillStyle);
           });
-          return it("separates each cell with a border", function() {
+          it("also accepts color as a string", function() {
+            canvases.drawWorkingCell(cell, {
+              color: '#00ff00'
+            });
+            return expect(ctx.fillStyle).toEqual('#00ff00');
+          });
+          it("separates each cell with a border", function() {
             canvases.drawWorkingCell(cell, {
               color: new Color({
                 red: 0,
@@ -1184,6 +1244,12 @@
               })
             });
             return expect(ctx.fillRect).toHaveBeenCalledWith(30, 50, 10, 10);
+          });
+          return it("does nothing if given a clear color", function() {
+            canvases.drawWorkingCell(cell, {
+              color: new Color()
+            });
+            return expect(ctx.fillRect).not.toHaveBeenCalled();
           });
         });
         return describe('when given a cell + a location', function() {
@@ -1202,6 +1268,44 @@
             return expect(ctx.fillRect).toHaveBeenCalledWith(20, 100, 10, 10);
           });
         });
+      });
+    });
+    return describe('#drawPreviewCell', function() {
+      var cell, imageData;
+      cell = imageData = null;
+      beforeEach(function() {
+        var currentTool;
+        cell = new Cell({
+          canvases: canvases,
+          loc: new CellLocation(canvases, 5, 3),
+          color: new Color({
+            red: 255,
+            green: 0,
+            blue: 0,
+            alpha: 0.5
+          })
+        });
+        currentTool = Toolset.createTool();
+        app.boxes = {
+          tools: {
+            currentTool: function() {
+              return currentTool;
+            }
+          }
+        };
+        canvases = DrawingCanvases.init(app);
+        canvases.draw();
+        imageData = canvases.previewCanvas.imageData;
+        return spyOn(imageData, 'setPixel');
+      });
+      it("fills in the pixel on the preview canvas with the color of the cell", function() {
+        canvases.drawPreviewCell(cell);
+        return expect(imageData.setPixel).toHaveBeenCalledWith(3, 5, 255, 0, 0, 127);
+      });
+      return it("does nothing if the color of the cell being drawn is clear", function() {
+        cell.color = new Color();
+        canvases.drawPreviewCell(cell);
+        return expect(imageData.setPixel).not.toHaveBeenCalled();
       });
     });
   });

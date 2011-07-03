@@ -247,7 +247,7 @@
         if (color.isClear()) {
           return;
         }
-        return pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, 255);
+        return pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, Math.floor(color.alpha * 255));
       },
       _initCells: function() {
         var cell, cells, color, i, j, json, row, _ref, _results;
@@ -363,9 +363,6 @@
           row = _ref2[_i];
           for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
             cell = row[_j];
-            if (this.app.boxes == null) {
-              throw new Error("app.boxes is not defined!");
-            }
             opts = this.app.boxes.tools.currentTool().trigger("cellOptions", cell) || {};
             this.drawCell(cell, opts);
           }
@@ -377,10 +374,8 @@
         var pattern, tpc;
         tpc = this.tiledPreviewCanvas;
         pattern = tpc.ctx.createPattern(this.previewCanvas.element, "repeat");
-        tpc.ctx.save();
         tpc.ctx.fillStyle = pattern;
-        tpc.ctx.fillRect(0, 0, tpc.width, tpc.height);
-        return tpc.ctx.restore();
+        return tpc.ctx.fillRect(0, 0, tpc.width, tpc.height);
       }
     });
     return DrawingCanvases;

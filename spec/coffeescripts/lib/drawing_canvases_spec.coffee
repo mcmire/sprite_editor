@@ -209,23 +209,59 @@ describe 'DrawingCanvases', ->
         tools: {currentTool: -> currentTool}
       }
 
-    it "clears the working canvas"  # not sure how to test this?
+    it "clears the working canvas", ->
+      wc = canvases.workingCanvas
+      wc.width = 100
+      wc.height = 100
+      spyOn(wc.ctx, 'clearRect')
+      canvases.draw()
+      expect(wc.ctx.clearRect).toHaveBeenCalledWith(0, 0, 100, 100)
 
     it "clears the preview canvas"  # not sure how to test this?
 
-    it "clears the tiled preview canvas"  # not sure how to test this?
+    it "clears the tiled preview canvas", ->
+      tpc = canvases.tiledPreviewCanvas
+      tpc.width = 100
+      tpc.height = 100
+      spyOn(tpc.ctx, 'clearRect')
+      canvases.draw()
+      expect(tpc.ctx.clearRect).toHaveBeenCalledWith(0, 0, 100, 100)
 
-    it "draws each cell", ->
+    it "draws each cell onto the working canvas", ->
       spyOn(canvases, 'drawCell')
       canvases.draw()
       expect(canvases.drawCell).toHaveBeenCalledWith(jasmine.any(Cell), {})
 
-    it "uses the current tool to draw the cell if it provides cell options", ->
+    it "uses the current tool to draw the cell onto the working canvas if it provides cell options", ->
       opts = {foo: "bar"}
       currentTool.cellOptions = -> opts
       spyOn(canvases, 'drawCell')
       canvases.draw()
       expect(canvases.drawCell).toHaveBeenCalledWith(jasmine.any(Cell), opts)
+
+    it "writes the changes to the preview canvas", ->
+      pc = canvases.previewCanvas
+      pc.imageData = "imageData"
+      spyOn(canvases, '_clearPreviewCanvas')  # to prevent the imageData from being initialized
+      spyOn(pc.ctx, 'putImageData')
+      canvases.draw()
+      expect(pc.ctx.putImageData).toHaveBeenCalledWith("imageData", 0, 0)
+
+    it "triggers a possible draw event on the current tool", ->
+      currentTool.draw = jasmine.createSpy()
+      canvases.draw()
+      expect(currentTool.draw).toHaveBeenCalled()
+
+    it "applies the preview canvas to the tiled preview canvas (tiling it, of course)", ->
+      tpc = canvases.tiledPreviewCanvas
+      tpc.width = 100
+      tpc.height = 100
+      spyOn(tpc.ctx, 'createPattern').andReturn('#ff0000')
+      spyOn(tpc.ctx, 'fillRect')
+      canvases.draw()
+      expect(tpc.ctx.createPattern).toHaveBeenCalledWith(canvases.previewCanvas.element, "repeat")
+      expect(tpc.ctx.fillStyle).toEqual('#ff0000')
+      expect(tpc.ctx.fillRect).toHaveBeenCalledWith(0, 0, 100, 100)
 
     # ---- TODO Add more tests ----
 
@@ -781,9 +817,17 @@ describe 'DrawingCanvases', ->
           fillStyle = if JHW? then 'rgba(0, 255, 0, 1)' else '#00ff00'
           expect(ctx.fillStyle).toEqual(fillStyle)
 
+        it "also accepts color as a string", ->
+          canvases.drawWorkingCell(cell, color: '#00ff00')
+          expect(ctx.fillStyle).toEqual('#00ff00')
+
         it "separates each cell with a border", ->
           canvases.drawWorkingCell(cell, color: new Color(red: 0, green: 255, blue: 0))
           expect(ctx.fillRect).toHaveBeenCalledWith(31, 51, 9, 9)
+
+        it "does nothing if given a clear color", ->
+          canvases.drawWorkingCell(cell, color: new Color())
+          expect(ctx.fillRect).not.toHaveBeenCalled()
 
       describe 'when given a cell + a location', ->
         it "fills in a section of the working canvas with the given color", ->
@@ -816,9 +860,17 @@ describe 'DrawingCanvases', ->
           fillStyle = if JHW? then 'rgba(0, 255, 0, 1)' else '#00ff00'
           expect(ctx.fillStyle).toEqual(fillStyle)
 
+        it "also accepts color as a string", ->
+          canvases.drawWorkingCell(cell, color: '#00ff00')
+          expect(ctx.fillStyle).toEqual('#00ff00')
+
         it "separates each cell with a border", ->
           canvases.drawWorkingCell(cell, color: new Color(red: 0, green: 255, blue: 0))
           expect(ctx.fillRect).toHaveBeenCalledWith(30, 50, 10, 10)
+
+        it "does nothing if given a clear color", ->
+          canvases.drawWorkingCell(cell, color: new Color())
+          expect(ctx.fillRect).not.toHaveBeenCalled()
 
       describe 'when given a cell + a location', ->
         it "fills in a section of the working canvas with the given color", ->
@@ -829,3 +881,31 @@ describe 'DrawingCanvases', ->
         it "separates each cell with a border", ->
           canvases.drawWorkingCell(cell, loc: new CellLocation(canvases, 10, 2))
           expect(ctx.fillRect).toHaveBeenCalledWith(20, 100, 10, 10)
+
+  describe '#drawPreviewCell', ->
+    cell = imageData = null
+    beforeEach ->
+      cell = new Cell(
+        canvases: canvases,
+        loc: new CellLocation(canvases, 5, 3),
+        color: new Color(red: 255, green: 0, blue: 0, alpha: 0.5)
+      )
+
+      currentTool = Toolset.createTool()
+      app.boxes = {
+        tools: {currentTool: -> currentTool}
+      }
+      canvases = DrawingCanvases.init(app)
+      canvases.draw()  # to populate previewCanvas.imageData
+
+      imageData = canvases.previewCanvas.imageData
+      spyOn(imageData, 'setPixel')
+
+    it "fills in the pixel on the preview canvas with the color of the cell", ->
+      canvases.drawPreviewCell(cell)
+      expect(imageData.setPixel).toHaveBeenCalledWith(3, 5, 255, 0, 0, 127)
+
+    it "does nothing if the color of the cell being drawn is clear", ->
+      cell.color = new Color()
+      canvases.drawPreviewCell(cell)
+      expect(imageData.setPixel).not.toHaveBeenCalled()
