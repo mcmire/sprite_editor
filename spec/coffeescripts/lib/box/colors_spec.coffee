@@ -55,7 +55,7 @@ describe 'Box.Colors', ->
       expect($e.css('background-color')).not.toBeNull()
 
     it "resets the UI", ->
-      spyOn(Colors, 'reset')
+      spyOn(Colors, 'reset').andCallThrough()
       colors = Colors.init(app)
       expect(Colors.reset).toHaveBeenCalled()
 

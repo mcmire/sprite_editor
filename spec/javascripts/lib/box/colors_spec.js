@@ -62,7 +62,7 @@
         return expect($e.css('background-color')).not.toBeNull();
       });
       return it("resets the UI", function() {
-        spyOn(Colors, 'reset');
+        spyOn(Colors, 'reset').andCallThrough();
         colors = Colors.init(app);
         return expect(Colors.reset).toHaveBeenCalled();
       });
