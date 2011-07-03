@@ -74,10 +74,13 @@
         if (!this.isInitialized) {
           return;
         }
+        if (this.workingCanvas == null) {
+          return;
+        }
         if (!this.app.isInitialized) {
           return;
         }
-        if (this.workingCanvas == null) {
+        if (this.app.boxes == null) {
           return;
         }
         this._clearWorkingCanvas();

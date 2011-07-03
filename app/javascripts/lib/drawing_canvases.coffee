@@ -69,12 +69,15 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       # If this singleton is destroyed, then no point in drawing (note: this
       # will only apply during tests)
       return unless @isInitialized
-      # No point in drawing if the App is destroyed, either (again, this
-      # only applies during tests)
-      return unless @app.isInitialized
       # Somehow variables are getting reset in our tests while the draw loop is
       # still active, so check for that too
       return unless @workingCanvas?
+      # No point in drawing if the App is destroyed, either (again, this
+      # only applies during tests)
+      return unless @app.isInitialized
+      # Finally, if app.boxes disappeared before app.isInitialized is set to
+      # false, this will also cause problems, so check for that too
+      return unless @app.boxes?
 
       @_clearWorkingCanvas()
       @_clearPreviewCanvas()
