@@ -223,6 +223,7 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
         @pos.rel.y = @elementSize.height
       #console.log "abs: #{@pos.abs.x}, #{@pos.abs.y}"
       #console.log "rel: #{@pos.rel.x}, #{@pos.rel.y}"
+      #console.log "elementOffset: {left: #{@elementOffset.left}, top: #{@elementOffset.top}}"
 
     _addEvents: ->
       self = this
