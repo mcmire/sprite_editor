@@ -2,6 +2,8 @@
   var _ensureEnderObject;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   window.RUNNING_TESTS = true;
+  window.$sandbox = $('<div id="sandbox" />');
+  window.sandboxAdded = false;
   _ensureEnderObject = function(obj) {
     if (!(typeof obj === "object" && '$' in obj)) {
       throw new Error("Object doesn't seem to be an Ender instance!");
@@ -210,9 +212,11 @@
         return result;
       }
     });
-    return $('<div id="sandbox"/>').appendTo(document.body);
-  });
-  afterEach(function() {
-    return $('#sandbox').remove();
+    if (window.sandboxAdded) {
+      return window.$sandbox.empty();
+    } else {
+      window.$sandbox.appendTo(document.body);
+      return window.sandboxAdded = true;
+    }
   });
 }).call(this);

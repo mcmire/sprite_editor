@@ -1,5 +1,8 @@
 window.RUNNING_TESTS = true
 
+window.$sandbox = $('<div id="sandbox" />')
+window.sandboxAdded = false
+
 _ensureEnderObject = (obj) ->
   unless typeof obj is "object" and '$' of obj
     throw new Error("Object doesn't seem to be an Ender instance!")
@@ -180,9 +183,9 @@ beforeEach ->
       result
   )
 
-  # Add container element we can dump elements into
-  $('<div id="sandbox"/>').appendTo(document.body)
-
-afterEach ->
-  # Remove the container element we added earlier
-  $('#sandbox').remove()
+  # Add a sandbox element to the body, or clear it
+  if window.sandboxAdded
+    window.$sandbox.empty()
+  else
+    window.$sandbox.appendTo(document.body)
+    window.sandboxAdded = true

@@ -32,33 +32,43 @@
         return $(document.body).append(this.colorPicker.$container);
       },
       destroy: function() {
+        var _ref, _ref2, _ref3;
         if (this.isInitialized) {
           this.removeEvents();
           Keyboard.destroy();
-          this.canvases.destroy();
-          this.toolset.destroy();
-          this.history.destroy();
+          if ((_ref = this.canvases) != null) {
+            _ref.destroy();
+          }
+          if ((_ref2 = this.toolset) != null) {
+            _ref2.destroy();
+          }
+          if ((_ref3 = this.history) != null) {
+            _ref3.destroy();
+          }
           this.reset();
           this.isInitialized = false;
         }
         return this;
       },
       reset: function() {
-        var _ref, _ref2;
+        var _ref, _ref2, _ref3;
         this.canvases = null;
         this.toolset = null;
         this.history = null;
         this.boxes = {};
+        if ((_ref = this.$container) != null) {
+          _ref.remove();
+        }
+        this.$container = null;
         this.$leftPane = null;
         this.$centerPane = null;
         this.$rightPane = null;
-        this.$container = null;
-        if ((_ref = this.maskDiv) != null) {
-          _ref.remove();
+        if ((_ref2 = this.$maskDiv) != null) {
+          _ref2.remove();
         }
-        this.maskDiv = null;
-        if ((_ref2 = this.colorPicker) != null) {
-          _ref2.$container.remove();
+        this.$maskDiv = null;
+        if ((_ref3 = this.colorPicker) != null) {
+          _ref3.$container.remove();
         }
         this.colorPicker = null;
         return this;
@@ -75,13 +85,9 @@
             key = event.keyCode;
             if (key === Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
               if (event.shiftKey) {
-                if (this.history.canRedo()) {
-                  this.history.redo();
-                }
+                this.history.redo();
               } else {
-                if (this.history.canUndo()) {
-                  this.history.undo();
-                }
+                this.history.undo();
               }
             }
             return this.boxes.tools.currentTool().trigger("keydown", event);
@@ -93,11 +99,20 @@
         return this;
       },
       removeEvents: function() {
+        var _ref, _ref2, _ref3, _ref4;
         Keyboard.removeEvents();
-        this.canvases.removeEvents();
-        this.boxes.tools.removeEvents();
-        this.boxes.sizes.removeEvents();
-        this.boxes.colors.removeEvents();
+        if ((_ref = this.canvases) != null) {
+          _ref.removeEvents();
+        }
+        if ((_ref2 = this.boxes.tools) != null) {
+          _ref2.removeEvents();
+        }
+        if ((_ref3 = this.boxes.sizes) != null) {
+          _ref3.removeEvents();
+        }
+        if ((_ref4 = this.boxes.colors) != null) {
+          _ref4.removeEvents();
+        }
         this._unbindEvents(document, "keydown", "keyup");
         return this;
       },

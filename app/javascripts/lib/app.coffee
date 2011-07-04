@@ -38,9 +38,9 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       if @isInitialized
         @removeEvents()
         Keyboard.destroy()
-        @canvases.destroy()
-        @toolset.destroy()
-        @history.destroy()
+        @canvases?.destroy()
+        @toolset?.destroy()
+        @history?.destroy()
         @reset()
         @isInitialized = false
       return this
@@ -50,12 +50,13 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       @toolset = null
       @history = null
       @boxes = {}
+      @$container?.remove()
+      @$container = null
       @$leftPane = null
       @$centerPane = null
       @$rightPane = null
-      @$container = null
-      @maskDiv?.remove()
-      @maskDiv = null
+      @$maskDiv?.remove()
+      @$maskDiv = null
       @colorPicker?.$container.remove()
       @colorPicker = null
       return this
@@ -73,10 +74,10 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
           if key == Keyboard.Z_KEY and (event.ctrlKey or event.metaKey)
             if event.shiftKey
               # Ctrl-Shift-Z or Command-Shift-Z: Redo last action
-              @history.redo() if @history.canRedo()
+              @history.redo()
             else
               # Ctrl-Z or Command-Z: Undo last action
-              @history.undo() if @history.canUndo()
+              @history.undo()
           @boxes.tools.currentTool().trigger("keydown", event)
 
         keyup: (event) =>
@@ -86,10 +87,10 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
     removeEvents: ->
       Keyboard.removeEvents()
-      @canvases.removeEvents()
-      @boxes.tools.removeEvents()
-      @boxes.sizes.removeEvents()
-      @boxes.colors.removeEvents()
+      @canvases?.removeEvents()
+      @boxes.tools?.removeEvents()
+      @boxes.sizes?.removeEvents()
+      @boxes.colors?.removeEvents()
       @_unbindEvents(document, "keydown", "keyup")
       return this
 
@@ -103,6 +104,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       @$centerPane = $('<div id="center_pane" />')
       @$container.append(@$centerPane)
 
+    # TODO: Create an anonymous object for this, with addEvents / removeEvents
     _createImportExportDiv: ->
       $importExportDiv = $("<div id=\"import_export\" />")
 

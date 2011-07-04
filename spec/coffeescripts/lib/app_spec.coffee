@@ -13,7 +13,7 @@ describe 'App', ->
     App.init()
 
   beforeEach ->
-    # stub this as we don't need stuff to be drawing unnecessarily
+    # always stub this as we don't need stuff to be drawing unnecessarily
     spyOn(DrawingCanvases, 'draw')
 
   afterEach ->
@@ -27,7 +27,7 @@ describe 'App', ->
     initAppWithSandbox = ->
       app = initApp()
       # make the container exist in the document so any find's that take place will work
-      $('#sandbox').append(app.$container)
+      $sandbox.append(app.$container)
       app
 
     describe 'when not initialized yet', ->
@@ -117,12 +117,325 @@ describe 'App', ->
       app = initApp()
 
     it "adds the container to the given element", ->
-      app.hook('#sandbox')
-      $body = $(document.body)
-      $sandbox = $('#sandbox')
+      app.hook($sandbox)
       expect($sandbox.find('div:first-child')).toBeElement(app.$container)
-      expect($body.find('#mask')).toBeElement(app.$maskDiv)
+
+    it "adds the mask and the color picker to the body", ->
+      app.hook($sandbox)
+      #console.log $(document.body).html()
+      $body = $(document.body)
+      mask1 = $body.find('#mask')[0]
+      mask2 = app.$maskDiv[0]
+      expect(mask1).toBe(mask2)
       expect($body).toContainElement(app.colorPicker.$container)
+
+  describe 'when destroyed', ->
+    beforeEach ->
+      app = initApp()
+
+    describe 'if not destroyed yet', ->
+      it "removes any events that may have been added", ->
+        spyOn(app, 'removeEvents')
+        app.destroy()
+        expect(app.removeEvents).toHaveBeenCalled()
+
+      it "un-initializes the Keyboard module", ->
+        spyOn(Keyboard, 'destroy')
+        app.destroy()
+        expect(Keyboard.destroy).toHaveBeenCalled()
+
+      it "un-initializes the drawing canvases", ->
+        spyOn(DrawingCanvases, 'destroy')
+        app.destroy()
+        expect(DrawingCanvases.destroy).toHaveBeenCalled()
+
+      it "doesn't blow up if @canvases is null", ->
+        app.canvases = null
+        expect(-> app.destroy()).not.toThrowAnything()
+
+      it "un-initializes the toolset", ->
+        spyOn(Toolset, 'destroy')
+        app.destroy()
+        expect(Toolset.destroy).toHaveBeenCalled()
+
+      it "doesn't blow up if @toolset is null", ->
+        app.toolset = null
+        expect(-> app.destroy()).not.toThrowAnything()
+
+      it "un-initializes the event history", ->
+        spyOn(EventHistory, 'destroy')
+        app.destroy()
+        expect(EventHistory.destroy).toHaveBeenCalled()
+
+      it "doesn't blow up if @history is null", ->
+        app.history = null
+        expect(-> app.destroy()).not.toThrowAnything()
+
+      it "resets key variables", ->
+        spyOn(app, 'reset')
+        app.destroy()
+        expect(app.reset).toHaveBeenCalled()
+
+      it "sets @isInitialized to false", ->
+        app.destroy()
+        expect(app.isInitialized).toBeFalsy()
+
+    describe 'if already destroyed', ->
+      beforeEach ->
+        app.destroy()
+
+      it "doesn't try to remove events", ->
+        spyOn(app, 'removeEvents')
+        app.destroy()
+        expect(app.removeEvents).not.toHaveBeenCalled()
+
+      it "doesn't try to un-initialize the Keyboard module", ->
+        spyOn(Keyboard, 'destroy')
+        app.destroy()
+        expect(Keyboard.destroy).not.toHaveBeenCalled()
+
+      it "doesn't try to un-initialize the drawing canvases", ->
+        spyOn(DrawingCanvases, 'destroy')
+        app.destroy()
+        expect(DrawingCanvases.destroy).not.toHaveBeenCalled()
+
+      it "doesn't try to un-initialize the toolset", ->
+        spyOn(Toolset, 'destroy')
+        app.destroy()
+        expect(Toolset.destroy).not.toHaveBeenCalled()
+
+      it "doesn't try to un-initialize the event history", ->
+        spyOn(EventHistory, 'destroy')
+        app.destroy()
+        expect(EventHistory.destroy).not.toHaveBeenCalled()
+
+      it "doesn't reset key variables", ->
+        spyOn(app, 'reset')
+        app.destroy()
+        expect(app.reset).not.toHaveBeenCalled()
+
+  describe 'when reset', ->
+    beforeEach ->
+      app = initApp()
+
+    it "resets @canvases", ->
+      app.canvases = "something"
+      app.reset()
+      expect(app.canvases).not.toBe()
+
+    it "resets @toolset", ->
+      app.toolset = "something"
+      app.reset()
+      expect(app.toolset).not.toBe()
+
+    it "resets @history", ->
+      app.history = "something"
+      app.reset()
+      expect(app.history).not.toBe()
+
+    it "resets @boxes", ->
+      app.boxes = "something"
+      app.reset()
+      expect(app.boxes).toEqual({})
+
+    it "removes the container from the document, if it's present", ->
+      app.$container.appendTo($sandbox)
+      app.reset()
+      expect($sandbox).not.toContainElement('#container')
+
+    it "resets @$container", ->
+      app.reset()
+      expect(app.$container).not.toBe()
+
+    it "resets @$leftPane", ->
+      app.$leftPane = "something"
+      app.reset()
+      expect(app.$leftPane).not.toBe()
+
+    it "resets @$centerPane", ->
+      app.$centerPane = "something"
+      app.reset()
+      expect(app.$centerPane).not.toBe()
+
+    it "resets @$rightPane", ->
+      app.$rightPane = "something"
+      app.reset()
+      expect(app.$rightPane).not.toBe()
+
+    it "removes the mask from the body, if it's present", ->
+      app.$maskDiv.appendTo($sandbox)
+      app.reset()
+      expect($sandbox).not.toContainElement('#mask')
+
+    it "resets @$maskDiv", ->
+      app.reset()
+      expect(app.$maskDiv).not.toBe()
+
+    it "removes the color picker container from the body, if it's present", ->
+      $elem = app.colorPicker.$container
+      id = $elem.attr("id")
+      $elem.appendTo($sandbox)
+      app.reset()
+      expect($sandbox).not.toContainElement("##{id}")
+
+    it "resets @colorPicker", ->
+      app.reset()
+      expect(app.colorPicker).not.toBe()
+
+  describe 'when events have been added', ->
+    currentTool = null
+
+    beforeEach ->
+      app = initApp()
+      currentTool = Toolset.createTool()
+      spyOn(app.boxes.tools, 'currentTool').andReturn(currentTool)
+
+    it "adds keyboard events", ->
+      spyOn(Keyboard, 'addEvents')
+      app.addEvents()
+      expect(Keyboard.addEvents).toHaveBeenCalled()
+
+    it "adds canvas events", ->
+      spyOn(DrawingCanvases, 'addEvents')
+      app.addEvents()
+      expect(DrawingCanvases.addEvents).toHaveBeenCalled()
+
+    it "adds tools box events", ->
+      spyOn(Box.Tools, 'addEvents')
+      app.addEvents()
+      expect(Box.Tools.addEvents).toHaveBeenCalled()
+
+    it "adds sizes box events", ->
+      spyOn(Box.Sizes, 'addEvents')
+      app.addEvents()
+      expect(Box.Sizes.addEvents).toHaveBeenCalled()
+
+    it "adds colors box events", ->
+      spyOn(Box.Colors, 'addEvents')
+      app.addEvents()
+      expect(Box.Colors.addEvents).toHaveBeenCalled()
+
+    describe 'when Ctrl-Z is pressed', ->
+      it "undoes the last action", ->
+        app.addEvents()
+        spyOn(app.history, 'undo')
+        $(document).simulate "keydown", keyCode: Keyboard.Z_KEY, ctrlKey: true
+        expect(app.history.undo).toHaveBeenCalled()
+
+    describe 'when Cmd-Z is pressed', ->
+      it "undoes the last action", ->
+        app.addEvents()
+        spyOn(app.history, 'undo')
+        $(document).simulate "keydown", keyCode: Keyboard.Z_KEY, metaKey: true
+        expect(app.history.undo).toHaveBeenCalled()
+
+    describe 'when Ctrl-Shift-Z is pressed', ->
+      it "redoes the last action", ->
+        app.addEvents()
+        spyOn(app.history, 'redo')
+        $(document).simulate "keydown", keyCode: Keyboard.Z_KEY, ctrlKey: true, shiftKey: true
+        expect(app.history.redo).toHaveBeenCalled()
+
+    describe 'when Cmd-Shift-Z is pressed', ->
+      it "redoes the last action", ->
+        app.addEvents()
+        spyOn(app.history, 'redo')
+        $(document).simulate "keydown", keyCode: Keyboard.Z_KEY, metaKey: true, shiftKey: true
+        expect(app.history.redo).toHaveBeenCalled()
+
+    describe 'when a key is pressed', ->
+      it "calls a possible keydown event on the current tool", ->
+        app.addEvents()
+        currentTool.keydown = ->
+        spyOn(currentTool, 'keydown')
+        $(document).simulate("keydown")
+        expect(currentTool.keydown).toHaveBeenCalled()
+
+    describe 'when a key is lifted', ->
+      it "calls a possible keyup event on the current tool", ->
+        app.addEvents()
+        currentTool.keyup = ->
+        spyOn(currentTool, 'keyup')
+        $(document).simulate("keyup")
+        expect(currentTool.keyup).toHaveBeenCalled()
+
+  describe 'when events have been removed', ->
+    currentTool = null
+
+    beforeEach ->
+      app = initApp()
+      app.addEvents()
+      currentTool = Toolset.createTool()
+      spyOn(app.boxes.tools, 'currentTool').andReturn(currentTool)
+
+    it "removes keyboard events", ->
+      spyOn(Keyboard, 'removeEvents')
+      app.removeEvents()
+      expect(Keyboard.removeEvents).toHaveBeenCalled()
+
+    it "removes canvas events", ->
+      spyOn(DrawingCanvases, 'removeEvents')
+      app.removeEvents()
+      expect(DrawingCanvases.removeEvents).toHaveBeenCalled()
+
+    it "removes tools box events", ->
+      spyOn(Box.Tools, 'removeEvents')
+      app.removeEvents()
+      expect(Box.Tools.removeEvents).toHaveBeenCalled()
+
+    it "removes sizes box events", ->
+      spyOn(Box.Sizes, 'removeEvents')
+      app.removeEvents()
+      expect(Box.Sizes.removeEvents).toHaveBeenCalled()
+
+    it "removes colors box events", ->
+      spyOn(Box.Colors, 'removeEvents')
+      app.removeEvents()
+      expect(Box.Colors.removeEvents).toHaveBeenCalled()
+
+    describe 'when Ctrl-Z is pressed', ->
+      it "doesn't undo the last action", ->
+        app.removeEvents()
+        spyOn(app.history, 'undo')
+        $(document).simulate "keydown", keyCode: Keyboard.Z_KEY, ctrlKey: true
+        expect(app.history.undo).not.toHaveBeenCalled()
+
+    describe 'when Cmd-Z is pressed', ->
+      it "doesn't undo the last action", ->
+        app.removeEvents()
+        spyOn(app.history, 'undo')
+        $(document).simulate "keydown", keyCode: Keyboard.Z_KEY, metaKey: true
+        expect(app.history.undo).not.toHaveBeenCalled()
+
+    describe 'when Ctrl-Shift-Z is pressed', ->
+      it "doesn't redo the last action", ->
+        app.removeEvents()
+        spyOn(app.history, 'redo')
+        $(document).simulate "keydown", keyCode: Keyboard.Z_KEY, ctrlKey: true, shiftKey: true
+        expect(app.history.redo).not.toHaveBeenCalled()
+
+    describe 'when Cmd-Shift-Z is pressed', ->
+      it "doesn't redo the last action", ->
+        app.removeEvents()
+        spyOn(app.history, 'redo')
+        $(document).simulate "keydown", keyCode: Keyboard.Z_KEY, metaKey: true, shiftKey: true
+        expect(app.history.redo).not.toHaveBeenCalled()
+
+    describe 'when a key is pressed', ->
+      it "doesn't call a keydown event on the current tool", ->
+        app.removeEvents()
+        currentTool.keydown = ->
+        spyOn(currentTool, 'keydown')
+        $(document).simulate("keydown")
+        expect(currentTool.keydown).not.toHaveBeenCalled()
+
+    describe 'when a key is lifted', ->
+      it "doesn't call a keyup event on the current tool", ->
+        app.removeEvents()
+        currentTool.keyup = ->
+        spyOn(currentTool, 'keyup')
+        $(document).simulate("keyup")
+        expect(currentTool.keyup).not.toHaveBeenCalled()
 
   #describe 'import form actions'
 
