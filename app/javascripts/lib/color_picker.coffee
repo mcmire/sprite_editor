@@ -98,7 +98,8 @@ $.export "SpriteEditor.ColorPicker", (SpriteEditor) ->
       @hueSatCanvas = SpriteEditor.Canvas.create @hueSatCanvasSize.width, @hueSatCanvasSize.height, (c) =>
         imageData = c.ctx.createImageData(c.width, c.height)
         hsl = @currentColor
-        # TODO: Use a gradient for this instead of manually filling in pixels
+        # TODO: This is SUPER SLOW... use a gradient for this instead of
+        # manually filling in pixels
         for y in [0...c.height]
           for x in [0...c.width]
             # x = 0..width  -> h = 0..360

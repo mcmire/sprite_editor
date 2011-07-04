@@ -3,7 +3,7 @@
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   window.RUNNING_TESTS = true;
   _ensureEnderObject = function(obj) {
-    if (!('$' in obj)) {
+    if (!(typeof obj === "object" && '$' in obj)) {
       throw new Error("Object doesn't seem to be an Ender instance!");
     }
   };
@@ -188,6 +188,26 @@
         _ensureEnderObject(this.actual);
         _ensureEnderObject(other);
         return this.actual[0] === other[0];
+      },
+      toContainElement: function(selector, options) {
+        var $elem, result;
+        if (options == null) {
+          options = {};
+        }
+        _ensureEnderObject(this.actual);
+        if (typeof selector === "object" && '$' in selector) {
+          result = $.isAncestor(this.actual[0], selector[0]);
+          if (options.content) {
+            result && (result = selector.html() === options.content);
+          }
+        } else {
+          $elem = this.actual.find(selector);
+          result = !!$elem.length;
+          if (options.content) {
+            result && (result = $elem.html() === options.content);
+          }
+        }
+        return result;
       }
     });
     return $('<div id="sandbox"/>').appendTo(document.body);

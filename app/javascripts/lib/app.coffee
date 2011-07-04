@@ -7,50 +7,61 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
   $.extend App,
     init: ->
-      @reset()
+      unless @isInitialized
+        @reset()
 
-      Keyboard.init()
+        Keyboard.init()
+        @canvases = SpriteEditor.DrawingCanvases.init(this)
+        @toolset = SpriteEditor.Toolset.init(this, @canvases)
+        @history = SpriteEditor.EventHistory.init(this)
 
-      @canvases = SpriteEditor.DrawingCanvases.init(this)
-      @toolset = SpriteEditor.Toolset.init(this, @canvases)
-      @history = SpriteEditor.EventHistory.init(this)
+        @$container = $('<div />');
+        @_createMask()
+        @_createWrapperDivs()
+        @_createImportExportDiv()
+        @_addWorkingCanvas()
+        @_createToolBox()
+        @_createBrushSizesBox()
+        @_createColorPicker()
+        @_createPreviewBox()
 
-      @$container = $("#main")
-      @_createMask()
-      @_createWrapperDivs()
-      @_createImportExportDiv()
-      @_addWorkingCanvas()
-      @_createToolBox()
-      @_createBrushSizesBox()
-      @_createColorPicker()
-      @_createPreviewBox()
-
-      @addEvents()
-
-      @isInitialized = true
+        @isInitialized = true
 
       return this
 
+    hook: (wrapper) ->
+      $(wrapper).append(@$container)
+      $(document.body).append(@$maskDiv)
+      $(document.body).append(@colorPicker.$container)
+
     destroy: ->
-      return unless @isInitialized
-      Keyboard.destroy()
-      @removeEvents()
-      @reset()
-      @isInitialized = false
+      if @isInitialized
+        @removeEvents()
+        Keyboard.destroy()
+        @canvases.destroy()
+        @toolset.destroy()
+        @history.destroy()
+        @reset()
+        @isInitialized = false
       return this
 
     reset: ->
       @canvases = null
       @toolset = null
       @history = null
-      @$container = null
+      @boxes = {}
       @$leftPane = null
       @$centerPane = null
       @$rightPane = null
-      @boxes = {}
+      @$container = null
+      @maskDiv?.remove()
+      @maskDiv = null
+      @colorPicker?.$container.remove()
+      @colorPicker = null
       return this
 
     addEvents: ->
+      Keyboard.addEvents()
       @canvases.addEvents()   # will start the draw loop
       @boxes.tools.addEvents()
       @boxes.sizes.addEvents()
@@ -74,6 +85,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       return this
 
     removeEvents: ->
+      Keyboard.removeEvents()
       @canvases.removeEvents()
       @boxes.tools.removeEvents()
       @boxes.sizes.removeEvents()
@@ -82,16 +94,13 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       return this
 
     _createWrapperDivs: ->
-      @$leftPane = $("<div/>")
-      @$leftPane.attr("id", "left_pane")
+      @$leftPane = $('<div id="left_pane" />')
       @$container.append(@$leftPane)
 
-      @$rightPane = $("<div/>")
-      @$rightPane.attr("id", "right_pane")
+      @$rightPane = $('<div id="right_pane" />')
       @$container.append(@$rightPane)
 
-      @$centerPane = $("<div/>")
-      @$centerPane.attr("id", "center_pane")
+      @$centerPane = $('<div id="center_pane" />')
       @$container.append(@$centerPane)
 
     _createImportExportDiv: ->
@@ -216,7 +225,6 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
           @_hideMask()
           @addEvents()
       )
-      $(document.body).append(@colorPicker.$container)
 
     _createPreviewBox: ->
       $boxDiv = $("<div/>").attr("id", "preview_box").addClass("box")
@@ -240,7 +248,6 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
     _createMask: ->
       @$maskDiv = $('<div id="mask" />').hide()
-      $(document.body).append(@$maskDiv)
 
     _showMask: ->
       @$maskDiv.show()

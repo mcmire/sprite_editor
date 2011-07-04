@@ -1,7 +1,7 @@
 window.RUNNING_TESTS = true
 
 _ensureEnderObject = (obj) ->
-  unless '$' of obj
+  unless typeof obj is "object" and '$' of obj
     throw new Error("Object doesn't seem to be an Ender instance!")
 
 window.specHelpers =
@@ -163,6 +163,21 @@ beforeEach ->
       _ensureEnderObject(@actual)
       _ensureEnderObject(other)
       @actual[0] == other[0]
+
+    toContainElement: (selector, options={}) ->
+      _ensureEnderObject(@actual)
+      if typeof selector is "object" and '$' of selector
+        # `selector` is an Ender object
+        result = $.isAncestor(@actual[0], selector[0])
+        if options.content
+          result &&= (selector.html() == options.content)
+      else
+        # `selector` is a string
+        $elem = @actual.find(selector)
+        result = !!$elem.length
+        if options.content
+          result &&= ($elem.html() == options.content)
+      result
   )
 
   # Add container element we can dump elements into

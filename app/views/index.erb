@@ -48,7 +48,9 @@
 
   <script>
     $.domReady(function() {
-      SpriteEditor.App.init();
+      var app = SpriteEditor.App.init();
+      app.addEvents();
+      app.hook('#main');
 
       var $helpBox = $('#help_box');
       $('#help').bind('click', function(event) {

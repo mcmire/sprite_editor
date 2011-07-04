@@ -7,46 +7,64 @@
     SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App");
     $.extend(App, {
       init: function() {
-        this.reset();
-        Keyboard.init();
-        this.canvases = SpriteEditor.DrawingCanvases.init(this);
-        this.toolset = SpriteEditor.Toolset.init(this, this.canvases);
-        this.history = SpriteEditor.EventHistory.init(this);
-        this.$container = $("#main");
-        this._createMask();
-        this._createWrapperDivs();
-        this._createImportExportDiv();
-        this._addWorkingCanvas();
-        this._createToolBox();
-        this._createBrushSizesBox();
-        this._createColorPicker();
-        this._createPreviewBox();
-        this.addEvents();
-        this.isInitialized = true;
+        if (!this.isInitialized) {
+          this.reset();
+          Keyboard.init();
+          this.canvases = SpriteEditor.DrawingCanvases.init(this);
+          this.toolset = SpriteEditor.Toolset.init(this, this.canvases);
+          this.history = SpriteEditor.EventHistory.init(this);
+          this.$container = $('<div />');
+          this._createMask();
+          this._createWrapperDivs();
+          this._createImportExportDiv();
+          this._addWorkingCanvas();
+          this._createToolBox();
+          this._createBrushSizesBox();
+          this._createColorPicker();
+          this._createPreviewBox();
+          this.isInitialized = true;
+        }
         return this;
       },
+      hook: function(wrapper) {
+        $(wrapper).append(this.$container);
+        $(document.body).append(this.$maskDiv);
+        return $(document.body).append(this.colorPicker.$container);
+      },
       destroy: function() {
-        if (!this.isInitialized) {
-          return;
+        if (this.isInitialized) {
+          this.removeEvents();
+          Keyboard.destroy();
+          this.canvases.destroy();
+          this.toolset.destroy();
+          this.history.destroy();
+          this.reset();
+          this.isInitialized = false;
         }
-        Keyboard.destroy();
-        this.removeEvents();
-        this.reset();
-        this.isInitialized = false;
         return this;
       },
       reset: function() {
+        var _ref, _ref2;
         this.canvases = null;
         this.toolset = null;
         this.history = null;
-        this.$container = null;
+        this.boxes = {};
         this.$leftPane = null;
         this.$centerPane = null;
         this.$rightPane = null;
-        this.boxes = {};
+        this.$container = null;
+        if ((_ref = this.maskDiv) != null) {
+          _ref.remove();
+        }
+        this.maskDiv = null;
+        if ((_ref2 = this.colorPicker) != null) {
+          _ref2.$container.remove();
+        }
+        this.colorPicker = null;
         return this;
       },
       addEvents: function() {
+        Keyboard.addEvents();
         this.canvases.addEvents();
         this.boxes.tools.addEvents();
         this.boxes.sizes.addEvents();
@@ -75,6 +93,7 @@
         return this;
       },
       removeEvents: function() {
+        Keyboard.removeEvents();
         this.canvases.removeEvents();
         this.boxes.tools.removeEvents();
         this.boxes.sizes.removeEvents();
@@ -83,14 +102,11 @@
         return this;
       },
       _createWrapperDivs: function() {
-        this.$leftPane = $("<div/>");
-        this.$leftPane.attr("id", "left_pane");
+        this.$leftPane = $('<div id="left_pane" />');
         this.$container.append(this.$leftPane);
-        this.$rightPane = $("<div/>");
-        this.$rightPane.attr("id", "right_pane");
+        this.$rightPane = $('<div id="right_pane" />');
         this.$container.append(this.$rightPane);
-        this.$centerPane = $("<div/>");
-        this.$centerPane.attr("id", "center_pane");
+        this.$centerPane = $('<div id="center_pane" />');
         return this.$container.append(this.$centerPane);
       },
       _createImportExportDiv: function() {
@@ -174,7 +190,7 @@
         var box;
         this.boxes.colors = box = SpriteEditor.Box.Colors.init(this);
         this.$rightPane.append(box.$element);
-        this.colorPicker = SpriteEditor.ColorPicker.init(this, {
+        return this.colorPicker = SpriteEditor.ColorPicker.init(this, {
           open: __bind(function() {
             this.removeEvents();
             return this._showMask();
@@ -184,7 +200,6 @@
             return this.addEvents();
           }, this)
         });
-        return $(document.body).append(this.colorPicker.$container);
       },
       _createPreviewBox: function() {
         var $boxDiv, $header;
@@ -206,8 +221,7 @@
         return this.$leftPane.append(box.$element);
       },
       _createMask: function() {
-        this.$maskDiv = $('<div id="mask" />').hide();
-        return $(document.body).append(this.$maskDiv);
+        return this.$maskDiv = $('<div id="mask" />').hide();
       },
       _showMask: function() {
         return this.$maskDiv.show();
