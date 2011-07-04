@@ -1,3 +1,14 @@
+# src_dir
+#
+# Source directory path. Your src_files must be returned relative to this path. Will use root if left blank.
+# Default: project root
+#
+# EXAMPLE:
+#
+# src_dir: public
+#
+src_dir: public/javascripts
+
 # src_files
 #
 # Return an array of filepaths relative to src_dir to include before jasmine specs.
@@ -11,27 +22,31 @@
 #   - dist/**/*.js
 #
 src_files:
-  - public/javascripts/vendor/ender.js
-  - public/javascripts/vendor/bowser.js
-  - public/javascripts/lib/ender_ext.js
-  - public/javascripts/lib/util.js
-  - public/javascripts/lib/dom_event_helpers.js
-  - public/javascripts/lib/canvas.js
-  - public/javascripts/lib/color.js
-  - public/javascripts/lib/element_mouse_tracker.js
-  - public/javascripts/lib/keyboard.js
-  - public/javascripts/lib/cell_location.js
-  - public/javascripts/lib/cell.js
-  - public/javascripts/lib/event_history.js
-  - public/javascripts/lib/eventable.js
-  - public/javascripts/lib/box.js
-  - public/javascripts/lib/box/tools.js
-  - public/javascripts/lib/box/sizes.js
-  - public/javascripts/lib/box/colors.js
-  - public/javascripts/lib/color_picker.js
-  - public/javascripts/lib/drawing_canvases.js
-  - public/javascripts/lib/toolset.js
-  - public/javascripts/lib/app.js
+  - vendor/ender.js
+  - vendor/bowser.js
+  - lib/ender_ext.js
+  - lib/util.js
+  - lib/dom_event_helpers.js
+  - lib/canvas.js
+  - lib/color.js
+  - lib/element_mouse_tracker.js
+  - lib/keyboard.js
+  - lib/cell_location.js
+  - lib/cell.js
+  - lib/event_history.js
+  - lib/eventable.js
+  - lib/box.js
+  - lib/box/tools.js
+  - lib/box/sizes.js
+  - lib/box/colors.js
+  - lib/color_picker.js
+  - lib/drawing_canvases.js
+  - lib/toolset.js
+  - lib/tools/pencil.js
+  - lib/tools/bucket.js
+  - lib/tools/select.js
+  - lib/tools/dropper.js
+  - lib/app.js
 
 # stylesheets
 #
@@ -71,17 +86,6 @@ helpers:
 #
 spec_files:
   - "**/*_spec.js"
-
-# src_dir
-#
-# Source directory path. Your src_files must be returned relative to this path. Will use root if left blank.
-# Default: project root
-#
-# EXAMPLE:
-#
-# src_dir: public
-#
-src_dir:
 
 # spec_dir
 #
