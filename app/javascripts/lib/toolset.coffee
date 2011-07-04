@@ -8,17 +8,18 @@ $.export "SpriteEditor.Toolset", (SpriteEditor) ->
     toolShortcuts: {}
     tools: {}
 
-    BaseTool: $.extend({}, SpriteEditor.Eventable, {
+    BaseTool: $.extend({}, SpriteEditor.Eventable,
       init: (@app, @canvases) ->
-
       trigger: (name, args...) ->
         @[name]?.apply(this, args)
-    })
+    )
 
     init: (@app, @canvases) ->
-      for name, tool of @tools
-        tool.init(app, canvases)
+      tool.init(app, canvases) for name, tool of @tools
       return this
+
+    destroy: ->
+      # TODO..........
 
     createTool: ->
       $.extend({}, @BaseTool)

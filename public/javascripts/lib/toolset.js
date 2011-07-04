@@ -30,6 +30,7 @@
         }
         return this;
       },
+      destroy: function() {},
       createTool: function() {
         return $.extend({}, this.BaseTool);
       },
