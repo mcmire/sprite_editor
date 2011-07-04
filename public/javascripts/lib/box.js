@@ -3,7 +3,8 @@
     init: function(app) {
       var $header;
       this.app = app;
-      this.$element = $("<div/>").attr("id", "se-box-" + (this.name.toLowerCase())).addClass("se-box");
+      this.containerId = "se-box-" + (this.name.toLowerCase());
+      this.$element = $("<div/>").attr("id", this.containerId).addClass("se-box");
       $header = $("<h3/>").text(this.header);
       this.$element.append($header);
       return this;
