@@ -9,7 +9,7 @@
           canvases: {}
         };
         currentColor = t.app.boxes.colors.currentColor();
-        focusedColor = t.canvases.focusedCells[0].color.clone();
+        focusedColor = t.canvases.focusedCell.color.clone();
         changedCells = [];
         $.v.each(t.canvases.cells, function(row) {
           return $.v.each(row, function(cell, j) {

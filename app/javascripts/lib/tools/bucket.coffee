@@ -3,10 +3,10 @@
 Toolset.addTool "bucket", "G", (t) ->
   t.addAction "fillFocusedCells",
     do: ->
-      event = canvases: {}
+      event = { canvases: {} }
 
       currentColor = t.app.boxes.colors.currentColor()
-      focusedColor = t.canvases.focusedCells[0].color.clone()
+      focusedColor = t.canvases.focusedCell.color.clone()
 
       # Look for all cells with the color of the current cell (or look for all
       # empty cells, if the current cell is empty) and mark them as filled
