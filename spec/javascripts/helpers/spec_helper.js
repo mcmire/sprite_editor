@@ -137,16 +137,14 @@
         return result;
       },
       toBeElementOf: function(nodeName) {
-        _ensureEnderObject(this.actual);
-        return this.actual[0].nodeName.toLowerCase() === nodeName.toLowerCase();
+        return $(this.actual)[0].nodeName.toLowerCase() === nodeName.toLowerCase();
       },
       toHaveClass: function(cssClass) {
-        _ensureEnderObject(this.actual);
-        return this.actual.hasClass(cssClass);
+        return $(this.actual).hasClass(cssClass);
       },
       toHaveAttr: function() {
-        var actual, props, result;
-        _ensureEnderObject(this.actual);
+        var $actual, actual, props, result;
+        $actual = $(this.actual);
         if (arguments.length === 2) {
           props = {};
           props[arguments[0]] = arguments[1];
@@ -154,7 +152,7 @@
           props = arguments[0];
         }
         actual = $.v.reduce($.v.keys(props), (__bind(function(h, k) {
-          h[k] = this.actual.attr(k);
+          h[k] = $actual.attr(k);
           return h;
         }, this)), {});
         result = this.env.equals_(actual, props);
@@ -164,8 +162,8 @@
         return result;
       },
       toHaveCss: function() {
-        var actual, props, result;
-        _ensureEnderObject(this.actual);
+        var $actual, actual, props, result;
+        $actual = $(this.actual);
         if (arguments.length === 2) {
           props = {};
           props[arguments[0]] = arguments[1];
@@ -173,7 +171,7 @@
           props = arguments[0];
         }
         actual = $.v.reduce($.v.keys(props), (__bind(function(h, k) {
-          h[k] = this.actual.css(k);
+          h[k] = $actual.css(k);
           return h;
         }, this)), {});
         result = this.env.equals_(actual, props);
@@ -183,27 +181,24 @@
         return result;
       },
       toHaveContent: function(html) {
-        _ensureEnderObject(this.actual);
-        return this.actual.html() === html;
+        return $(this.actual).html() === html;
       },
       toBeElement: function(other) {
-        _ensureEnderObject(this.actual);
-        _ensureEnderObject(other);
-        return this.actual[0] === other[0];
+        return $(this.actual)[0] === $(other)[0];
       },
       toContainElement: function(selector, options) {
-        var $elem, result;
+        var $actual, $elem, result;
         if (options == null) {
           options = {};
         }
-        _ensureEnderObject(this.actual);
+        $actual = $(this.actual);
         if (typeof selector === "object" && '$' in selector) {
-          result = $.isAncestor(this.actual[0], selector[0]);
+          result = $.isAncestor($actual[0], selector[0]);
           if (options.content) {
             result && (result = selector.html() === options.content);
           }
         } else {
-          $elem = this.actual.find(selector);
+          $elem = $actual.find(selector);
           result = !!$elem.length;
           if (options.content) {
             result && (result = $elem.html() === options.content);

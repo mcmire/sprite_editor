@@ -4,37 +4,61 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
   SpriteEditor.DOMEventHelpers.mixin(ElementMouseTracker, "SpriteEditor_ElementMouseTracker")
 
   $.extend ElementMouseTracker,
-    instances: []
-    activeInstance:
-      mouseWithin: null
-      mouseDownWithin: null
-
     init: ->
-      self = this
-
-      # We bind these events to the document rather than to the element to
-      # make it possible to do special behavior when the user moves the mouse
-      # outside of the element in question. For instance, we definitely want
-      # to trigger the mouseup event outside the element. As another example,
-      # the ColorPicker widget has logic that keeps the hue/saturation
-      # selector indicator inside the canvas for hue/saturation even if the
-      # user moves the mouse outside of the canvas.
-      #
-      @_bindEvents document,
-        mouseup: (event) ->
-          if inst = self.activeInstance.mouseDownWithin
-            inst.triggerHandler("mouseup", event)  # clear mouseDownWithin
-          #event.stopPropagation();
-          event.preventDefault()
-        mousemove: (event) ->
-          self.pos = {x: event.pageX, y: event.pageY}
-          if inst = self.activeInstance.mouseWithin
-            inst.triggerHandler("mousemove", event)
-          event.preventDefault()
+      unless @isInitialized
+        @reset()
+        @_eventsAdded = false
+        @isInitialized = true
+      return this
 
     destroy: ->
-      @_unbindEvents(document, "mouseup", "mousemove")
-      @debugDiv().hide()
+      if @isInitialized
+        @removeEvents()
+        @remove(inst) for inst in @instances
+        @reset()
+        @isInitialized = false
+
+    reset: ->
+      @instances = []
+      @activeInstance = {
+        mouseWithin: null
+        mouseDownWithin: null
+      }
+      @pos = null
+      @debugDiv().remove()
+      @$debugDiv = null
+      return this
+
+    addEvents: ->
+      self = this
+      unless @_eventsAdded
+        # We bind these events to the document rather than to the element to
+        # make it possible to do special behavior when the user moves the mouse
+        # outside of the element in question. For instance, we definitely want
+        # to trigger the mouseup event outside the element. As another example,
+        # the ColorPicker widget has logic that keeps the hue/saturation
+        # selector indicator inside the canvas for hue/saturation even if the
+        # user moves the mouse outside of the canvas.
+        #
+        @_bindEvents document,
+          mouseup: (event) ->
+            if inst = self.activeInstance.mouseDownWithin
+              inst.triggerHandler("mouseup", event)  # clear mouseDownWithin
+            #event.stopPropagation();
+            event.preventDefault()
+          mousemove: (event) ->
+            self.pos = {x: event.pageX, y: event.pageY}
+            if inst = self.activeInstance.mouseWithin
+              inst.triggerHandler("mousemove", event)
+            event.preventDefault()
+        @_eventsAdded = true
+      return this
+
+    removeEvents: ->
+      if @_eventsAdded
+        @_unbindEvents(document, "mouseup", "mousemove")
+        @_eventsAdded = false
+      return this
 
     # Starts tracking the mouse in the context of an element.
     #
@@ -79,10 +103,11 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
     # Returns the instance of ElementMouseTracker.instance. You'll want to
     # store this somewhere so you can destroy it later.
     #
-    add: ($element, options) ->
-      @init() if @instances.length == 0
+    add: ($element, options={}) ->
+      @addEvents() if @instances.length == 0
 
       instance = new ElementMouseTracker.instance($element, options)
+      instance.addEvents()
       @instances.push(instance)
 
       instance
@@ -101,7 +126,7 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
       if @activeInstance.mouseDownWithin == instance
         delete @activeInstance.mouseDownWithin
 
-      @destroy() if @instances.length == 0
+      @removeEvents() if @instances.length == 0
 
     debugDiv: ->
       @$debugDiv ||= $('<div />')
@@ -115,7 +140,7 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
           width: "200px"
           height: "50px"
         )
-      .appendTo(document.body)
+        .appendTo(document.body)
 
   #-----------------------------------------------------------------------------
 
@@ -135,18 +160,10 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
       # default options
       @options.draggingDistance ?= 1
 
-      @pos = {
-        abs: {x: null, y: null},
-        rel: {x: null, y: null}
-      }
+      @pos = { abs: null, rel: null }
       @isDown = false
-      @downAt = {
-        abs: {x: null, y: null},
-        rel: {x: null, y: null}
-      }
+      @downAt = { abs: null, rel: null }
       @isDragging = false
-
-      @_addEvents()
 
       # Cache some values for later use
       @elementOffset = @$element.offset()
@@ -156,7 +173,64 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
         height: parseInt(computedStyle["height"], 10)
 
     destroy: ->
-      @_removeEvents()
+      @removeEvents()
+
+    addEvents: ->
+      self = this
+      unless @_eventsAdded
+        @_bindEvents @$element,
+          mouseover: (event) ->
+            self.triggerHandler("mouseover", event)
+
+          mouseout: (event) ->
+            self.triggerHandler("mouseout", event)
+
+          mouseenter: (event) ->
+            ElementMouseTracker.activeInstance.mouseWithin = self
+            self.triggerHandler("mouseenter", event)
+
+          mouseleave: (event) ->
+            delete ElementMouseTracker.activeInstance.mouseWithin
+            self.triggerHandler("mouseleave", event)
+
+          mousedown: (event) ->
+            ElementMouseTracker.activeInstance.mouseDownWithin = self
+            self.isDown = true
+            self._setMousePosition()
+            self.downAt =
+              abs: { x: event.pageX, y: event.pageY }
+              rel: { x: event.pageX - self.elementOffset.left, y: event.pageY - self.elementOffset.top }
+
+            ElementMouseTracker.debugDiv().show() if self.options.debug
+
+            self.triggerHandler("mousedown", event)
+
+            #event.stopPropagation();
+            event.preventDefault()
+
+          click: (event) ->
+            self.triggerHandler("mouseclick", event)
+            # Prevent things on the page from being selected
+            event.preventDefault()
+
+          contextmenu: (event) ->
+            self.triggerHandler("contextmenu", event)
+            # Prevent things on the page from being selected
+            event.preventDefault()
+
+        @_eventsAdded = true
+
+      return this
+
+    removeEvents: ->
+      if @_eventsAdded
+        @_unbindEvents @$element,
+          "mouseover", "mouseout",
+          "mouseenter", "mouseleave",
+          "mousedown",
+          "click", "contextmenu"
+        @_eventsAdded = false
+      return this
 
     triggerHandler: (eventName, event) ->
       # If we have a method below that has the same name as the event,
@@ -224,55 +298,6 @@ $.export "SpriteEditor.ElementMouseTracker", (SpriteEditor) ->
       #console.log "abs: #{@pos.abs.x}, #{@pos.abs.y}"
       #console.log "rel: #{@pos.rel.x}, #{@pos.rel.y}"
       #console.log "elementOffset: {left: #{@elementOffset.left}, top: #{@elementOffset.top}}"
-
-    _addEvents: ->
-      self = this
-      @_bindEvents @$element,
-        mouseover: (event) ->
-          self.triggerHandler("mouseover", event)
-
-        mouseout: (event) ->
-          self.triggerHandler("mouseout", event)
-
-        mouseenter: (event) ->
-          ElementMouseTracker.activeInstance.mouseWithin = self
-          self.triggerHandler("mouseenter", event)
-
-        mouseleave: (event) ->
-          delete ElementMouseTracker.activeInstance.mouseWithin
-          self.triggerHandler("mouseleave", event)
-
-        mousedown: (event) ->
-          ElementMouseTracker.activeInstance.mouseDownWithin = self
-          self.isDown = true
-          self._setMousePosition()
-          self.downAt =
-            abs: { x: event.pageX, y: event.pageY }
-            rel: { x: event.pageX - self.elementOffset.left, y: event.pageY - self.elementOffset.top }
-
-          ElementMouseTracker.debugDiv().show() if self.options.debug
-
-          self.triggerHandler("mousedown", event)
-
-          #event.stopPropagation();
-          event.preventDefault()
-
-        click: (event) ->
-          self.triggerHandler("mouseclick", event)
-          # Prevent things on the page from being selected
-          event.preventDefault()
-
-        contextmenu: (event) ->
-          self.triggerHandler("contextmenu", event)
-          # Prevent things on the page from being selected
-          event.preventDefault()
-
-    _removeEvents: ->
-      @_unbindEvents @$element,
-        "mouseover", "mouseout",
-        "mouseenter", "mouseleave",
-        "mousedown",
-        "click", "contextmenu"
 
     _distance: (v1, v2) ->
       Math.floor Math.sqrt(Math.pow((v2.y - v1.y), 2) + Math.pow((v2.x - v1.x), 2))

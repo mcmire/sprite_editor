@@ -1,4 +1,4 @@
-{DrawingCanvases, Keyboard, Cell, CellLocation, Color, Toolset} = SpriteEditor
+{DrawingCanvases, ElementMouseTracker, Keyboard, Cell, CellLocation, Color, Toolset} = SpriteEditor
 
 describe 'DrawingCanvases', ->
   app = canvases = null
@@ -31,6 +31,13 @@ describe 'DrawingCanvases', ->
       expect(canvases.heightInCells).toBe()
       expect(canvases.cellSize).toBe()
       expect(canvases.showGrid).toBe()
+
+    it "initializes ElementMouseTracker if it hasn't been initialized yet", ->
+      spyOn(ElementMouseTracker, 'init').andCallThrough()
+      spyOn(ElementMouseTracker, 'addEvents').andCallThrough()
+      canvases = DrawingCanvases.init(app)
+      expect(ElementMouseTracker.init).toHaveBeenCalled()
+      expect(ElementMouseTracker.addEvents).toHaveBeenCalled()
 
     it "initializes @cells to an array of arrays of Cells, initializing those Cells to empty Colors", ->
       canvases = DrawingCanvases.init(app, {widthInCells: 2, heightInCells: 2})

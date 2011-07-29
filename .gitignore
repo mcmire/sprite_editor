@@ -2,3 +2,5 @@
 *.tmproj
 .bundle
 .sass-cache
+tags
+*.vim

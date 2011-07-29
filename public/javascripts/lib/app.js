@@ -1,8 +1,8 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $["export"]("SpriteEditor.App", function(SpriteEditor) {
-    var App, Keyboard;
-    Keyboard = SpriteEditor.Keyboard;
+    var App, Box, Color, ColorPicker, DrawingCanvases, ElementMouseTracker, EventHistory, Keyboard, Toolset;
+    Keyboard = SpriteEditor.Keyboard, ElementMouseTracker = SpriteEditor.ElementMouseTracker, DrawingCanvases = SpriteEditor.DrawingCanvases, Toolset = SpriteEditor.Toolset, EventHistory = SpriteEditor.EventHistory, Color = SpriteEditor.Color, ColorPicker = SpriteEditor.ColorPicker, Box = SpriteEditor.Box;
     App = {};
     SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App");
     $.extend(App, {
@@ -10,9 +10,10 @@
         if (!this.isInitialized) {
           this.reset();
           Keyboard.init();
-          this.canvases = SpriteEditor.DrawingCanvases.init(this);
-          this.toolset = SpriteEditor.Toolset.init(this, this.canvases);
-          this.history = SpriteEditor.EventHistory.init(this);
+          ElementMouseTracker.init();
+          this.canvases = DrawingCanvases.init(this);
+          this.toolset = Toolset.init(this, this.canvases);
+          this.history = EventHistory.init(this);
           this.$container = $('<div />');
           this._createMask();
           this._createWrapperDivs();
@@ -75,6 +76,7 @@
       },
       addEvents: function() {
         Keyboard.addEvents();
+        ElementMouseTracker.addEvents();
         this.canvases.addEvents();
         this.boxes.tools.addEvents();
         this.boxes.sizes.addEvents();
@@ -158,14 +160,14 @@
               img = document.createElement("img");
               img.src = event.target.result;
               console.log(img.src);
-              c = SpriteEditor.Canvas.create(img.width, img.height);
+              c = Canvas.create(img.width, img.height);
               c.ctx.drawImage(img, 0, 0);
               imageData = c.ctx.getImageData(0, 0, img.width, img.height);
               for (x = 0, _ref = img.width; 0 <= _ref ? x < _ref : x > _ref; 0 <= _ref ? x++ : x--) {
                 _fn = function() {
                   var color, rgba;
                   rgba = imageData.getPixel(x, y);
-                  color = new SpriteEditor.Color(color);
+                  color = new Color(color);
                   if (!color.isClear()) {
                     return this.cells[y][x].color = color;
                   }
@@ -203,9 +205,9 @@
       },
       _createColorPicker: function() {
         var box;
-        this.boxes.colors = box = SpriteEditor.Box.Colors.init(this);
+        this.boxes.colors = box = Box.Colors.init(this);
         this.$rightPane.append(box.$element);
-        return this.colorPicker = SpriteEditor.ColorPicker.init(this, {
+        return this.colorPicker = ColorPicker.init(this, {
           open: __bind(function() {
             this.removeEvents();
             return this._showMask();
@@ -227,12 +229,12 @@
       },
       _createToolBox: function() {
         var box;
-        this.boxes.tools = box = SpriteEditor.Box.Tools.init(this);
+        this.boxes.tools = box = Box.Tools.init(this);
         return this.$leftPane.append(box.$element);
       },
       _createBrushSizesBox: function() {
         var box;
-        this.boxes.sizes = box = SpriteEditor.Box.Sizes.init(this);
+        this.boxes.sizes = box = Box.Sizes.init(this);
         return this.$leftPane.append(box.$element);
       },
       _createMask: function() {

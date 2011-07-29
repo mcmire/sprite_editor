@@ -1,6 +1,6 @@
 (function() {
-  var Cell, CellLocation, Color, DrawingCanvases, Keyboard, Toolset;
-  DrawingCanvases = SpriteEditor.DrawingCanvases, Keyboard = SpriteEditor.Keyboard, Cell = SpriteEditor.Cell, CellLocation = SpriteEditor.CellLocation, Color = SpriteEditor.Color, Toolset = SpriteEditor.Toolset;
+  var Cell, CellLocation, Color, DrawingCanvases, ElementMouseTracker, Keyboard, Toolset;
+  DrawingCanvases = SpriteEditor.DrawingCanvases, ElementMouseTracker = SpriteEditor.ElementMouseTracker, Keyboard = SpriteEditor.Keyboard, Cell = SpriteEditor.Cell, CellLocation = SpriteEditor.CellLocation, Color = SpriteEditor.Color, Toolset = SpriteEditor.Toolset;
   describe('DrawingCanvases', function() {
     var app, canvases;
     app = canvases = null;
@@ -34,6 +34,13 @@
         expect(canvases.heightInCells).toBe();
         expect(canvases.cellSize).toBe();
         return expect(canvases.showGrid).toBe();
+      });
+      it("initializes ElementMouseTracker if it hasn't been initialized yet", function() {
+        spyOn(ElementMouseTracker, 'init').andCallThrough();
+        spyOn(ElementMouseTracker, 'addEvents').andCallThrough();
+        canvases = DrawingCanvases.init(app);
+        expect(ElementMouseTracker.init).toHaveBeenCalled();
+        return expect(ElementMouseTracker.addEvents).toHaveBeenCalled();
       });
       it("initializes @cells to an array of arrays of Cells, initializing those Cells to empty Colors", function() {
         var result;

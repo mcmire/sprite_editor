@@ -1,6 +1,6 @@
 $.export "SpriteEditor.App", (SpriteEditor) ->
 
-  Keyboard = SpriteEditor.Keyboard
+  {Keyboard, ElementMouseTracker, DrawingCanvases, Toolset, EventHistory, Color, ColorPicker, Box} = SpriteEditor
 
   App = {}
   SpriteEditor.DOMEventHelpers.mixin(App, "SpriteEditor_App")
@@ -11,9 +11,10 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
         @reset()
 
         Keyboard.init()
-        @canvases = SpriteEditor.DrawingCanvases.init(this)
-        @toolset = SpriteEditor.Toolset.init(this, @canvases)
-        @history = SpriteEditor.EventHistory.init(this)
+        ElementMouseTracker.init()
+        @canvases = DrawingCanvases.init(this)
+        @toolset = Toolset.init(this, @canvases)
+        @history = EventHistory.init(this)
 
         @$container = $('<div />');
         @_createMask()
@@ -63,6 +64,7 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
 
     addEvents: ->
       Keyboard.addEvents()
+      ElementMouseTracker.addEvents()
       @canvases.addEvents()   # will start the draw loop
       @boxes.tools.addEvents()
       @boxes.sizes.addEvents()
@@ -175,14 +177,14 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
             console.log(img.src)
             # We *could* update the preview canvas here, but it already gets
             # updated automatically when draw() is called
-            c = SpriteEditor.Canvas.create(img.width, img.height)
+            c = Canvas.create(img.width, img.height)
             c.ctx.drawImage(img, 0, 0)
             imageData = c.ctx.getImageData(0, 0, img.width, img.height)
             for x in [0...img.width]
               for y in [0...img.height]
                 do ->
                   rgba = imageData.getPixel(x, y)
-                  color = new SpriteEditor.Color(color)
+                  color = new Color(color)
                   @cells[y][x].color = color unless color.isClear()
             @draw()
           reader.readAsDataURL(file)
@@ -216,10 +218,10 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       @$centerPane.append(@canvases.workingCanvas.$element)
 
     _createColorPicker: ->
-      @boxes.colors = box = SpriteEditor.Box.Colors.init(this)
+      @boxes.colors = box = Box.Colors.init(this)
       @$rightPane.append(box.$element)
 
-      @colorPicker = SpriteEditor.ColorPicker.init(this,
+      @colorPicker = ColorPicker.init(this,
         open: =>
           @removeEvents()
           @_showMask()
@@ -239,13 +241,13 @@ $.export "SpriteEditor.App", (SpriteEditor) ->
       $boxDiv.append(@canvases.tiledPreviewCanvas.$element)
 
     _createToolBox: ->
-      @boxes.tools = box = SpriteEditor.Box.Tools.init(this)
+      @boxes.tools = box = Box.Tools.init(this)
       @$leftPane.append(box.$element)
 
     # TODO: when the paint bucket tool is selected, hide the brush sizes box
     # and set the brush size to 1
     _createBrushSizesBox: ->
-      @boxes.sizes = box = SpriteEditor.Box.Sizes.init(this)
+      @boxes.sizes = box = Box.Sizes.init(this)
       @$leftPane.append(box.$element)
 
     _createMask: ->

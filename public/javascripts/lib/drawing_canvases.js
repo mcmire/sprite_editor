@@ -1,9 +1,8 @@
 (function() {
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   $["export"]("SpriteEditor.DrawingCanvases", function(SpriteEditor) {
-    var Canvas, DrawingCanvases, Keyboard, defaults;
-    Keyboard = SpriteEditor.Keyboard;
-    Canvas = SpriteEditor.Canvas;
+    var Canvas, DrawingCanvases, ElementMouseTracker, Keyboard, defaults;
+    ElementMouseTracker = SpriteEditor.ElementMouseTracker, Keyboard = SpriteEditor.Keyboard, Canvas = SpriteEditor.Canvas;
     DrawingCanvases = {};
     SpriteEditor.DOMEventHelpers.mixin(DrawingCanvases, "SpriteEditor_DrawingCanvases");
     $.extend(DrawingCanvases, SpriteEditor.Eventable);
@@ -24,6 +23,7 @@
         this.app = app;
         this.reset();
         $.extend(this, defaults, options);
+        ElementMouseTracker.init().addEvents();
         this._initCells();
         if (this.showGrid) {
           this._createGridBgCanvas();
@@ -37,6 +37,7 @@
         if (!this.isInitialized) {
           return;
         }
+        ElementMouseTracker.destroy();
         this.removeEvents();
         this.reset();
         return this.isInitialized = false;
@@ -174,7 +175,6 @@
       addEvents: function() {
         var self;
         self = this;
-        this.startDrawing();
         this.workingCanvas.$element.mouseTracker({
           mousedown: function(event) {
             self.app.boxes.tools.currentTool().trigger("mousedown", event);
@@ -213,7 +213,7 @@
           },
           draggingDistance: 3
         });
-        return this._bindEvents(window, {
+        this._bindEvents(window, {
           blur: function() {
             return self.suspend();
           },
@@ -221,14 +221,15 @@
             return self.resume();
           }
         });
+        return this.startDrawing();
       },
       removeEvents: function() {
         var _ref;
-        this.stopDrawing();
         if ((_ref = this.workingCanvas) != null) {
           _ref.$element.mouseTracker("destroy");
         }
-        return this._unbindEvents(window, "blur", "focus");
+        this._unbindEvents(window, "blur", "focus");
+        return this.stopDrawing();
       },
       drawCell: function(cell, opts) {
         this.drawWorkingCell(cell, opts);

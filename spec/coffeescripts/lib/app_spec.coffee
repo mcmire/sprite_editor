@@ -1,4 +1,4 @@
-{Keyboard, DrawingCanvases, Toolset, EventHistory, ColorPicker, Box, App} = SpriteEditor
+{Keyboard, ElementMouseTracker, DrawingCanvases, Toolset, EventHistory, ColorPicker, Box, App} = SpriteEditor
 
 describe 'App', ->
   app = null
@@ -40,6 +40,11 @@ describe 'App', ->
         spyOn(Keyboard, 'init').andCallThrough()
         app = initAppWithSandbox()
         expect(Keyboard.init).toHaveBeenCalled()
+
+      it "initializes the ElementMouseTracker", ->
+        spyOn(ElementMouseTracker, 'init').andCallThrough()
+        app = initAppWithSandbox()
+        expect(ElementMouseTracker.init).toHaveBeenCalled()
 
       it "initializes the drawing canvases and stores them in @canvases", ->
         app = initAppWithSandbox()
@@ -294,6 +299,11 @@ describe 'App', ->
       spyOn(Keyboard, 'addEvents')
       app.addEvents()
       expect(Keyboard.addEvents).toHaveBeenCalled()
+
+    it "adds mouse tracker events", ->
+      spyOn(ElementMouseTracker, 'addEvents')
+      app.addEvents()
+      expect(ElementMouseTracker.addEvents).toHaveBeenCalled()
 
     it "adds canvas events", ->
       spyOn(DrawingCanvases, 'addEvents')

@@ -1,7 +1,6 @@
 $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
 
-  Keyboard = SpriteEditor.Keyboard
-  Canvas   = SpriteEditor.Canvas
+  {ElementMouseTracker, Keyboard, Canvas} = SpriteEditor
 
   DrawingCanvases = {}
   SpriteEditor.DOMEventHelpers.mixin(DrawingCanvases, "SpriteEditor_DrawingCanvases")
@@ -22,6 +21,8 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
       @reset()
       $.extend(this, defaults, options)
 
+      ElementMouseTracker.init().addEvents()
+
       @_initCells()
       @_createGridBgCanvas() if @showGrid
       @_createWorkingCanvas()
@@ -34,6 +35,7 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
 
     destroy: ->
       return unless @isInitialized
+      ElementMouseTracker.destroy()
       @removeEvents()
       @reset()
       @isInitialized = false
@@ -141,8 +143,6 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
     addEvents: ->
       self = this
 
-      @startDrawing()
-
       @workingCanvas.$element.mouseTracker
         mousedown: (event) ->
           self.app.boxes.tools.currentTool().trigger("mousedown", event)
@@ -178,10 +178,12 @@ $.export "SpriteEditor.DrawingCanvases", (SpriteEditor) ->
         focus: ->
           self.resume()
 
+      @startDrawing()
+
     removeEvents: ->
-      @stopDrawing()
       @workingCanvas?.$element.mouseTracker("destroy")
       @_unbindEvents(window, "blur", "focus")
+      @stopDrawing()
 
     drawCell: (cell, opts) ->
       @drawWorkingCell(cell, opts)

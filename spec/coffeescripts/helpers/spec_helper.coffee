@@ -119,22 +119,20 @@ beforeEach ->
       result
 
     toBeElementOf: (nodeName) ->
-      _ensureEnderObject(@actual)
-      @actual[0].nodeName.toLowerCase() == nodeName.toLowerCase()
+      $(@actual)[0].nodeName.toLowerCase() == nodeName.toLowerCase()
 
     toHaveClass: (cssClass) ->
-      _ensureEnderObject(@actual)
-      @actual.hasClass(cssClass)
+      $(@actual).hasClass(cssClass)
 
     toHaveAttr: ->
-      _ensureEnderObject(@actual)
+      $actual = $(@actual)
       if arguments.length == 2
         props = {}
         props[arguments[0]] = arguments[1]
       else
         props = arguments[0]
       # $.v.every can't cope with objects, only arrays
-      actual = $.v.reduce($.v.keys(props), ((h, k) => h[k] = @actual.attr(k); h), {})
+      actual = $.v.reduce($.v.keys(props), ((h, k) => h[k] = $actual.attr(k); h), {})
       result = @env.equals_(actual, props)
       @message = -> [
         "Expected element to have attributes #{jasmine.pp(props)}, but its attributes were #{jasmine.pp(actual)}",
@@ -143,14 +141,14 @@ beforeEach ->
       result
 
     toHaveCss: ->
-      _ensureEnderObject(@actual)
+      $actual = $(@actual)
       if arguments.length == 2
         props = {}
         props[arguments[0]] = arguments[1]
       else
         props = arguments[0]
       # $.v.every can't cope with objects, only arrays
-      actual = $.v.reduce($.v.keys(props), ((h, k) => h[k] = @actual.css(k); h), {})
+      actual = $.v.reduce($.v.keys(props), ((h, k) => h[k] = $actual.css(k); h), {})
       result = @env.equals_(actual, props)
       @message = -> [
         "Expected element to have css #{jasmine.pp(props)}, but its css was #{jasmine.pp(actual)}",
@@ -159,24 +157,21 @@ beforeEach ->
       result
 
     toHaveContent: (html) ->
-      _ensureEnderObject(@actual)
-      @actual.html() == html
+      $(@actual).html() == html
 
     toBeElement: (other) ->
-      _ensureEnderObject(@actual)
-      _ensureEnderObject(other)
-      @actual[0] == other[0]
+      $(@actual)[0] == $(other)[0]
 
     toContainElement: (selector, options={}) ->
-      _ensureEnderObject(@actual)
+      $actual = $(@actual)
       if typeof selector is "object" and '$' of selector
         # `selector` is an Ender object
-        result = $.isAncestor(@actual[0], selector[0])
+        result = $.isAncestor($actual[0], selector[0])
         if options.content
           result &&= (selector.html() == options.content)
       else
         # `selector` is a string
-        $elem = @actual.find(selector)
+        $elem = $actual.find(selector)
         result = !!$elem.length
         if options.content
           result &&= ($elem.html() == options.content)

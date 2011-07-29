@@ -1,6 +1,6 @@
 (function() {
-  var App, Box, ColorPicker, DrawingCanvases, EventHistory, Keyboard, Toolset;
-  Keyboard = SpriteEditor.Keyboard, DrawingCanvases = SpriteEditor.DrawingCanvases, Toolset = SpriteEditor.Toolset, EventHistory = SpriteEditor.EventHistory, ColorPicker = SpriteEditor.ColorPicker, Box = SpriteEditor.Box, App = SpriteEditor.App;
+  var App, Box, ColorPicker, DrawingCanvases, ElementMouseTracker, EventHistory, Keyboard, Toolset;
+  Keyboard = SpriteEditor.Keyboard, ElementMouseTracker = SpriteEditor.ElementMouseTracker, DrawingCanvases = SpriteEditor.DrawingCanvases, Toolset = SpriteEditor.Toolset, EventHistory = SpriteEditor.EventHistory, ColorPicker = SpriteEditor.ColorPicker, Box = SpriteEditor.Box, App = SpriteEditor.App;
   describe('App', function() {
     var app, initApp;
     app = null;
@@ -42,6 +42,11 @@
           spyOn(Keyboard, 'init').andCallThrough();
           app = initAppWithSandbox();
           return expect(Keyboard.init).toHaveBeenCalled();
+        });
+        it("initializes the ElementMouseTracker", function() {
+          spyOn(ElementMouseTracker, 'init').andCallThrough();
+          app = initAppWithSandbox();
+          return expect(ElementMouseTracker.init).toHaveBeenCalled();
         });
         it("initializes the drawing canvases and stores them in @canvases", function() {
           app = initAppWithSandbox();
@@ -316,6 +321,11 @@
         spyOn(Keyboard, 'addEvents');
         app.addEvents();
         return expect(Keyboard.addEvents).toHaveBeenCalled();
+      });
+      it("adds mouse tracker events", function() {
+        spyOn(ElementMouseTracker, 'addEvents');
+        app.addEvents();
+        return expect(ElementMouseTracker.addEvents).toHaveBeenCalled();
       });
       it("adds canvas events", function() {
         spyOn(DrawingCanvases, 'addEvents');

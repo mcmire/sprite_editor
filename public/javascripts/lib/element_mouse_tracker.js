@@ -4,45 +4,83 @@
     ElementMouseTracker = {};
     SpriteEditor.DOMEventHelpers.mixin(ElementMouseTracker, "SpriteEditor_ElementMouseTracker");
     $.extend(ElementMouseTracker, {
-      instances: [],
-      activeInstance: {
-        mouseWithin: null,
-        mouseDownWithin: null
-      },
       init: function() {
-        var self;
-        self = this;
-        return this._bindEvents(document, {
-          mouseup: function(event) {
-            var inst;
-            if (inst = self.activeInstance.mouseDownWithin) {
-              inst.triggerHandler("mouseup", event);
-            }
-            return event.preventDefault();
-          },
-          mousemove: function(event) {
-            var inst;
-            self.pos = {
-              x: event.pageX,
-              y: event.pageY
-            };
-            if (inst = self.activeInstance.mouseWithin) {
-              inst.triggerHandler("mousemove", event);
-            }
-            return event.preventDefault();
-          }
-        });
+        if (!this.isInitialized) {
+          this.reset();
+          this._eventsAdded = false;
+          this.isInitialized = true;
+        }
+        return this;
       },
       destroy: function() {
-        this._unbindEvents(document, "mouseup", "mousemove");
-        return this.debugDiv().hide();
+        var inst, _i, _len, _ref;
+        if (this.isInitialized) {
+          this.removeEvents();
+          _ref = this.instances;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            inst = _ref[_i];
+            this.remove(inst);
+          }
+          this.reset();
+          return this.isInitialized = false;
+        }
+      },
+      reset: function() {
+        this.instances = [];
+        this.activeInstance = {
+          mouseWithin: null,
+          mouseDownWithin: null
+        };
+        this.pos = null;
+        this.debugDiv().remove();
+        this.$debugDiv = null;
+        return this;
+      },
+      addEvents: function() {
+        var self;
+        self = this;
+        if (!this._eventsAdded) {
+          this._bindEvents(document, {
+            mouseup: function(event) {
+              var inst;
+              if (inst = self.activeInstance.mouseDownWithin) {
+                inst.triggerHandler("mouseup", event);
+              }
+              return event.preventDefault();
+            },
+            mousemove: function(event) {
+              var inst;
+              self.pos = {
+                x: event.pageX,
+                y: event.pageY
+              };
+              if (inst = self.activeInstance.mouseWithin) {
+                inst.triggerHandler("mousemove", event);
+              }
+              return event.preventDefault();
+            }
+          });
+          this._eventsAdded = true;
+        }
+        return this;
+      },
+      removeEvents: function() {
+        if (this._eventsAdded) {
+          this._unbindEvents(document, "mouseup", "mousemove");
+          this._eventsAdded = false;
+        }
+        return this;
       },
       add: function($element, options) {
         var instance;
+        if (options == null) {
+          options = {};
+        }
         if (this.instances.length === 0) {
-          this.init();
+          this.addEvents();
         }
         instance = new ElementMouseTracker.instance($element, options);
+        instance.addEvents();
         this.instances.push(instance);
         return instance;
       },
@@ -58,7 +96,7 @@
           delete this.activeInstance.mouseDownWithin;
         }
         if (this.instances.length === 0) {
-          return this.destroy();
+          return this.removeEvents();
         }
       },
       debugDiv: function() {
@@ -98,28 +136,15 @@
           _base.draggingDistance = 1;
         };
         this.pos = {
-          abs: {
-            x: null,
-            y: null
-          },
-          rel: {
-            x: null,
-            y: null
-          }
+          abs: null,
+          rel: null
         };
         this.isDown = false;
         this.downAt = {
-          abs: {
-            x: null,
-            y: null
-          },
-          rel: {
-            x: null,
-            y: null
-          }
+          abs: null,
+          rel: null
         };
         this.isDragging = false;
-        this._addEvents();
         this.elementOffset = this.$element.offset();
         computedStyle = this.$element.computedStyle();
         this.elementSize = {
@@ -128,7 +153,66 @@
         };
       }
       instance.prototype.destroy = function() {
-        return this._removeEvents();
+        return this.removeEvents();
+      };
+      instance.prototype.addEvents = function() {
+        var self;
+        self = this;
+        if (!this._eventsAdded) {
+          this._bindEvents(this.$element, {
+            mouseover: function(event) {
+              return self.triggerHandler("mouseover", event);
+            },
+            mouseout: function(event) {
+              return self.triggerHandler("mouseout", event);
+            },
+            mouseenter: function(event) {
+              ElementMouseTracker.activeInstance.mouseWithin = self;
+              return self.triggerHandler("mouseenter", event);
+            },
+            mouseleave: function(event) {
+              delete ElementMouseTracker.activeInstance.mouseWithin;
+              return self.triggerHandler("mouseleave", event);
+            },
+            mousedown: function(event) {
+              ElementMouseTracker.activeInstance.mouseDownWithin = self;
+              self.isDown = true;
+              self._setMousePosition();
+              self.downAt = {
+                abs: {
+                  x: event.pageX,
+                  y: event.pageY
+                },
+                rel: {
+                  x: event.pageX - self.elementOffset.left,
+                  y: event.pageY - self.elementOffset.top
+                }
+              };
+              if (self.options.debug) {
+                ElementMouseTracker.debugDiv().show();
+              }
+              self.triggerHandler("mousedown", event);
+              return event.preventDefault();
+            },
+            click: function(event) {
+              self.triggerHandler("mouseclick", event);
+              return event.preventDefault();
+            },
+            contextmenu: function(event) {
+              self.triggerHandler("contextmenu", event);
+              return event.preventDefault();
+            }
+          });
+          this._eventsAdded = true;
+        }
+        return this;
+      };
+      instance.prototype.removeEvents = function() {
+        if (this._eventsAdded) {
+          this._unbindEvents(this.$element, "mouseover", "mouseout", "mouseenter", "mouseleave", "mousedown", "click", "contextmenu");
+          this._eventsAdded = false;
+        }
+        return this;
       };
       instance.prototype.triggerHandler = function(eventName, event) {
         if (eventName in this) {
@@ -199,57 +283,6 @@
         } else if (this.pos.rel.y > this.elementSize.height) {
           return this.pos.rel.y = this.elementSize.height;
         }
-      };
-      instance.prototype._addEvents = function() {
-        var self;
-        self = this;
-        return this._bindEvents(this.$element, {
-          mouseover: function(event) {
-            return self.triggerHandler("mouseover", event);
-          },
-          mouseout: function(event) {
-            return self.triggerHandler("mouseout", event);
-          },
-          mouseenter: function(event) {
-            ElementMouseTracker.activeInstance.mouseWithin = self;
-            return self.triggerHandler("mouseenter", event);
-          },
-          mouseleave: function(event) {
-            delete ElementMouseTracker.activeInstance.mouseWithin;
-            return self.triggerHandler("mouseleave", event);
-          },
-          mousedown: function(event) {
-            ElementMouseTracker.activeInstance.mouseDownWithin = self;
-            self.isDown = true;
-            self._setMousePosition();
-            self.downAt = {
-              abs: {
-                x: event.pageX,
-                y: event.pageY
-              },
-              rel: {
-                x: event.pageX - self.elementOffset.left,
-                y: event.pageY - self.elementOffset.top
-              }
-            };
-            if (self.options.debug) {
-              ElementMouseTracker.debugDiv().show();
-            }
-            self.triggerHandler("mousedown", event);
-            return event.preventDefault();
-          },
-          click: function(event) {
-            self.triggerHandler("mouseclick", event);
-            return event.preventDefault();
-          },
-          contextmenu: function(event) {
-            self.triggerHandler("contextmenu", event);
-            return event.preventDefault();
-          }
-        });
-      };
-      instance.prototype._removeEvents = function() {
-        return this._unbindEvents(this.$element, "mouseover", "mouseout", "mouseenter", "mouseleave", "mousedown", "click", "contextmenu");
       };
       instance.prototype._distance = function(v1, v2) {
         return Math.floor(Math.sqrt(Math.pow(v2.y - v1.y, 2) + Math.pow(v2.x - v1.x, 2)));
