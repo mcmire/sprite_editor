@@ -3,4 +3,4 @@
 .bundle
 .sass-cache
 tags
-*.vim
+*.vim*
