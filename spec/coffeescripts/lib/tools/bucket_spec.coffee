@@ -1,7 +1,7 @@
 {Keyboard, Toolset, Tools, Color, Cell} = SpriteEditor
 
 describe 'The bucket tool', ->
-  tool = app = null
+  canvases = app = tool = null
   beforeEach ->
     Keyboard.init()
     canvases = {}

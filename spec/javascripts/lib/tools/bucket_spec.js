@@ -2,10 +2,9 @@
   var Cell, Color, Keyboard, Tools, Toolset;
   Keyboard = SpriteEditor.Keyboard, Toolset = SpriteEditor.Toolset, Tools = SpriteEditor.Tools, Color = SpriteEditor.Color, Cell = SpriteEditor.Cell;
   describe('The bucket tool', function() {
-    var app, tool;
-    tool = app = null;
+    var app, canvases, tool;
+    canvases = app = tool = null;
     beforeEach(function() {
-      var canvases;
       Keyboard.init();
       canvases = {};
       app = {
