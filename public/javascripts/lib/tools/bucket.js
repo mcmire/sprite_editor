@@ -55,7 +55,7 @@
         event = {
           canvases: {}
         };
-        focusedColor = t.canvases.focusedCells[0].color.clone();
+        focusedColor = t.canvases.focusedCell.color.clone();
         changedCells = [];
         $.v.each(t.canvases.cells, function(row) {
           return $.v.each(row, function(cell, j) {
@@ -73,33 +73,31 @@
         });
         event.canvases.changedCells = changedCells;
         return event;
-        return {
-          undo: function(event) {
-            var cell, _i, _len, _ref, _results;
-            _ref = event.canvases.changedCells;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              cell = _ref[_i];
-              _results.push(t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before);
-            }
-            return _results;
-          },
-          redo: function(event) {
-            var cell, _i, _len, _ref, _results;
-            _ref = event.canvases.changedCells;
-            _results = [];
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              cell = _ref[_i];
-              _results.push(t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after);
-            }
-            return _results;
-          }
-        };
+      },
+      undo: function(event) {
+        var cell, _i, _len, _ref, _results;
+        _ref = event.canvases.changedCells;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          cell = _ref[_i];
+          _results.push(t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before);
+        }
+        return _results;
+      },
+      redo: function(event) {
+        var cell, _i, _len, _ref, _results;
+        _ref = event.canvases.changedCells;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          cell = _ref[_i];
+          _results.push(t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after);
+        }
+        return _results;
       }
     });
     return $.extend(t, {
       mousedown: function(event) {
-        if (event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
+        if (event.rightClick || Keyboard.isKeyPressed(Keyboard.CTRL_KEY)) {
           return this._setCellsLikeCurrentToUnfilled();
         } else {
           return this._setCellsLikeCurrentToFilled();

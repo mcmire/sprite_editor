@@ -33,10 +33,10 @@ Toolset.addTool "bucket", "G", (t) ->
 
   t.addAction "clearFocusedCells",
     do: ->
-      event = canvases: {}
+      event = { canvases: {} }
 
       # Copy this as the color of the current cell will change during this loop
-      focusedColor = t.canvases.focusedCells[0].color.clone()
+      focusedColor = t.canvases.focusedCell.color.clone()
 
       # Look for all cells with the color of the current cell
       # and mark them as unfilled
@@ -52,17 +52,17 @@ Toolset.addTool "bucket", "G", (t) ->
 
       return event
 
-      undo: (event) ->
-        for cell in event.canvases.changedCells
-          t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
+    undo: (event) ->
+      for cell in event.canvases.changedCells
+        t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before
 
-      redo: (event) ->
-        for cell in event.canvases.changedCells
-          t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
+    redo: (event) ->
+      for cell in event.canvases.changedCells
+        t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after
 
   $.extend t,
     mousedown: (event) ->
-      if event.rightClick or Keyboard.pressedKeys[Keyboard.CTRL_KEY]
+      if event.rightClick or Keyboard.isKeyPressed(Keyboard.CTRL_KEY)
         @_setCellsLikeCurrentToUnfilled()
       else
         @_setCellsLikeCurrentToFilled()
