@@ -12,7 +12,7 @@ describe 'Box.Tools', ->
   beforeEach ->
     app = {
       toolset: {
-        toolNames: toolNames,
+        toolNames: -> toolNames,
         toolShortcuts: toolShortcuts,
         tools: {
           tool1: {
@@ -93,7 +93,7 @@ describe 'Box.Tools', ->
     it "selects the first tool", ->
       spyOn(tools, 'select')
       tools.reset()
-      expect(tools.select).toHaveBeenCalledWith(app.toolset.toolNames[0])
+      expect(tools.select).toHaveBeenCalledWith(app.toolset.toolNames()[0])
 
   describe 'when events have been added', ->
     beforeEach ->

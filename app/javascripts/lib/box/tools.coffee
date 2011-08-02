@@ -18,7 +18,7 @@ $.export "SpriteEditor.Box.Tools", (SpriteEditor) ->
       @$element.append($ul)
 
       @toolImages = {}
-      for name in @app.toolset.toolNames
+      for name in $.v.keys(@app.toolset.tools)
         ((self, name) ->
           $li = $("<li/>")
           $img = $("<img/>")
@@ -43,7 +43,7 @@ $.export "SpriteEditor.Box.Tools", (SpriteEditor) ->
       @removeEvents()
 
     reset: ->
-      @select(@app.toolset.toolNames[0])
+      @select(@app.toolset.toolNames()[0])
 
     addEvents: ->
       self = this

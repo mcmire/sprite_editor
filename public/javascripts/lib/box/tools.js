@@ -14,7 +14,7 @@
         $ul = $("<ul/>");
         this.$element.append($ul);
         this.toolImages = {};
-        _ref = this.app.toolset.toolNames;
+        _ref = $.v.keys(this.app.toolset.tools);
         _fn = function(self, name) {
           var $img, $li;
           $li = $("<li/>");
@@ -41,7 +41,7 @@
         return this.removeEvents();
       },
       reset: function() {
-        return this.select(this.app.toolset.toolNames[0]);
+        return this.select(this.app.toolset.toolNames()[0]);
       },
       addEvents: function() {
         var self;

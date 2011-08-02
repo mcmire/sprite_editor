@@ -27,7 +27,10 @@ $.export "SpriteEditor.Toolset", (SpriteEditor) ->
       tool = @createTool()
       def = def(tool) if typeof def is "function"
       @tools[name] = $.extend(tool, def)
-      @toolNames.push(name)
+      #@toolNames.push(name)
       @toolShortcuts[shortcut] = name
+
+    toolNames: ->
+      $.v.keys(@tools)
 
   return Toolset

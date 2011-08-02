@@ -13,7 +13,9 @@
     beforeEach(function() {
       return app = {
         toolset: {
-          toolNames: toolNames,
+          toolNames: function() {
+            return toolNames;
+          },
           toolShortcuts: toolShortcuts,
           tools: {
             tool1: {
@@ -96,7 +98,7 @@
       return it("selects the first tool", function() {
         spyOn(tools, 'select');
         tools.reset();
-        return expect(tools.select).toHaveBeenCalledWith(app.toolset.toolNames[0]);
+        return expect(tools.select).toHaveBeenCalledWith(app.toolset.toolNames()[0]);
       });
     });
     describe('when events have been added', function() {

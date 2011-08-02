@@ -40,8 +40,10 @@
           def = def(tool);
         }
         this.tools[name] = $.extend(tool, def);
-        this.toolNames.push(name);
         return this.toolShortcuts[shortcut] = name;
+      },
+      toolNames: function() {
+        return $.v.keys(this.tools);
       }
     };
     return Toolset;
