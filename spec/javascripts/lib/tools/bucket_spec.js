@@ -5,14 +5,18 @@
     var app, tool;
     tool = app = null;
     beforeEach(function() {
+      var canvases;
       Keyboard.init();
-      tool = $.extend(true, Toolset.tools.bucket);
-      return app = {
-        canvases: {}
+      canvases = {};
+      app = {
+        canvases: canvases
       };
+      Toolset.init(app, canvases);
+      return tool = $.extend(true, Toolset.tools.bucket);
     });
     afterEach(function() {
-      return Keyboard.destroy();
+      Keyboard.destroy();
+      return Toolset.destroy();
     });
     describe('on mouse down', function() {
       it("clears like cells if a cell is right-clicked", function() {
