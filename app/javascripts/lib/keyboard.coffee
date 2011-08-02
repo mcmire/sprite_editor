@@ -3,7 +3,8 @@ $.export "SpriteEditor.Keyboard", (SpriteEditor) ->
   Keyboard = {}
   SpriteEditor.DOMEventHelpers.mixin(Keyboard, "SpriteEditor_Keyboard")
 
-  $.extend Keyboard,
+  # TODO: Make these key names the same as in the LWJGL library
+  keys =
     TAB_KEY: 9
     ESC_KEY: 27
     SHIFT_KEY: 16
@@ -21,6 +22,11 @@ $.export "SpriteEditor.Keyboard", (SpriteEditor) ->
     X_KEY: 88
     Z_KEY: 90
 
+  # This is only here for compatibility, remove when fixed
+  $.extend Keyboard, keys
+
+  $.extend Keyboard,
+    keys: keys
     modifierKeys: [16, 17, 18, 91]
 
     init: ->
@@ -35,6 +41,7 @@ $.export "SpriteEditor.Keyboard", (SpriteEditor) ->
 
     destroy: ->
       if @isInitialized
+        @reset()
         @removeEvents()
         @isInitialized = false
       return this
@@ -53,7 +60,13 @@ $.export "SpriteEditor.Keyboard", (SpriteEditor) ->
       @_unbindEvents window, "blur"
       return this
 
+    isKeyPressed: (key) ->
+      if typeof key is "string"
+        unless key = @keys[key]
+          throw new Error("'#{key}' is not a valid key")
+      @pressedKeys.hasOwnProperty(key)
+
     modifierKeyPressed: (event) ->
-      return (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)
+      (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey)
 
   return Keyboard

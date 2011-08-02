@@ -39,6 +39,11 @@
         return kb = Keyboard.init();
       });
       describe('if not destroyed yet', function() {
+        it("resets key variables", function() {
+          spyOn(kb, 'reset');
+          kb.destroy();
+          return expect(kb.reset).toHaveBeenCalled();
+        });
         it("removes any events that may have been added", function() {
           spyOn(kb, 'removeEvents');
           kb.destroy();
@@ -52,6 +57,11 @@
       return describe('if already destroyed', function() {
         beforeEach(function() {
           return Keyboard.destroy();
+        });
+        it("does not try to reset anything", function() {
+          spyOn(kb, 'reset');
+          kb.destroy();
+          return expect(kb.reset).not.toHaveBeenCalled();
         });
         return it("does not try to remove events", function() {
           spyOn(kb, 'removeEvents');
@@ -129,6 +139,21 @@
         kb.pressedKeys = "something";
         kb.reset();
         return expect(kb.pressedKeys).toEqual({});
+      });
+    });
+    describe('#isKeyPressed', function() {
+      beforeEach(function() {
+        kb = Keyboard.init();
+        return kb.pressedKeys[kb.keys.CTRL_KEY] = true;
+      });
+      it("returns true if the given key is in @pressedKeys", function() {
+        return expect(kb.isKeyPressed(kb.keys.CTRL_KEY)).toBe(true);
+      });
+      it("also accepts a string which is a key name", function() {
+        return expect(kb.isKeyPressed('CTRL_KEY')).toBe(true);
+      });
+      return it("returns false if the given key is not in @pressedKeys", function() {
+        return expect(kb.isKeyPressed(kb.keys.X_KEY)).toBe(false);
       });
     });
     return describe('#modifierKeyPressed', function() {
