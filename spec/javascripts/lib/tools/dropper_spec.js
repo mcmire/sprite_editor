@@ -10,10 +10,11 @@
         canvases: canvases
       };
       Toolset.init(app, canvases);
-      return tool = $.extend(true, Toolset.tools.dropper);
+      return tool = Toolset.tools.dropper.init(app, canvases);
     });
     afterEach(function() {
-      return Toolset.destroy();
+      Toolset.destroy();
+      return tool.destroy();
     });
     describe('when selected', function() {
       return it("adds the dropper class to the working canvas", function() {

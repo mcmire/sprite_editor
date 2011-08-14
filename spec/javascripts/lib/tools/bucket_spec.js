@@ -10,12 +10,12 @@
       app = {
         canvases: canvases
       };
-      Toolset.init(app, canvases);
-      return tool = $.extend(true, Toolset.tools.bucket);
+      return tool = Toolset.tools.bucket.init(app, canvases);
     });
     afterEach(function() {
       Keyboard.destroy();
-      return Toolset.destroy();
+      Toolset.destroy();
+      return tool.destroy();
     });
     describe('on mouse down', function() {
       it("clears like cells if a cell is right-clicked", function() {

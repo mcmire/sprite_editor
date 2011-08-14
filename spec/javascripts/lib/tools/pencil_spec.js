@@ -185,33 +185,30 @@
         var oldCanvasCells, upcomingCells;
         upcomingCells = oldCanvasCells = null;
         beforeEach(function() {
-          upcomingCells = [new Cell(canvases, 0, 0), new Cell(canvases, 0, 1), new Cell(canvases, 0, 2)];
           tool.upcomingCells = {
-            "0,1": upcomingCells[0],
-            "0,2": upcomingCells[1],
-            "0,3": upcomingCells[2]
+            "0,1": new Cell(canvases, 0, 0),
+            "0,2": new Cell(canvases, 0, 1),
+            "0,3": new Cell(canvases, 0, 2)
           };
           oldCanvasCells = [new Cell(canvases, 0, 0), new Cell(canvases, 0, 1), new Cell(canvases, 0, 2)];
-          return canvases.cells = [oldCanvasCells];
+          return canvases.cells = [[oldCanvasCells[0], oldCanvasCells[1], oldCanvasCells[2]]];
         });
         it("takes the @upcomingCells and applies them to the canvas", function() {
-          var actualCells;
           action["do"]();
-          actualCells = tool.canvases.cells;
-          expect(actualCells[0][0]).toEqualCell(upcomingCells[0]);
-          expect(actualCells[0][1]).toEqualCell(upcomingCells[1]);
-          return expect(actualCells[0][2]).toEqualCell(upcomingCells[2]);
+          expect(canvases.cells[0][0]).toBe(tool.upcomingCells["0,1"]);
+          expect(canvases.cells[0][1]).toBe(tool.upcomingCells["0,2"]);
+          return expect(canvases.cells[0][2]).toBe(tool.upcomingCells["0,3"]);
         });
         return it("returns an event with data to use for undoing and redoing the action", function() {
           var changedCells, event;
           event = action["do"]();
           changedCells = event.canvases.changedCells;
-          expect(changedCells[0].before).toEqualCell(oldCanvasCells[0]);
-          expect(changedCells[0].after).toEqualCell(upcomingCells[0]);
-          expect(changedCells[1].before).toEqualCell(oldCanvasCells[1]);
-          expect(changedCells[1].after).toEqualCell(upcomingCells[1]);
-          expect(changedCells[2].before).toEqualCell(oldCanvasCells[2]);
-          return expect(changedCells[2].after).toEqualCell(upcomingCells[2]);
+          expect(changedCells[0].before).toBe(oldCanvasCells[0]);
+          expect(changedCells[0].after).toBe(tool.upcomingCells["0,1"]);
+          expect(changedCells[1].before).toBe(oldCanvasCells[1]);
+          expect(changedCells[1].after).toBe(tool.upcomingCells["0,2"]);
+          expect(changedCells[2].before).toBe(oldCanvasCells[2]);
+          return expect(changedCells[2].after).toBe(tool.upcomingCells["0,3"]);
         });
       });
       describe('#undo', function() {

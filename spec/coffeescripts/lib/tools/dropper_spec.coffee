@@ -2,13 +2,16 @@
 
 describe 'The dropper tool', ->
   canvases = app = tool = null
+
   beforeEach ->
     canvases = {}
     app = {canvases: canvases}
     Toolset.init(app, canvases)
-    tool = $.extend true, Toolset.tools.dropper
+    tool = Toolset.tools.dropper.init(app, canvases)
+
   afterEach ->
     Toolset.destroy()
+    tool.destroy()
 
   describe 'when selected', ->
     it "adds the dropper class to the working canvas", ->
@@ -27,12 +30,12 @@ describe 'The dropper tool', ->
   describe '#mousedown', ->
     newColor = null
     currentColor = new Color(hue: 100, sat: 50, lum: 30)
+
     beforeEach ->
-      app.boxes = {
-        colors: {
+      app.boxes =
+        colors:
           update: (color) -> newColor = color
-        }
-      }
+
       spyOn(app.boxes.colors, 'update').andCallThrough()
       canvases.focusedCell = new Cell(app, 1, 2)
       canvases.focusedCell.color = currentColor

@@ -2,15 +2,17 @@
 
 describe 'The bucket tool', ->
   canvases = app = tool = null
+
   beforeEach ->
     Keyboard.init()
     canvases = {}
     app = {canvases: canvases}
-    Toolset.init(app, canvases)
-    tool = $.extend true, Toolset.tools.bucket
+    tool = Toolset.tools.bucket.init(app, canvases)
+
   afterEach ->
     Keyboard.destroy()
     Toolset.destroy()
+    tool.destroy()
 
   describe 'on mouse down', ->
     it "clears like cells if a cell is right-clicked", ->

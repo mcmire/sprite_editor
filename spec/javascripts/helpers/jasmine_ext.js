@@ -1,16 +1,12 @@
 (function() {
-  /*
-  jasmine.Env.prototype.it = (description, func) ->
-    spec = new jasmine.Spec(this, @currentSuite, description)
-    @currentSuite.add(spec)
-    @currentSpec = spec
-  
-    if func
-      spec.runs(func)
-    else
-      # PATCH
-      spec.runs(-> throw new Error("pending"))
-  
-    return spec
-  */
+  var proto;
+  proto = jasmine.PrettyPrinter.prototype;
+  proto.oldFormat_ = proto.format;
+  proto.format = function(value) {
+    if ((value != null) && typeof value.inspect === "function") {
+      return this.append(value.inspect());
+    } else {
+      return this.oldFormat_(value);
+    }
+  };
 }).call(this);
