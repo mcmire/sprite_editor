@@ -11,7 +11,20 @@
         init: function(app, canvases) {
           this.app = app;
           this.canvases = canvases;
+          if (!this.isInitialized) {
+            this.reset();
+            this.isInitialized = true;
+          }
+          return this;
         },
+        destroy: function() {
+          if (this.isInitialized) {
+            this.reset();
+            this.isInitialized = false;
+          }
+          return this;
+        },
+        reset: function() {},
         trigger: function() {
           var args, name, _ref;
           name = arguments[0], args = 2 <= arguments.length ? __slice.call(arguments, 1) : [];
@@ -29,7 +42,15 @@
         }
         return this;
       },
-      destroy: function() {},
+      destroy: function() {
+        var name, tool, _ref;
+        _ref = this.tools;
+        for (name in _ref) {
+          tool = _ref[name];
+          tool.destroy();
+        }
+        return this;
+      },
       createTool: function() {
         return $.extend({}, this.BaseTool);
       },

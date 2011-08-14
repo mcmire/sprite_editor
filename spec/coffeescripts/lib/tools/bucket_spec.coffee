@@ -30,7 +30,7 @@ describe 'The bucket tool', ->
       tool.mousedown({})
       expect(tool.recordEvent).toHaveBeenCalledWith('fillFocusedCells')
 
-  describe 'fillFocusedCells', ->
+  describe 'the fillFocusedCells event', ->
     action = null
     beforeEach ->
       action = tool.actions.fillFocusedCells
@@ -107,7 +107,7 @@ describe 'The bucket tool', ->
         expect(cells[0][1]).toBe(cell2)
         expect(cells[0][2]).toBe(cell3)
 
-  describe 'clearFocusedCells', ->
+  describe 'the clearFocusedCells event', ->
     action = null
     beforeEach ->
       action = tool.actions.clearFocusedCells

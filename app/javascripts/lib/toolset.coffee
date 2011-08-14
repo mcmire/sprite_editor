@@ -9,6 +9,20 @@ $.export "SpriteEditor.Toolset", (SpriteEditor) ->
 
     BaseTool: $.extend({}, SpriteEditor.Eventable,
       init: (@app, @canvases) ->
+        unless @isInitialized
+          @reset()
+          @isInitialized = true
+        return this
+
+      destroy: ->
+        if @isInitialized
+          @reset()
+          @isInitialized = false
+        return this
+
+      reset: ->
+        # ...
+
       trigger: (name, args...) ->
         @[name]?.apply(this, args)
     )
@@ -18,7 +32,8 @@ $.export "SpriteEditor.Toolset", (SpriteEditor) ->
       return this
 
     destroy: ->
-      # TODO..........
+      tool.destroy() for name, tool of @tools
+      return this
 
     createTool: ->
       $.extend({}, @BaseTool)

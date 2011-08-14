@@ -39,7 +39,7 @@
         return expect(tool.recordEvent).toHaveBeenCalledWith('fillFocusedCells');
       });
     });
-    describe('fillFocusedCells', function() {
+    describe('the fillFocusedCells event', function() {
       var action;
       action = null;
       beforeEach(function() {
@@ -166,7 +166,7 @@
         });
       });
     });
-    return describe('clearFocusedCells', function() {
+    return describe('the clearFocusedCells event', function() {
       var action;
       action = null;
       beforeEach(function() {
