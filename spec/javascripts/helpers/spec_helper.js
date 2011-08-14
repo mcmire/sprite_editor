@@ -116,6 +116,35 @@
         };
         return result;
       },
+      toHaveColor: function(color) {
+        var result;
+        if (!this.actual) {
+          throw new Error("Actual object is undefined.");
+        }
+        if (!(this.actual instanceof SpriteEditor.Cell)) {
+          throw new Error("Actual object isn't a Cell!");
+        }
+        if (!color) {
+          throw new Error("Expected object is undefined.");
+        }
+        if (!(color instanceof SpriteEditor.Color)) {
+          color = new SpriteEditor.Color(color);
+        }
+        result = this.actual.color.eq(color);
+        this.message = function() {
+          return ["Expected " + (this.actual.inspect()) + " to have color " + (color.inspect()), "Expected " + (this.actual.inspect()) + " to not have the given color"];
+        };
+        return result;
+      },
+      toHaveNoColor: function() {
+        if (!this.actual) {
+          throw new Error("Actual object is undefined.");
+        }
+        if (!(this.actual instanceof SpriteEditor.Cell)) {
+          throw new Error("Actual object isn't a Cell!");
+        }
+        return this.actual.color.isClear();
+      },
       toEqualColor: function(color) {
         var result;
         if (!this.actual) {
@@ -128,7 +157,7 @@
           throw new Error("Expected object is undefined.");
         }
         if (!(color instanceof SpriteEditor.Color)) {
-          throw new Error("Expected object isn't a Color!");
+          color = new SpriteEditor.Color(color);
         }
         result = this.actual.eq(color);
         this.message = function() {

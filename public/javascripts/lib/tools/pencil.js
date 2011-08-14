@@ -43,7 +43,6 @@
       }
     });
     return $.extend(t, {
-      upcomingCells: {},
       reset: function() {
         return this.upcomingCells = {};
       },
@@ -52,14 +51,13 @@
         return this.mousedrag(event);
       },
       mousedrag: function(event) {
-        var cell, currentColor, erase, self, _, _ref, _results;
-        self = this;
-        erase = event.rightClick || Keyboard.pressedKeys[Keyboard.CTRL_KEY];
-        currentColor = this.app.boxes.colors.currentColor();
+        var cell, coords, currentColor, erase, _ref, _results;
+        erase = event.rightClick || Keyboard.isKeyPressed(Keyboard.CTRL_KEY);
+        currentColor = (erase ? null : this.app.boxes.colors.currentColor());
         _ref = this.canvases.focusedCells;
         _results = [];
-        for (_ in _ref) {
-          cell = _ref[_];
+        for (coords in _ref) {
+          cell = _ref[coords];
           if (cell.coords() in this.upcomingCells) {
             continue;
           }
@@ -73,19 +71,19 @@
         return this.reset();
       },
       cellOptions: function(cell) {
-        var currentColor, focusedCell, opts, upcomingCell;
+        var currentColor, focusedCell, opts, upcomingCell, _ref;
         opts = {};
-        currentColor = this.app.boxes.colors.currentColor();
         upcomingCell = this.upcomingCells[cell.coords()];
-        focusedCell = this.canvases.focusedCells && this.canvases.focusedCells[cell.coords()];
+        focusedCell = (_ref = this.canvases.focusedCells) != null ? _ref[cell.coords()] : void 0;
         if (upcomingCell) {
           opts.color = upcomingCell.color;
         } else if (focusedCell) {
-          if (Keyboard.pressedKeys[Keyboard.CTRL_KEY]) {
+          if (Keyboard.isKeyPressed(Keyboard.CTRL_KEY)) {
             opts.color = cell.color["with"]({
               alpha: 0.2
             });
           } else {
+            currentColor = this.app.boxes.colors.currentColor();
             opts.color = currentColor["with"]({
               alpha: 0.5
             });

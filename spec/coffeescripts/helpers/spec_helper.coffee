@@ -101,6 +101,31 @@ beforeEach ->
       ]
       result
 
+    toHaveColor: (color) ->
+      unless @actual
+        throw new Error("Actual object is undefined.")
+      unless @actual instanceof SpriteEditor.Cell
+        throw new Error("Actual object isn't a Cell!")
+      unless color
+        throw new Error("Expected object is undefined.")
+      unless color instanceof SpriteEditor.Color
+        color = new SpriteEditor.Color(color)
+
+      result = @actual.color.eq(color)
+      @message = -> [
+        "Expected #{@actual.inspect()} to have color #{color.inspect()}",
+        "Expected #{@actual.inspect()} to not have the given color"
+      ]
+      result
+
+    toHaveNoColor: ->
+      unless @actual
+        throw new Error("Actual object is undefined.")
+      unless @actual instanceof SpriteEditor.Cell
+        throw new Error("Actual object isn't a Cell!")
+
+      @actual.color.isClear()
+
     toEqualColor: (color) ->
       unless @actual
         throw new Error("Actual object is undefined.")
@@ -109,7 +134,7 @@ beforeEach ->
       unless color
         throw new Error("Expected object is undefined.")
       unless color instanceof SpriteEditor.Color
-        throw new Error("Expected object isn't a Color!")
+        color = new SpriteEditor.Color(color)
 
       result = @actual.eq(color)
       @message = -> [
