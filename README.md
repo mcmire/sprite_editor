@@ -55,10 +55,10 @@ to run the tests you can simply run:
 
     bundle exec jasmine-headless-webkit spec/javascripts
 
-**UPDATE 13 Feb 2012:** Or at least you could be able to at one point, but that
-doesn't seem to work anymore. Just use the jasmine gem:
+**UPDATE 13 Feb 2012:** ...Or at least you could be able to at one point, but
+that doesn't seem to work anymore. Just use the jasmine gem:
 
-  bundle exec jasmine
+    bundle exec jasmine
 
 Now, go to http://localhost:8888.
 
