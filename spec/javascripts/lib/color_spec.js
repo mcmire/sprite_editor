@@ -1,6 +1,8 @@
 (function() {
   var Color;
+
   Color = SpriteEditor.Color;
+
   describe("Color", function() {
     describe(".new", function() {
       describe("given properties of an RGB color", function() {
@@ -1547,4 +1549,5 @@
       });
     });
   });
+
 }).call(this);

@@ -1,7 +1,10 @@
 (function() {
   var Keyboard, Tools;
+
   Tools = SpriteEditor.Box.Tools;
+
   Keyboard = SpriteEditor.Keyboard;
+
   describe('Box.Tools', function() {
     var app, toolNames, toolShortcuts, tools;
     app = tools = null;
@@ -102,14 +105,14 @@
       });
     });
     describe('when events have been added', function() {
-      var key, name, _len, _results;
+      var key, name, _i, _len, _results;
       beforeEach(function() {
         tools = Tools.init(app);
         tools.addEvents();
         return spyOn(tools, 'select');
       });
       _results = [];
-      for (name = 0, _len = toolShortcuts.length; name < _len; name++) {
+      for (name = _i = 0, _len = toolShortcuts.length; _i < _len; name = ++_i) {
         key = toolShortcuts[name];
         _results.push(it("if the " + key + " key is pressed, marks the element corresponding to " + tool + " tool as selected", function() {
           specHelpers.fireNativeEvent(document, "keydown", function(evt) {
@@ -121,7 +124,7 @@
       return _results;
     });
     describe('when events have been removed', function() {
-      var key, name, _len, _results;
+      var key, name, _i, _len, _results;
       beforeEach(function() {
         tools = Tools.init(app);
         tools.addEvents();
@@ -129,7 +132,7 @@
         return spyOn(tools, 'select');
       });
       _results = [];
-      for (name = 0, _len = toolShortcuts.length; name < _len; name++) {
+      for (name = _i = 0, _len = toolShortcuts.length; _i < _len; name = ++_i) {
         key = toolShortcuts[name];
         _results.push(it("if the " + key + " key is pressed, does nothing", function() {
           specHelpers.fireNativeEvent(document, "keydown", function(evt) {
@@ -156,14 +159,18 @@
         return _results;
       });
       it("marks the element corresponding to the given tool as selected", function() {
-        var $img, name, _len, _ref, _results;
+        var $img, name, _i, _len, _ref, _results;
         tools.select("tool2");
         expect(tools.currentToolName).toBe("tool2");
         _ref = tools.toolImages;
         _results = [];
-        for ($img = 0, _len = _ref.length; $img < _len; $img++) {
+        for ($img = _i = 0, _len = _ref.length; _i < _len; $img = ++_i) {
           name = _ref[$img];
-          _results.push(name === "tool2" ? expect($img).toHaveClass("selected") : expect($img).not.toHaveClass("selected"));
+          if (name === "tool2") {
+            _results.push(expect($img).toHaveClass("selected"));
+          } else {
+            _results.push(expect($img).not.toHaveClass("selected"));
+          }
         }
         return _results;
       });
@@ -176,11 +183,11 @@
         return expect(app.toolset.tools.tool2.select).toHaveBeenCalled();
       });
       return it("does nothing if the given size is already selected", function() {
-        var $img, name, _len, _ref, _results;
+        var $img, name, _i, _len, _ref, _results;
         tools.select("tool1");
         _ref = tools.toolImages;
         _results = [];
-        for ($img = 0, _len = _ref.length; $img < _len; $img++) {
+        for ($img = _i = 0, _len = _ref.length; _i < _len; $img = ++_i) {
           name = _ref[$img];
           _results.push(expect($img).not.toHaveClass("selected"));
         }
@@ -197,4 +204,5 @@
       });
     });
   });
+
 }).call(this);

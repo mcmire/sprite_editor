@@ -1,8 +1,12 @@
 (function() {
   var Color, Colors, Keyboard;
+
   Colors = SpriteEditor.Box.Colors;
+
   Keyboard = SpriteEditor.Keyboard;
+
   Color = SpriteEditor.Color;
+
   describe('Box.Colors', function() {
     var app, colors;
     app = colors = null;
@@ -381,4 +385,5 @@
       });
     });
   });
+
 }).call(this);

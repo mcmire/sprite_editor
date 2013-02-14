@@ -1,19 +1,25 @@
 (function() {
+
   $["export"]("SpriteEditor.CellLocation", function(SpriteEditor) {
     var CellLocation;
     return CellLocation = (function() {
+
       CellLocation.plus = function(l1, l2) {
         return l1.plus(l2);
       };
+
       CellLocation.add = function() {
         return this.plus.apply(this, arguments);
       };
+
       CellLocation.minus = function(l1, l2) {
         return l1.minus(l2);
       };
+
       CellLocation.subtract = function() {
         return this.minus.apply(this, arguments);
       };
+
       function CellLocation() {
         var obj;
         if (arguments.length === 1 && $.v.is.obj(arguments[0])) {
@@ -26,6 +32,7 @@
           $.extend(this._fillOutCoords(this));
         }
       }
+
       CellLocation.prototype.add = function(offset) {
         offset = this._fillOutCoords(offset);
         if (offset.i != null) {
@@ -42,9 +49,11 @@
         }
         return this;
       };
+
       CellLocation.prototype.plus = function(offset) {
         return this.clone().add(offset);
       };
+
       CellLocation.prototype.subtract = function(offset) {
         offset = this._fillOutCoords(offset);
         if (offset.i != null) {
@@ -61,18 +70,23 @@
         }
         return this;
       };
+
       CellLocation.prototype.minus = function(offset) {
         return this.clone().subtract(offset);
       };
+
       CellLocation.prototype.eq = function(other) {
         return this.i === other.i && this.j === other.j;
       };
+
       CellLocation.prototype.gt = function(other) {
         return this.i > other.i || this.j > other.j;
       };
+
       CellLocation.prototype.clone = function() {
         return new CellLocation(this);
       };
+
       CellLocation.prototype.toJSON = function() {
         return JSON.stringify({
           x: this.x,
@@ -81,9 +95,11 @@
           j: this.j
         });
       };
+
       CellLocation.prototype.inspect = function() {
         return "(" + this.i + ", " + this.j + ")";
       };
+
       CellLocation.prototype._handleCoordsObject = function(obj, sig) {
         if (!(obj instanceof CellLocation)) {
           this._validateCoords(obj, sig);
@@ -91,6 +107,7 @@
         }
         return obj;
       };
+
       CellLocation.prototype._validateCoords = function(obj, sig) {
         var count;
         count = 0;
@@ -113,6 +130,7 @@
           throw "An object passed to " + sig + " must contain i and j and/or x and y!";
         }
       };
+
       CellLocation.prototype._fillOutCoords = function(obj) {
         obj = $.extend(obj);
         if ((obj.j != null) && !(obj.x != null)) {
@@ -129,7 +147,10 @@
         }
         return obj;
       };
+
       return CellLocation;
+
     })();
   });
+
 }).call(this);

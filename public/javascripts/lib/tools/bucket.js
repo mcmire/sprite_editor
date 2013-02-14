@@ -1,6 +1,8 @@
 (function() {
   var Keyboard, Toolset;
+
   Keyboard = SpriteEditor.Keyboard, Toolset = SpriteEditor.Toolset;
+
   Toolset.addTool("bucket", "G", function(t) {
     t.addAction("fillFocusedCells", {
       "do": function() {
@@ -112,4 +114,5 @@
       }
     });
   });
+
 }).call(this);

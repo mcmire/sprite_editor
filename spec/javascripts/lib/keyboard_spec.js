@@ -1,6 +1,8 @@
 (function() {
   var Keyboard;
+
   Keyboard = SpriteEditor.Keyboard;
+
   describe('Keyboard', function() {
     var kb;
     kb = null;
@@ -203,4 +205,5 @@
       });
     });
   });
+
 }).call(this);

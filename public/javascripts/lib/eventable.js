@@ -1,4 +1,5 @@
 (function() {
+
   $["export"]("SpriteEditor.Eventable", {
     actions: {},
     recordEvent: function(method) {
@@ -8,4 +9,5 @@
       return this.actions[name] = routines;
     }
   });
+
 }).call(this);

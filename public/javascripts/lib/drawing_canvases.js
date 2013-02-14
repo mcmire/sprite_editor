@@ -1,5 +1,5 @@
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
   $["export"]("SpriteEditor.DrawingCanvases", function(SpriteEditor) {
     var Canvas, DrawingCanvases, ElementMouseTracker, Keyboard, defaults;
     ElementMouseTracker = SpriteEditor.ElementMouseTracker, Keyboard = SpriteEditor.Keyboard, Canvas = SpriteEditor.Canvas;
@@ -118,7 +118,7 @@
         return this;
       },
       save: function() {
-        var cell, cells, row, _i, _j, _len, _len2, _ref;
+        var cell, cells, row, _i, _j, _len, _len1, _ref;
         if (!window.RUNNING_TESTS) {
           console.log("Saving...");
         }
@@ -126,7 +126,7 @@
         _ref = this.cells;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           row = _ref[_i];
-          for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
+          for (_j = 0, _len1 = row.length; _j < _len1; _j++) {
             cell = row[_j];
             cells[cell.coords()] = cell.color.asJSON();
           }
@@ -266,37 +266,43 @@
         return pc.imageData.setPixel(cell.loc.j, cell.loc.i, color.red, color.green, color.blue, Math.floor(color.alpha * 255));
       },
       _initCells: function() {
-        var cell, cells, color, i, j, json, row, _ref, _results;
+        var cell, cells, color, i, j, json, row, _i, _ref, _results;
         json = localStorage.getItem("sprite_editor.cells");
         if (json) {
           cells = JSON.parse(json);
         }
         _results = [];
-        for (i = 0, _ref = this.heightInCells; 0 <= _ref ? i < _ref : i > _ref; 0 <= _ref ? i++ : i--) {
+        for (i = _i = 0, _ref = this.heightInCells; 0 <= _ref ? _i < _ref : _i > _ref; i = 0 <= _ref ? ++_i : --_i) {
           row = this.cells[i] = [];
           _results.push((function() {
-            var _ref2, _results2;
-            _results2 = [];
-            for (j = 0, _ref2 = this.widthInCells; 0 <= _ref2 ? j < _ref2 : j > _ref2; 0 <= _ref2 ? j++ : j--) {
+            var _j, _ref1, _results1;
+            _results1 = [];
+            for (j = _j = 0, _ref1 = this.widthInCells; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; j = 0 <= _ref1 ? ++_j : --_j) {
               cell = row[j] = new SpriteEditor.Cell(this, i, j);
-              _results2.push(cells ? (color = cells[cell.coords()], row[j].color = new SpriteEditor.Color(color)) : void 0);
+              if (cells) {
+                color = cells[cell.coords()];
+                _results1.push(row[j].color = new SpriteEditor.Color(color));
+              } else {
+                _results1.push(void 0);
+              }
             }
-            return _results2;
+            return _results1;
           }).call(this));
         }
         return _results;
       },
       _createGridBgCanvas: function() {
-        return this.gridBgCanvas = Canvas.create(this.cellSize, this.cellSize, __bind(function(c) {
+        var _this = this;
+        return this.gridBgCanvas = Canvas.create(this.cellSize, this.cellSize, function(c) {
           c.ctx.strokeStyle = "#eee";
           c.ctx.beginPath();
           c.ctx.moveTo(0.5, 0);
-          c.ctx.lineTo(0.5, this.cellSize);
+          c.ctx.lineTo(0.5, _this.cellSize);
           c.ctx.moveTo(0, 0.5);
-          c.ctx.lineTo(this.cellSize, 0.5);
+          c.ctx.lineTo(_this.cellSize, 0.5);
           c.ctx.stroke();
           return c.ctx.closePath();
-        }, this));
+        });
       },
       _createWorkingCanvas: function() {
         this.width = this.widthInCells * this.cellSize;
@@ -322,7 +328,7 @@
         return this.focusedCell = this.cells[i][j];
       },
       _setFocusedCells: function(mouse) {
-        var bs, cell, focusedCells, i, i1, i2, j, j1, j2, row, x, x1, x2, y, y1, y2;
+        var bs, cell, focusedCells, i, i1, i2, j, j1, j2, row, x, x1, x2, y, y1, y2, _i, _j;
         bs = (this.app.boxes.sizes.currentSize - 1) * this.cellSize;
         x = mouse.rel.x;
         y = mouse.rel.y;
@@ -335,8 +341,8 @@
         i1 = Math.floor(y1 / this.cellSize);
         i2 = Math.floor(y2 / this.cellSize);
         focusedCells = {};
-        for (i = i1; i1 <= i2 ? i <= i2 : i >= i2; i1 <= i2 ? i++ : i--) {
-          for (j = j1; j1 <= j2 ? j <= j2 : j >= j2; j1 <= j2 ? j++ : j--) {
+        for (i = _i = i1; i1 <= i2 ? _i <= i2 : _i >= i2; i = i1 <= i2 ? ++_i : --_i) {
+          for (j = _j = j1; j1 <= j2 ? _j <= j2 : _j >= j2; j = j1 <= j2 ? ++_j : --_j) {
             row = this.cells[i];
             if (row) {
               cell = row[j];
@@ -371,13 +377,13 @@
         return ptc.ctx.clearRect(0, 0, ptc.width, ptc.height);
       },
       _fillCells: function() {
-        var cell, opts, pc, row, wc, _i, _j, _len, _len2, _ref, _ref2;
+        var cell, opts, pc, row, wc, _i, _j, _len, _len1, _ref, _ref1;
         _ref = [this.workingCanvas, this.previewCanvas], wc = _ref[0], pc = _ref[1];
         wc.ctx.save();
-        _ref2 = this.cells;
-        for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-          row = _ref2[_i];
-          for (_j = 0, _len2 = row.length; _j < _len2; _j++) {
+        _ref1 = this.cells;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          row = _ref1[_i];
+          for (_j = 0, _len1 = row.length; _j < _len1; _j++) {
             cell = row[_j];
             opts = this.app.boxes.tools.currentTool().trigger("cellOptions", cell) || {};
             this.drawCell(cell, opts);
@@ -396,4 +402,5 @@
     });
     return DrawingCanvases;
   });
+
 }).call(this);

@@ -1,7 +1,10 @@
 (function() {
   var Keyboard, Sizes;
+
   Sizes = SpriteEditor.Box.Sizes;
+
   Keyboard = SpriteEditor.Keyboard;
+
   describe('Box.Sizes', function() {
     var app, sizes;
     app = sizes = null;
@@ -153,23 +156,27 @@
         return _results;
       });
       it("marks the element corresponding to the given size as selected", function() {
-        var $grid, size, _len, _ref, _results;
+        var $grid, size, _i, _len, _ref, _results;
         sizes.select(1);
         expect(sizes.currentSize).toBe(1);
         _ref = sizes.sizeGrids;
         _results = [];
-        for ($grid = 0, _len = _ref.length; $grid < _len; $grid++) {
+        for ($grid = _i = 0, _len = _ref.length; _i < _len; $grid = ++_i) {
           size = _ref[$grid];
-          _results.push(size === 1 ? expect($grid).toHaveClass("selected") : expect($grid).not.toHaveClass("selected"));
+          if (size === 1) {
+            _results.push(expect($grid).toHaveClass("selected"));
+          } else {
+            _results.push(expect($grid).not.toHaveClass("selected"));
+          }
         }
         return _results;
       });
       return it("does nothing if the given size is already selected", function() {
-        var $grid, size, _len, _ref, _results;
+        var $grid, size, _i, _len, _ref, _results;
         sizes.select(3);
         _ref = sizes.sizeGrids;
         _results = [];
-        for ($grid = 0, _len = _ref.length; $grid < _len; $grid++) {
+        for ($grid = _i = 0, _len = _ref.length; _i < _len; $grid = ++_i) {
           size = _ref[$grid];
           _results.push(expect($grid).not.toHaveClass("selected"));
         }
@@ -177,4 +184,5 @@
       });
     });
   });
+
 }).call(this);

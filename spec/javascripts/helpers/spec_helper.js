@@ -1,14 +1,18 @@
 (function() {
   var _ensureEnderObject;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
   window.RUNNING_TESTS = true;
+
   window.$sandbox = $('<div id="sandbox" />');
+
   window.sandboxAdded = false;
+
   _ensureEnderObject = function(obj) {
     if (!(typeof obj === "object" && '$' in obj)) {
       throw new Error("Object doesn't seem to be an Ender instance!");
     }
   };
+
   window.specHelpers = {
     fireEvent: function(element, type, isNative, fn) {
       var evt;
@@ -27,6 +31,7 @@
       return this.fireEvent(element, type, false, fn);
     }
   };
+
   beforeEach(function() {
     this.addMatchers({
       toContainObject: function(expected) {
@@ -172,7 +177,8 @@
         return $(this.actual).hasClass(cssClass);
       },
       toHaveAttr: function() {
-        var $actual, actual, props, result;
+        var $actual, actual, props, result,
+          _this = this;
         $actual = $(this.actual);
         if (arguments.length === 2) {
           props = {};
@@ -180,10 +186,10 @@
         } else {
           props = arguments[0];
         }
-        actual = $.v.reduce($.v.keys(props), (__bind(function(h, k) {
+        actual = $.v.reduce($.v.keys(props), (function(h, k) {
           h[k] = $actual.attr(k);
           return h;
-        }, this)), {});
+        }), {});
         result = this.env.equals_(actual, props);
         this.message = function() {
           return ["Expected element to have attributes " + (jasmine.pp(props)) + ", but its attributes were " + (jasmine.pp(actual)), "Expected element to not have attributes " + (jasmine.pp(actual))];
@@ -191,7 +197,8 @@
         return result;
       },
       toHaveCss: function() {
-        var $actual, actual, props, result;
+        var $actual, actual, props, result,
+          _this = this;
         $actual = $(this.actual);
         if (arguments.length === 2) {
           props = {};
@@ -199,10 +206,10 @@
         } else {
           props = arguments[0];
         }
-        actual = $.v.reduce($.v.keys(props), (__bind(function(h, k) {
+        actual = $.v.reduce($.v.keys(props), (function(h, k) {
           h[k] = $actual.css(k);
           return h;
-        }, this)), {});
+        }), {});
         result = this.env.equals_(actual, props);
         this.message = function() {
           return ["Expected element to have css " + (jasmine.pp(props)) + ", but its css was " + (jasmine.pp(actual)), "Expected element to not have css " + (jasmine.pp(actual))];
@@ -243,4 +250,5 @@
       return window.sandboxAdded = true;
     }
   });
+
 }).call(this);

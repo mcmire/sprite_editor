@@ -1,4 +1,5 @@
 (function() {
+
   describe("ender class methods", function() {
     describe('$.extend', function() {
       it("copies the properties of the objects after the first object, to the first object", function() {
@@ -210,6 +211,7 @@
       });
     });
   });
+
   describe('ender instance methods', function() {
     describe('$::center', function() {
       return it("sets the top and left coordinates of the element so it is in the center of the window", function() {
@@ -376,4 +378,5 @@
       });
     });
   });
+
 }).call(this);

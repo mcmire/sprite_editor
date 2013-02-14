@@ -1,7 +1,10 @@
 (function() {
   var Cell, Color;
+
   Cell = SpriteEditor.Cell;
+
   Color = SpriteEditor.Color;
+
   describe('Cell', function() {
     describe('.new', function() {
       describe('with three arguments', function() {
@@ -182,4 +185,5 @@
       });
     });
   });
+
 }).call(this);

@@ -1,6 +1,8 @@
 (function() {
   var EventHistory;
+
   EventHistory = SpriteEditor.EventHistory;
+
   describe("EventHistory", function() {
     var app, history;
     app = history = null;
@@ -163,4 +165,5 @@
       });
     });
   });
+
 }).call(this);

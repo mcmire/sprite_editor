@@ -1,6 +1,8 @@
 (function() {
   var CellLocation;
+
   CellLocation = SpriteEditor.CellLocation;
+
   describe("CellLocation", function() {
     var canvases;
     canvases = {
@@ -687,4 +689,5 @@
       });
     });
   });
+
 }).call(this);

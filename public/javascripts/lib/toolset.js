@@ -1,5 +1,6 @@
 (function() {
-  var __slice = Array.prototype.slice;
+  var __slice = [].slice;
+
   $["export"]("SpriteEditor.Toolset", function(SpriteEditor) {
     var Keyboard, Toolset;
     Keyboard = SpriteEditor.Keyboard;
@@ -69,4 +70,5 @@
     };
     return Toolset;
   });
+
 }).call(this);

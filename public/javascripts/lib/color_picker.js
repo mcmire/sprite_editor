@@ -1,5 +1,6 @@
 (function() {
-  var __slice = Array.prototype.slice, __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  var __slice = [].slice;
+
   $["export"]("SpriteEditor.ColorPicker", function(SpriteEditor) {
     var ColorPicker, Keyboard;
     Keyboard = SpriteEditor.Keyboard;
@@ -108,12 +109,13 @@
         return this._addHueSatSelectorDiv();
       },
       _addHueSatCanvas: function() {
-        this.hueSatCanvas = SpriteEditor.Canvas.create(this.hueSatCanvasSize.width, this.hueSatCanvasSize.height, __bind(function(c) {
-          var h, hsl, imageData, rgb, s, x, y, _ref, _ref2;
+        var _this = this;
+        this.hueSatCanvas = SpriteEditor.Canvas.create(this.hueSatCanvasSize.width, this.hueSatCanvasSize.height, function(c) {
+          var h, hsl, imageData, rgb, s, x, y, _i, _j, _ref, _ref1;
           imageData = c.ctx.createImageData(c.width, c.height);
-          hsl = this.currentColor;
-          for (y = 0, _ref = c.height; 0 <= _ref ? y < _ref : y > _ref; 0 <= _ref ? y++ : y--) {
-            for (x = 0, _ref2 = c.width; 0 <= _ref2 ? x < _ref2 : x > _ref2; 0 <= _ref2 ? x++ : x--) {
+          hsl = _this.currentColor;
+          for (y = _i = 0, _ref = c.height; 0 <= _ref ? _i < _ref : _i > _ref; y = 0 <= _ref ? ++_i : --_i) {
+            for (x = _j = 0, _ref1 = c.width; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; x = 0 <= _ref1 ? ++_j : --_j) {
               h = Math.round(x * (360 / c.width));
               s = Math.round(y * (-100 / c.height) + 100);
               rgb = hsl["with"]({
@@ -124,7 +126,7 @@
             }
           }
           return c.ctx.putImageData(imageData, 0, 0);
-        }, this));
+        });
         this.hueSatCanvas.$element.addClass("hue_sat_canvas");
         return this.$hueSatDiv.append(this.hueSatCanvas.$element);
       },
@@ -147,16 +149,16 @@
         return this.$lumDiv.append(this.lumCanvas.$element);
       },
       _drawLumCanvas: function() {
-        var c, hsl, imageData, l, rgb, x, y, _ref, _ref2;
+        var c, hsl, imageData, l, rgb, x, y, _i, _j, _ref, _ref1;
         c = this.lumCanvas;
         imageData = c.ctx.createImageData(c.width, c.height);
         hsl = this.currentColor;
-        for (y = 0, _ref = c.height; 0 <= _ref ? y < _ref : y > _ref; 0 <= _ref ? y++ : y--) {
+        for (y = _i = 0, _ref = c.height; 0 <= _ref ? _i < _ref : _i > _ref; y = 0 <= _ref ? ++_i : --_i) {
           l = Math.round((-100 / c.height) * y + 100);
           rgb = hsl["with"]({
             lum: l
           });
-          for (x = 0, _ref2 = c.width; 0 <= _ref2 ? x < _ref2 : x > _ref2; 0 <= _ref2 ? x++ : x--) {
+          for (x = _j = 0, _ref1 = c.width; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; x = 0 <= _ref1 ? ++_j : --_j) {
             imageData.setPixel(x, y, rgb.red, rgb.green, rgb.blue, 255);
           }
         }
@@ -186,30 +188,31 @@
         return this.$container.append(this.$colorSampleDiv);
       },
       _addCloseButton: function() {
-        var $p;
+        var $p,
+          _this = this;
         $p = $('<p class="clear" style="text-align: center; margin-top: 30px" />');
         this.$closeButton = $('<a href="#" />').html("Close box");
-        this.$closeButton.bind("click", __bind(function() {
-          return this.close();
-        }, this));
+        this.$closeButton.bind("click", function() {
+          return _this.close();
+        });
         $p.append(this.$closeButton);
         return this.$container.append($p);
       },
       _setColorFields: function() {
-        var color, prop, _i, _j, _len, _len2, _ref, _ref2, _ref3, _ref4, _results;
+        var color, prop, _i, _j, _len, _len1, _ref, _ref1, _ref2, _ref3, _results;
         color = this.currentColor;
         _ref = SpriteEditor.Color.componentsByType.rgb;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           prop = _ref[_i];
-          if ((_ref2 = this.colorFields[prop]) != null) {
-            _ref2.val(String(color[prop]));
+          if ((_ref1 = this.colorFields[prop]) != null) {
+            _ref1.val(String(color[prop]));
           }
         }
-        _ref3 = SpriteEditor.Color.componentsByType.hsl;
+        _ref2 = SpriteEditor.Color.componentsByType.hsl;
         _results = [];
-        for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
-          prop = _ref3[_j];
-          _results.push((_ref4 = this.colorFields[prop]) != null ? _ref4.val(String(color[prop])) : void 0);
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          prop = _ref2[_j];
+          _results.push((_ref3 = this.colorFields[prop]) != null ? _ref3.val(String(color[prop])) : void 0);
         }
         return _results;
       },
@@ -300,4 +303,5 @@
     });
     return ColorPicker;
   });
+
 }).call(this);

@@ -1,7 +1,9 @@
 (function() {
-  var ElementMouseTracker;
-  var __slice = Array.prototype.slice;
+  var ElementMouseTracker,
+    __slice = [].slice;
+
   ElementMouseTracker = SpriteEditor.ElementMouseTracker;
+
   describe('ElementMouseTracker', function() {
     var mouse;
     mouse = null;
@@ -275,6 +277,7 @@
       });
     });
   });
+
   describe('ElementMouseTracker.instance', function() {
     var $element, mouse, newMouse;
     mouse = $element = null;
@@ -652,6 +655,7 @@
       });
     });
   });
+
   describe('$.mouseTracker', function() {
     it("returns the mouse tracker instance if no args given");
     it("creates a mouse tracker instance and ties it to the element if given an object");
@@ -660,4 +664,5 @@
     it("returns the mouse tracker instance itself");
     return it("destroys the mouse tracker instance");
   });
+
 }).call(this);

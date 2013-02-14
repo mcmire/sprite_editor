@@ -1,4 +1,5 @@
 (function() {
+
   $["export"]("SpriteEditor.EventHistory", {
     init: function(app) {
       this.app = app;
@@ -49,4 +50,5 @@
       }
     }
   });
+
 }).call(this);

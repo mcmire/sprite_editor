@@ -1,6 +1,8 @@
 (function() {
   var Cell, Color, Keyboard, Toolset;
+
   Keyboard = SpriteEditor.Keyboard, Toolset = SpriteEditor.Toolset, Cell = SpriteEditor.Cell, Color = SpriteEditor.Color;
+
   describe('The pencil tool', function() {
     var app, canvases, tool;
     canvases = app = tool = null;
@@ -261,4 +263,5 @@
       });
     });
   });
+
 }).call(this);

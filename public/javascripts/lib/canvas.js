@@ -1,4 +1,5 @@
 (function() {
+
   $["export"]("SpriteEditor.Canvas", function(SpriteEditor) {
     var Canvas;
     Canvas = {
@@ -53,4 +54,5 @@
     };
     return Canvas;
   });
+
 }).call(this);

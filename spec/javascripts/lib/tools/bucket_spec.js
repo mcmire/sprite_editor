@@ -1,6 +1,8 @@
 (function() {
   var Cell, Color, Keyboard, Tools, Toolset;
+
   Keyboard = SpriteEditor.Keyboard, Toolset = SpriteEditor.Toolset, Tools = SpriteEditor.Tools, Color = SpriteEditor.Color, Cell = SpriteEditor.Cell;
+
   describe('The bucket tool', function() {
     var app, canvases, tool;
     canvases = app = tool = null;
@@ -294,4 +296,5 @@
       });
     });
   });
+
 }).call(this);

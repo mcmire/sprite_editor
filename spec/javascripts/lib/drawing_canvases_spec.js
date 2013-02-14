@@ -1,6 +1,8 @@
 (function() {
   var Cell, CellLocation, Color, DrawingCanvases, ElementMouseTracker, Keyboard, Toolset;
+
   DrawingCanvases = SpriteEditor.DrawingCanvases, ElementMouseTracker = SpriteEditor.ElementMouseTracker, Keyboard = SpriteEditor.Keyboard, Cell = SpriteEditor.Cell, CellLocation = SpriteEditor.CellLocation, Color = SpriteEditor.Color, Toolset = SpriteEditor.Toolset;
+
   describe('DrawingCanvases', function() {
     var app, canvases;
     app = canvases = null;
@@ -676,7 +678,7 @@
           return expect(canvases.focusedCell).toEqual(cell);
         });
         return it("stores the cells that have focus (considering the brush size)", function() {
-          var cell, cells, i, _len, _ref, _results;
+          var cell, cells, i, _i, _len, _ref, _results;
           app.boxes.sizes = {
             currentSize: 4
           };
@@ -692,7 +694,7 @@
           simulateEvent(65, 35);
           _ref = canvases.focusedCells;
           _results = [];
-          for (i = 0, _len = _ref.length; i < _len; i++) {
+          for (i = _i = 0, _len = _ref.length; _i < _len; i = ++_i) {
             cell = _ref[i];
             _results.push(expect(cell).toEqualCell(cells[i]));
           }
@@ -1338,4 +1340,5 @@
       });
     });
   });
+
 }).call(this);

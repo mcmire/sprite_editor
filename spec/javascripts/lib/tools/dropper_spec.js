@@ -1,6 +1,8 @@
 (function() {
   var Cell, Color, Toolset;
+
   Color = SpriteEditor.Color, Cell = SpriteEditor.Cell, Toolset = SpriteEditor.Toolset;
+
   describe('The dropper tool', function() {
     var app, canvases, tool;
     canvases = app = tool = null;
@@ -73,4 +75,5 @@
       });
     });
   });
+
 }).call(this);

@@ -1,6 +1,8 @@
 (function() {
   var App, Box, ColorPicker, DrawingCanvases, ElementMouseTracker, EventHistory, Keyboard, Toolset;
+
   Keyboard = SpriteEditor.Keyboard, ElementMouseTracker = SpriteEditor.ElementMouseTracker, DrawingCanvases = SpriteEditor.DrawingCanvases, Toolset = SpriteEditor.Toolset, EventHistory = SpriteEditor.EventHistory, ColorPicker = SpriteEditor.ColorPicker, Box = SpriteEditor.Box, App = SpriteEditor.App;
+
   describe('App', function() {
     var app, initApp;
     app = null;
@@ -512,4 +514,5 @@
       });
     });
   });
+
 }).call(this);

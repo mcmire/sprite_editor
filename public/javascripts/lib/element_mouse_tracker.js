@@ -1,4 +1,5 @@
 (function() {
+
   $["export"]("SpriteEditor.ElementMouseTracker", function(SpriteEditor) {
     var ElementMouseTracker;
     ElementMouseTracker = {};
@@ -112,9 +113,11 @@
       }
     });
     ElementMouseTracker.instance = (function() {
+
       SpriteEditor.DOMEventHelpers.mixin(instance.prototype, "SpriteEditor_ElementMouseTracker");
+
       function instance($element, options) {
-        var computedStyle, key, keys, val, _base, _i, _len, _ref, _ref2;
+        var computedStyle, key, keys, val, _base, _i, _len, _ref, _ref1;
         this.$element = $element;
         this.options = {};
         this.customEvents = {};
@@ -130,11 +133,9 @@
             }
           }
         }
-                if ((_ref2 = (_base = this.options).draggingDistance) != null) {
-          _ref2;
-        } else {
+        if ((_ref1 = (_base = this.options).draggingDistance) == null) {
           _base.draggingDistance = 1;
-        };
+        }
         this.pos = {
           abs: null,
           rel: null
@@ -152,9 +153,11 @@
           height: parseInt(computedStyle["height"], 10)
         };
       }
+
       instance.prototype.destroy = function() {
         return this.removeEvents();
       };
+
       instance.prototype.addEvents = function() {
         var self;
         self = this;
@@ -207,6 +210,7 @@
         }
         return this;
       };
+
       instance.prototype.removeEvents = function() {
         if (this._eventsAdded) {
           this._unbindEvents(this.$element, "mouseover", "mouseout", "mouseenter", "mouseleave", "mousedown", "click", "contextmenu");
@@ -214,6 +218,7 @@
         }
         return this;
       };
+
       instance.prototype.triggerHandler = function(eventName, event) {
         if (eventName in this) {
           return this[eventName].call(this, event);
@@ -221,6 +226,7 @@
           return this.customEvents[eventName].call(this, event);
         }
       };
+
       instance.prototype.mousemove = function(event) {
         var dist, wasDragging, _ref;
         this._setMousePosition();
@@ -246,11 +252,13 @@
           return ElementMouseTracker.debugDiv().html(String.format("abs: ({0}, {1})<br/>rel: ({2}, {3})", this.pos.abs.x, this.pos.abs.y, this.pos.rel.x, this.pos.rel.y));
         }
       };
+
       instance.prototype.mousedragstop = function(event) {
         var _ref;
         this.isDragging = false;
         return (_ref = this.customEvents.mousedragstop) != null ? _ref.call(this, event) : void 0;
       };
+
       instance.prototype.mouseup = function(event) {
         var _ref;
         this.isDown = false;
@@ -265,6 +273,7 @@
           return ElementMouseTracker.debugDiv().hide();
         }
       };
+
       instance.prototype._setMousePosition = function() {
         this.pos = {
           abs: ElementMouseTracker.pos,
@@ -284,10 +293,13 @@
           return this.pos.rel.y = this.elementSize.height;
         }
       };
+
       instance.prototype._distance = function(v1, v2) {
         return Math.floor(Math.sqrt(Math.pow(v2.y - v1.y, 2) + Math.pow(v2.x - v1.x, 2)));
       };
+
       return instance;
+
     })();
     $.ender({
       mouseTracker: function() {
@@ -322,4 +334,5 @@
     }, true);
     return ElementMouseTracker;
   });
+
 }).call(this);

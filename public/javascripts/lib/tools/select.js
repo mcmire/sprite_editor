@@ -1,6 +1,8 @@
 (function() {
   var Keyboard, Toolset;
+
   Keyboard = SpriteEditor.Keyboard, Toolset = SpriteEditor.Toolset;
+
   Toolset.addTool("select", "S", function(t) {
     t.addAction("cutSelection", {
       "do": function(event) {
@@ -95,15 +97,15 @@
         return event;
       },
       undo: function(event) {
-        var cell, _i, _j, _len, _len2, _ref, _ref2;
+        var cell, _i, _j, _len, _len1, _ref, _ref1;
         _ref = event.canvases.changedCells.tgt;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           cell = _ref[_i];
           t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before;
         }
-        _ref2 = event.canvases.changedCells.src;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          cell = _ref2[_j];
+        _ref1 = event.canvases.changedCells.src;
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          cell = _ref1[_j];
           t.canvases.cells[cell.before.loc.i][cell.before.loc.j] = cell.before;
         }
         t.selectionStart = event.me.selectionStart.before;
@@ -111,15 +113,15 @@
         return t.calculateSelectedCells();
       },
       redo: function(event) {
-        var cell, _i, _j, _len, _len2, _ref, _ref2;
+        var cell, _i, _j, _len, _len1, _ref, _ref1;
         _ref = event.canvases.changedCells.src;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           cell = _ref[_i];
           t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after;
         }
-        _ref2 = event.canvases.changedCells.tgt;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          cell = _ref2[_j];
+        _ref1 = event.canvases.changedCells.tgt;
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          cell = _ref1[_j];
           t.canvases.cells[cell.after.loc.i][cell.after.loc.j] = cell.after;
         }
         t.selectionStart = event.me.selectionStart.after;
@@ -263,7 +265,7 @@
         }
       },
       _drawSelectionBox: function(args) {
-        var alpha, bounds, cell, ctx, loc, x, x1, x2, y, y1, y2, _i, _j, _len, _len2, _ref, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9, _step, _step2, _step3, _step4;
+        var alpha, bounds, cell, ctx, loc, x, x1, x2, y, y1, y2, _i, _j, _k, _l, _len, _len1, _m, _n, _ref, _ref1, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
         alpha = (args.shadow ? 0.3 : 1);
         ctx = this.canvases.workingCanvas.ctx;
         ctx.save();
@@ -277,9 +279,9 @@
             });
           }
         } else {
-          _ref2 = this.selectedCells;
-          for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-            cell = _ref2[_j];
+          _ref1 = this.selectedCells;
+          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+            cell = _ref1[_j];
             this.canvases.drawCell(cell, {
               color: cell.color["with"]({
                 alpha: alpha
@@ -290,22 +292,22 @@
         bounds = this._selectionBounds(args);
         ctx.strokeStyle = "rgba(0, 0, 0, " + alpha + ")";
         ctx.beginPath();
-        for (x = _ref3 = bounds.x1 + this.animOffset, _ref4 = bounds.x2, _step = 4; _ref3 <= _ref4 ? x <= _ref4 : x >= _ref4; x += _step) {
+        for (x = _k = _ref2 = bounds.x1 + this.animOffset, _ref3 = bounds.x2; _k <= _ref3; x = _k += 4) {
           y1 = bounds.y1;
           ctx.moveTo(x, y1 + 0.5);
           ctx.lineTo(x + 2, y1 + 0.5);
         }
-        for (y = _ref5 = bounds.y1 + this.animOffset, _ref6 = bounds.y2, _step2 = 4; _ref5 <= _ref6 ? y <= _ref6 : y >= _ref6; y += _step2) {
+        for (y = _l = _ref4 = bounds.y1 + this.animOffset, _ref5 = bounds.y2; _l <= _ref5; y = _l += 4) {
           x2 = bounds.x2;
           ctx.moveTo(x2 + 0.5, y);
           ctx.lineTo(x2 + 0.5, y + 2);
         }
-        for (x = _ref7 = bounds.x2 - this.animOffset, _ref8 = bounds.x1 + 2, _step3 = -4; _ref7 <= _ref8 ? x <= _ref8 : x >= _ref8; x += _step3) {
+        for (x = _m = _ref6 = bounds.x2 - this.animOffset, _ref7 = bounds.x1 + 2; _m >= _ref7; x = _m += -4) {
           y2 = bounds.y2;
           ctx.moveTo(x, y2 + 0.5);
           ctx.lineTo(x - 2, y2 + 0.5);
         }
-        for (y = _ref9 = bounds.y2 - this.animOffset, _ref10 = bounds.y1 + 2, _step4 = -4; _ref9 <= _ref10 ? y <= _ref10 : y >= _ref10; y += _step4) {
+        for (y = _n = _ref8 = bounds.y2 - this.animOffset, _ref9 = bounds.y1 + 2; _n >= _ref9; y = _n += -4) {
           x1 = bounds.x1;
           ctx.moveTo(x1 + 0.5, y);
           ctx.lineTo(x1 + 0.5, y - 2);
@@ -372,4 +374,5 @@
       }
     });
   });
+
 }).call(this);

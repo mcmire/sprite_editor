@@ -1,18 +1,23 @@
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
   $["export"]("SpriteEditor.Color", function(SpriteEditor) {
     var Color;
     return Color = (function() {
+
       Color.componentsByType = {
         rgb: "red green blue".split(" "),
         hsl: "hue sat lum".split(" ")
       };
+
       Color.allComponents = Color.componentsByType.rgb.concat(Color.componentsByType.hsl);
+
       Color.propertiesByType = {
         rgb: Color.componentsByType.rgb.concat(["alpha"]),
         hsl: Color.componentsByType.hsl.concat(["alpha"])
       };
+
       Color.allProperties = Color.allComponents.concat(["alpha"]);
+
       Color.rgb2hsl = function(rgb) {
         var b, correctHue, diff, g, h, hsl, l, max, min, r, s, sum, _ref;
         hsl = {};
@@ -54,6 +59,7 @@
         hsl.lum = Math.round(l * 100);
         return hsl;
       };
+
       Color.hsl2rgb = function(hsl) {
         var h, l, p, q, rgb, s, tb, tg, tr;
         rgb = {};
@@ -74,6 +80,7 @@
         rgb.blue = Math.round(this._hue2rgb(p, q, tb) * 255);
         return rgb;
       };
+
       Color._hue2rgb = function(p, q, h) {
         if (h < 0) {
           h += 1;
@@ -91,6 +98,7 @@
         }
         return p;
       };
+
       function Color(args) {
         var prop;
         if (args != null) {
@@ -117,6 +125,7 @@
         }
         this.correctHue = true;
       }
+
       Color.prototype.set = function(args, onDetectType) {
         var prop, type, _i, _len, _ref;
         if (type = this._detectType(args)) {
@@ -140,12 +149,14 @@
           return this.alpha = args.alpha;
         }
       };
+
       Color.prototype["with"] = function(args) {
         var clone;
         clone = this.clone();
         clone.set(args);
         return clone;
       };
+
       Color.prototype.isFilled = function() {
         var self;
         self = this;
@@ -153,12 +164,15 @@
           return self[prop] != null;
         });
       };
+
       Color.prototype.isClear = function() {
         return !this.isFilled();
       };
+
       Color.prototype.clone = function() {
         return new Color(this);
       };
+
       Color.prototype.asJSON = function() {
         return {
           _s: true,
@@ -171,50 +185,58 @@
           alpha: this.alpha
         };
       };
+
       Color.prototype.toRGBAString = function() {
         var prop, values;
         values = (function() {
-          var _i, _len, _ref, _ref2, _results;
+          var _i, _len, _ref, _ref1, _results;
           _ref = Color.propertiesByType.rgb;
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             prop = _ref[_i];
-            _results.push((_ref2 = this[prop]) != null ? _ref2 : "null");
+            _results.push((_ref1 = this[prop]) != null ? _ref1 : "null");
           }
           return _results;
         }).call(this);
         return "rgba(" + values.join(", ") + ")";
       };
+
       Color.prototype.toHSLAString = function() {
         var prop, values;
         values = (function() {
-          var _i, _len, _ref, _ref2, _results;
+          var _i, _len, _ref, _ref1, _results;
           _ref = Color.propertiesByType.hsl;
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             prop = _ref[_i];
-            _results.push((_ref2 = this[prop]) != null ? _ref2 : "null");
+            _results.push((_ref1 = this[prop]) != null ? _ref1 : "null");
           }
           return _results;
         }).call(this);
         return "hsla(" + values.join(", ") + ")";
       };
+
       Color.prototype.inspect = function() {
         return "{rgba: " + (this.toRGBAString()) + ", hsla: " + (this.toHSLAString()) + "}";
       };
+
       Color.prototype.eq = function(other) {
-        var self;
+        var self,
+          _this = this;
         self = this;
-        return $.v.every(Color.allProperties, __bind(function(prop) {
+        return $.v.every(Color.allProperties, function(prop) {
           return self[prop] === other[prop];
-        }, this));
+        });
       };
+
       Color.prototype._recalculateRGB = function() {
         return $.extend(this, Color.hsl2rgb(this));
       };
+
       Color.prototype._recalculateHSL = function() {
         return $.extend(this, Color.rgb2hsl(this));
       };
+
       Color.prototype._detectType = function(args, sig) {
         var count;
         count = 0;
@@ -240,7 +262,10 @@
             return null;
         }
       };
+
       return Color;
+
     })();
   });
+
 }).call(this);

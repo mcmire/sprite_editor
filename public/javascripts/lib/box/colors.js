@@ -1,5 +1,5 @@
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
   $["export"]("SpriteEditor.Box.Colors", function(SpriteEditor) {
     var Color, Colors, Keyboard;
     Keyboard = SpriteEditor.Keyboard;
@@ -11,7 +11,7 @@
       header: "Colors",
       colorTypes: ["foreground", "background"],
       init: function(app) {
-        var $div, type, _fn, _i, _len, _ref, _ref2;
+        var $div, type, _fn, _i, _len, _ref, _ref1;
         SpriteEditor.Box.init.call(this, app);
         this.colorSampleDivs = {};
         _ref = this.colorTypes;
@@ -34,9 +34,9 @@
           _fn(this, type);
         }
         this.reset();
-        _ref2 = this.colorSampleDivs;
-        for (type in _ref2) {
-          $div = _ref2[type];
+        _ref1 = this.colorSampleDivs;
+        for (type in _ref1) {
+          $div = _ref1[type];
           $div.trigger("render");
         }
         return this;
@@ -66,20 +66,21 @@
         return this._selectColorType(this.currentColorType);
       },
       addEvents: function() {
+        var _this = this;
         return this._bindEvents(document, {
-          keydown: __bind(function(event) {
+          keydown: function(event) {
             var key;
             key = event.keyCode;
             switch (key) {
               case Keyboard.X_KEY:
-                return this._switchForegroundAndBackgroundColor();
+                return _this._switchForegroundAndBackgroundColor();
               case Keyboard.SHIFT_KEY:
-                return this._selectColorType("background");
+                return _this._selectColorType("background");
             }
-          }, this),
-          keyup: __bind(function(event) {
-            return this._selectColorType("foreground");
-          }, this)
+          },
+          keyup: function(event) {
+            return _this._selectColorType("foreground");
+          }
         });
       },
       removeEvents: function() {
@@ -108,4 +109,5 @@
     });
     return Colors;
   });
+
 }).call(this);

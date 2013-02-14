@@ -1,4 +1,5 @@
 (function() {
+
   $["export"]("SpriteEditor.Box.Tools", function(SpriteEditor) {
     var Keyboard, Tools;
     Keyboard = SpriteEditor.Keyboard;
@@ -60,7 +61,7 @@
         return this._unbindEvents(document, "keydown");
       },
       select: function(name) {
-        var _base, _base2;
+        var _base, _base1;
         if (name === this.currentToolName) {
           return;
         }
@@ -72,7 +73,7 @@
         }
         this.currentToolName = name;
         this.toolImages[name].addClass("selected");
-        return typeof (_base2 = this.app.toolset.tools[name]).select === "function" ? _base2.select() : void 0;
+        return typeof (_base1 = this.app.toolset.tools[name]).select === "function" ? _base1.select() : void 0;
       },
       currentTool: function() {
         return this.app.toolset.tools[this.currentToolName];
@@ -80,4 +81,5 @@
     });
     return Tools;
   });
+
 }).call(this);

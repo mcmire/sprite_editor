@@ -1,5 +1,5 @@
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
   $["export"]("SpriteEditor.Box.Sizes", function(SpriteEditor) {
     var Keyboard, Sizes;
     Keyboard = SpriteEditor.Keyboard;
@@ -40,21 +40,22 @@
         return this.select(this.sizes[0]);
       },
       addEvents: function() {
+        var _this = this;
         return this._bindEvents(document, {
-          keydown: __bind(function(event) {
+          keydown: function(event) {
             var key;
             key = event.keyCode;
             switch (key) {
               case Keyboard.KEY_1:
-                return this.select(1);
+                return _this.select(1);
               case Keyboard.KEY_2:
-                return this.select(2);
+                return _this.select(2);
               case Keyboard.KEY_3:
-                return this.select(3);
+                return _this.select(3);
               case Keyboard.KEY_4:
-                return this.select(4);
+                return _this.select(4);
             }
-          }, this)
+          }
         });
       },
       removeEvents: function() {
@@ -71,16 +72,17 @@
         return this.sizeGrids[size].addClass("selected");
       },
       _createGrid: function(size) {
-        return SpriteEditor.Canvas.create(size, size, __bind(function(c) {
-          var cellSize, fontSize, metrics, text, x, y, _step, _step2;
-          cellSize = this.app.canvases.cellSize;
+        var _this = this;
+        return SpriteEditor.Canvas.create(size, size, function(c) {
+          var cellSize, fontSize, metrics, text, x, y, _i, _j;
+          cellSize = _this.app.canvases.cellSize;
           c.ctx.strokeStyle = "#eee";
           c.ctx.beginPath();
-          for (x = 0.5, _step = cellSize; 0.5 <= size ? x < size : x > size; x += _step) {
+          for (x = _i = 0.5; 0.5 <= size ? _i < size : _i > size; x = _i += cellSize) {
             c.ctx.moveTo(x, 0);
             c.ctx.lineTo(x, size);
           }
-          for (y = 0.5, _step2 = cellSize; 0.5 <= size ? y < size : y > size; y += _step2) {
+          for (y = _j = 0.5; 0.5 <= size ? _j < size : _j > size; y = _j += cellSize) {
             c.ctx.moveTo(0, y);
             c.ctx.lineTo(size, y);
           }
@@ -91,9 +93,10 @@
           text = (size / cellSize) + "px";
           metrics = c.ctx.measureText(text);
           return c.ctx.fillText(text, size / 2 - metrics.width / 2, size / 2 + fontSize / 4);
-        }, this));
+        });
       }
     });
     return Sizes;
   });
+
 }).call(this);

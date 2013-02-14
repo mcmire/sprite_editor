@@ -1,4 +1,5 @@
 (function() {
+
   $["export"]("SpriteEditor.Keyboard", function(SpriteEditor) {
     var Keyboard, keys;
     Keyboard = {};
@@ -81,4 +82,5 @@
     });
     return Keyboard;
   });
+
 }).call(this);

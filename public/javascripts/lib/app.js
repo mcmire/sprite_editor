@@ -1,5 +1,5 @@
 (function() {
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+
   $["export"]("SpriteEditor.App", function(SpriteEditor) {
     var App, Box, Color, ColorPicker, DrawingCanvases, ElementMouseTracker, EventHistory, Keyboard, Toolset;
     Keyboard = SpriteEditor.Keyboard, ElementMouseTracker = SpriteEditor.ElementMouseTracker, DrawingCanvases = SpriteEditor.DrawingCanvases, Toolset = SpriteEditor.Toolset, EventHistory = SpriteEditor.EventHistory, Color = SpriteEditor.Color, ColorPicker = SpriteEditor.ColorPicker, Box = SpriteEditor.Box;
@@ -33,18 +33,18 @@
         return $(document.body).append(this.colorPicker.$container);
       },
       destroy: function() {
-        var _ref, _ref2, _ref3;
+        var _ref, _ref1, _ref2;
         if (this.isInitialized) {
           this.removeEvents();
           Keyboard.destroy();
           if ((_ref = this.canvases) != null) {
             _ref.destroy();
           }
-          if ((_ref2 = this.toolset) != null) {
-            _ref2.destroy();
+          if ((_ref1 = this.toolset) != null) {
+            _ref1.destroy();
           }
-          if ((_ref3 = this.history) != null) {
-            _ref3.destroy();
+          if ((_ref2 = this.history) != null) {
+            _ref2.destroy();
           }
           this.reset();
           this.isInitialized = false;
@@ -52,7 +52,7 @@
         return this;
       },
       reset: function() {
-        var _ref, _ref2, _ref3;
+        var _ref, _ref1, _ref2;
         this.canvases = null;
         this.toolset = null;
         this.history = null;
@@ -64,17 +64,18 @@
         this.$leftPane = null;
         this.$centerPane = null;
         this.$rightPane = null;
-        if ((_ref2 = this.$maskDiv) != null) {
-          _ref2.remove();
+        if ((_ref1 = this.$maskDiv) != null) {
+          _ref1.remove();
         }
         this.$maskDiv = null;
-        if ((_ref3 = this.colorPicker) != null) {
-          _ref3.$container.remove();
+        if ((_ref2 = this.colorPicker) != null) {
+          _ref2.$container.remove();
         }
         this.colorPicker = null;
         return this;
       },
       addEvents: function() {
+        var _this = this;
         Keyboard.addEvents();
         ElementMouseTracker.addEvents();
         this.canvases.addEvents();
@@ -82,38 +83,38 @@
         this.boxes.sizes.addEvents();
         this.boxes.colors.addEvents();
         this._bindEvents(document, {
-          keydown: __bind(function(event) {
+          keydown: function(event) {
             var key;
             key = event.keyCode;
             if (key === Keyboard.Z_KEY && (event.ctrlKey || event.metaKey)) {
               if (event.shiftKey) {
-                this.history.redo();
+                _this.history.redo();
               } else {
-                this.history.undo();
+                _this.history.undo();
               }
             }
-            return this.boxes.tools.currentTool().trigger("keydown", event);
-          }, this),
-          keyup: __bind(function(event) {
-            return this.boxes.tools.currentTool().trigger("keyup", event);
-          }, this)
+            return _this.boxes.tools.currentTool().trigger("keydown", event);
+          },
+          keyup: function(event) {
+            return _this.boxes.tools.currentTool().trigger("keyup", event);
+          }
         });
         return this;
       },
       removeEvents: function() {
-        var _ref, _ref2, _ref3, _ref4;
+        var _ref, _ref1, _ref2, _ref3;
         Keyboard.removeEvents();
         if ((_ref = this.canvases) != null) {
           _ref.removeEvents();
         }
-        if ((_ref2 = this.boxes.tools) != null) {
+        if ((_ref1 = this.boxes.tools) != null) {
+          _ref1.removeEvents();
+        }
+        if ((_ref2 = this.boxes.sizes) != null) {
           _ref2.removeEvents();
         }
-        if ((_ref3 = this.boxes.sizes) != null) {
+        if ((_ref3 = this.boxes.colors) != null) {
           _ref3.removeEvents();
-        }
-        if ((_ref4 = this.boxes.colors) != null) {
-          _ref4.removeEvents();
         }
         this._unbindEvents(document, "keydown", "keyup");
         return this;
@@ -127,7 +128,8 @@
         return this.$container.append(this.$centerPane);
       },
       _createImportExportDiv: function() {
-        var $exportForm, $importDiv, $importErrorSpan, $importExportDiv, $importFileButton, $importFileInput;
+        var $exportForm, $importDiv, $importErrorSpan, $importExportDiv, $importFileButton, $importFileInput,
+          _this = this;
         $importExportDiv = $("<div id=\"import_export\" />");
         $importDiv = $("<div id=\"import\" />");
         $importErrorSpan = $("<span id=\"import_error\" style=\"display: none\" />");
@@ -137,7 +139,8 @@
           return $importFileInput.trigger("click");
         });
         $importFileInput.bind("change", function(event) {
-          var error, file, input, reader;
+          var error, file, input, reader,
+            _this = this;
           input = $importFileInput[0];
           file = input.files[0];
           error = "";
@@ -155,15 +158,15 @@
           } else {
             $importErrorSpan.hide();
             reader = new FileReader();
-            reader.onload = __bind(function(event) {
-              var c, imageData, img, x, y, _fn, _ref, _ref2;
+            reader.onload = function(event) {
+              var c, imageData, img, x, y, _fn, _i, _j, _ref, _ref1;
               img = document.createElement("img");
               img.src = event.target.result;
               console.log(img.src);
               c = Canvas.create(img.width, img.height);
               c.ctx.drawImage(img, 0, 0);
               imageData = c.ctx.getImageData(0, 0, img.width, img.height);
-              for (x = 0, _ref = img.width; 0 <= _ref ? x < _ref : x > _ref; 0 <= _ref ? x++ : x--) {
+              for (x = _i = 0, _ref = img.width; 0 <= _ref ? _i < _ref : _i > _ref; x = 0 <= _ref ? ++_i : --_i) {
                 _fn = function() {
                   var color, rgba;
                   rgba = imageData.getPixel(x, y);
@@ -172,12 +175,12 @@
                     return this.cells[y][x].color = color;
                   }
                 };
-                for (y = 0, _ref2 = img.height; 0 <= _ref2 ? y < _ref2 : y > _ref2; 0 <= _ref2 ? y++ : y--) {
+                for (y = _j = 0, _ref1 = img.height; 0 <= _ref1 ? _j < _ref1 : _j > _ref1; y = 0 <= _ref1 ? ++_j : --_j) {
                   _fn();
                 }
               }
-              return this.draw();
-            }, this);
+              return _this.draw();
+            };
             return reader.readAsDataURL(file);
           }
         });
@@ -191,12 +194,12 @@
           <button type="submit">Export PNG</button>\
         </form>\
       '.trim());
-        $exportForm.bind("submit", __bind(function() {
+        $exportForm.bind("submit", function() {
           var data;
-          data = this.previewCanvas.element.toDataURL("image/png");
+          data = _this.previewCanvas.element.toDataURL("image/png");
           data = data.replace(/^data:image\/png;base64,/, "");
           return $exportForm.find("input").val(data);
-        }, this));
+        });
         $importExportDiv.append($exportForm);
         return this.$centerPane.append($importExportDiv);
       },
@@ -204,18 +207,19 @@
         return this.$centerPane.append(this.canvases.workingCanvas.$element);
       },
       _createColorPicker: function() {
-        var box;
+        var box,
+          _this = this;
         this.boxes.colors = box = Box.Colors.init(this);
         this.$rightPane.append(box.$element);
         return this.colorPicker = ColorPicker.init(this, {
-          open: __bind(function() {
-            this.removeEvents();
-            return this._showMask();
-          }, this),
-          close: __bind(function() {
-            this._hideMask();
-            return this.addEvents();
-          }, this)
+          open: function() {
+            _this.removeEvents();
+            return _this._showMask();
+          },
+          close: function() {
+            _this._hideMask();
+            return _this.addEvents();
+          }
         });
       },
       _createPreviewBox: function() {
@@ -249,4 +253,5 @@
     });
     return App;
   });
+
 }).call(this);

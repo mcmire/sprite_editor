@@ -1,4 +1,5 @@
 (function() {
+
   $.ender({
     simulate: function(type, options) {
       this.each(function() {
@@ -9,7 +10,9 @@
       return this;
     }
   }, true);
+
   $.simulate = (function() {
+
     function simulate(el, type, options) {
       if (type === "drag") {
         this.simulateDragEvent(el, options);
@@ -17,12 +20,14 @@
         this.simulateEvent(el, type, options);
       }
     }
+
     simulate.prototype.simulateEvent = function(el, type, options) {
       var evt;
       evt = this.createEvent(type, options);
       this.dispatchEvent(el, type, evt, options);
       return evt;
     };
+
     simulate.prototype.simulateDragEvent = function(el, options) {
       var center, coord, dx, dy, self, x, y;
       self = this;
@@ -49,6 +54,7 @@
       this.simulateEvent(document, "mousemove", coord);
       return this.simulateEvent(el, "mouseup", coord);
     };
+
     simulate.prototype.createEvent = function(type, options) {
       if (/^mouse(over|out|down|up|move)|(dbl)?click$/.test(type)) {
         return this.createMouseEvent(type, options);
@@ -58,6 +64,7 @@
         return this.createBasicEvent(type, options);
       }
     };
+
     simulate.prototype.createMouseEvent = function(type, options) {
       var e, evt, relatedTarget;
       e = $.extend({
@@ -91,6 +98,7 @@
       }
       return evt;
     };
+
     simulate.prototype.createKeyboardEvent = function(type, options) {
       var e, evt;
       e = $.extend({
@@ -131,6 +139,7 @@
       }
       return evt;
     };
+
     simulate.prototype.createBasicEvent = function(type, options) {
       var e, evt;
       e = $.extend({
@@ -150,6 +159,7 @@
       }
       return evt;
     };
+
     simulate.prototype.dispatchEvent = function(el, type, evt) {
       if (el.dispatchEvent) {
         el.dispatchEvent(evt);
@@ -158,6 +168,7 @@
       }
       return evt;
     };
+
     simulate.prototype.findCenter = function(el) {
       var o;
       o = $(el).offset();
@@ -166,8 +177,11 @@
         y: o.top + o.height / 2
       };
     };
+
     return simulate;
+
   })();
+
   $.extend($.simulate, {
     defaults: {
       speed: "sync"
@@ -184,4 +198,5 @@
     VK_RIGHT: 39,
     VK_DOWN: 40
   });
+
 }).call(this);

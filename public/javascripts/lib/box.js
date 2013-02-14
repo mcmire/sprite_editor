@@ -1,4 +1,5 @@
 (function() {
+
   $["export"]("SpriteEditor.Box", {
     init: function(app) {
       var $header;
@@ -14,4 +15,5 @@
       return this;
     }
   });
+
 }).call(this);

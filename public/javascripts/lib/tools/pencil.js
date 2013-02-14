@@ -1,6 +1,8 @@
 (function() {
   var Keyboard, Toolset;
+
   Keyboard = SpriteEditor.Keyboard, Toolset = SpriteEditor.Toolset;
+
   Toolset.addTool("pencil", "E", function(t) {
     t.addAction("updateCells", {
       "do": function() {
@@ -93,4 +95,5 @@
       }
     });
   });
+
 }).call(this);

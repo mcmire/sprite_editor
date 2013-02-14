@@ -1,7 +1,9 @@
 (function() {
-  var __arSlice;
-  var __hasProp = Object.prototype.hasOwnProperty;
+  var __arSlice,
+    __hasProp = {}.hasOwnProperty;
+
   __arSlice = Array.prototype.slice;
+
   $.ender({
     extend: function() {
       var args, deep, obj, objects, prop, target, _i, _len;
@@ -64,11 +66,9 @@
       }
       for (_i = 0, _len = chainStrs.length; _i < _len; _i++) {
         idStr = chainStrs[_i];
-                if ((_ref = context[idStr]) != null) {
-          _ref;
-        } else {
+        if ((_ref = context[idStr]) == null) {
           context[idStr] = {};
-        };
+        }
         context = context[idStr];
       }
       return context;
@@ -88,6 +88,7 @@
       return chain;
     }
   });
+
   $.ender({
     center: function() {
       var left, top, vp;
@@ -125,4 +126,5 @@
       return prop && computedStyle[prop] || computedStyle;
     }
   }, true);
+
 }).call(this);
