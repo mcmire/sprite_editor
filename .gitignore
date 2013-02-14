@@ -1,6 +1,3 @@
-.DS_Store
-*.tmproj
-.bundle
-.sass-cache
+.*
 tags
 *.vim*
