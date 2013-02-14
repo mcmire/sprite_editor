@@ -1,81 +1,82 @@
 GIT
   remote: http://github.com/guard/guard
-  revision: 649920b7f0c88ed1e161826f75eda204d5f3ad83
+  revision: d7ed82db384687a4f0ef9acf8d0700ffce512072
   specs:
-    guard (0.5.0)
-      thor (~> 0.14.6)
+    guard (1.6.2)
+      listen (>= 0.6.0)
+      lumberjack (>= 1.0.2)
+      pry (>= 0.9.10)
+      terminal-table (>= 1.4.3)
+      thor (>= 0.14.6)
 
 GIT
   remote: http://github.com/johnbintz/guard-jasmine-headless-webkit
-  revision: 245eeba2609e4021375208178bd8f26c3ee03a08
+  revision: f86ec8b3b6e672ca6b3268de9054ed2cbedaa6a4
   specs:
-    guard-jasmine-headless-webkit (0.2.0)
+    guard-jasmine-headless-webkit (0.4.0.rc1)
       guard (>= 0.4.0)
-      jasmine-headless-webkit (>= 0.3.0)
+      jasmine-headless-webkit (>= 0.7.0)
 
 GIT
   remote: http://github.com/johnbintz/jasmine-headless-webkit
-  revision: 6454c329faaa6255dde1ae162f5650613ff6f5b2
+  revision: aa1d989a90c7ebc2d5ac372f2228fbbbcd335fb0
   specs:
-    jasmine-headless-webkit (0.4.3)
-      coffee-script (>= 2.2)
-      jasmine (~> 1.1.beta)
+    jasmine-headless-webkit (0.9.0.rc.2)
+      coffee-script
+      jasmine-core
+      multi_json (>= 1.2.0)
       rainbow
+      sprockets
+      sprockets-vendor_gems
 
 GEM
   remote: http://rubygems.org/
   specs:
-    childprocess (0.1.9)
-      ffi (~> 1.0.6)
     chunky_png (0.12.0)
+    coderay (1.0.8)
     coffee-script (2.2.0)
       coffee-script-source
       execjs
-    coffee-script-source (1.1.1)
+    coffee-script-source (1.4.0)
     compass (0.11.beta.2)
       chunky_png (~> 0.12.0)
       sass (>= 3.1.0.alpha.218)
-    diff-lcs (1.1.2)
-    execjs (1.2.0)
+    execjs (1.4.0)
       multi_json (~> 1.0)
-    ffi (1.0.9)
     growl (1.0.3)
-    guard-coffeescript (0.3.0)
+    guard-coffeescript (1.2.1)
       coffee-script (>= 2.2.0)
-      guard (>= 0.4)
-    guard-shell (0.1.1)
-      guard (>= 0.2.0)
-    jasmine (1.1.0.rc2)
-      jasmine-core (>= 1.1.0.rc2)
-      rack (>= 1.1)
-      rspec (>= 1.3.1)
-      selenium-webdriver (>= 0.1.3)
-    jasmine-core (1.1.0.rc2)
-    json_pure (1.5.3)
-    multi_json (1.0.3)
-    rack (1.3.0)
-    rainbow (1.1.1)
-    rb-fsevent (0.4.0)
-    rspec (2.6.0)
-      rspec-core (~> 2.6.0)
-      rspec-expectations (~> 2.6.0)
-      rspec-mocks (~> 2.6.0)
-    rspec-core (2.6.4)
-    rspec-expectations (2.6.0)
-      diff-lcs (~> 1.1.2)
-    rspec-mocks (2.6.0)
-    rubyzip (0.9.4)
-    sass (3.2.0.alpha.8)
-    selenium-webdriver (0.2.2)
-      childprocess (>= 0.1.9)
-      ffi (>= 1.0.7)
-      json_pure
-      rubyzip
+      guard (>= 1.1.0)
+    guard-shell (0.5.1)
+      guard (>= 1.1.0)
+    hike (1.2.1)
+    jasmine-core (1.3.1)
+    listen (0.7.2)
+    lumberjack (1.0.2)
+    method_source (0.8.1)
+    multi_json (1.6.0)
+    pry (0.9.12)
+      coderay (~> 1.0.5)
+      method_source (~> 0.8)
+      slop (~> 3.4)
+    rack (1.5.2)
+    rainbow (1.1.4)
+    rb-fsevent (0.9.3)
+    sass (3.3.0.alpha.69)
     sinatra (1.1.4)
       rack (~> 1.1)
-      tilt (< 2.0, >= 1.2.2)
-    thor (0.14.6)
-    tilt (1.3.2)
+      tilt (>= 1.2.2, < 2.0)
+    slop (3.4.3)
+    sprockets (2.8.2)
+      hike (~> 1.2)
+      multi_json (~> 1.0)
+      rack (~> 1.0)
+      tilt (~> 1.1, != 1.3.0)
+    sprockets-vendor_gems (0.1.3)
+      sprockets
+    terminal-table (1.4.5)
+    thor (0.17.0)
+    tilt (1.3.3)
 
 PLATFORMS
   ruby
