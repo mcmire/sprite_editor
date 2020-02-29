@@ -73,7 +73,7 @@ GEM
       slop (~> 3.4)
     rack (1.5.2)
     rainbow (1.1.4)
-    rake (10.0.3)
+    rake (12.3.3)
     rb-fsevent (0.9.3)
     rspec (2.12.0)
       rspec-core (~> 2.12.0)
